@@ -241,13 +241,13 @@ export interface TopChef {
   location: string;
   phone: string;
   cuisineTypes: string[];
-  isVerified?: boolean; // Added missing property
+  isVerified: boolean; // Changed from optional to required
 }
 
 export interface AdminDashboardData {
   totalBuyers: number;
-  newUsersToday?: number; // Added missing property
-  activeUsers?: number; // Added missing property
+  newUsersToday: number; // Changed from optional to required
+  activeUsers: number; // Changed from optional to required
   topEarners: TopEarner[];
   topDishes: TopDish[];
   topChefs: TopChef[];

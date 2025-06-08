@@ -167,7 +167,7 @@ export default function AdminDashboard() {
       canceledOrders,
       resolvedComplaints,
       pendingComplaints,
-      newUsersToday: mockAdminDashboardData.newUsersToday || 3,
+      newUsersToday: mockAdminDashboardData.newUsersToday,
       newOrdersToday,
       newListingsToday,
       newComplaintsToday,
@@ -176,7 +176,7 @@ export default function AdminDashboard() {
       pendingChefs: totalChefs - verifiedChefs,
       averageRating,
       totalBuyers: mockAdminDashboardData.totalBuyers,
-      activeUsers: mockAdminDashboardData.activeUsers || 42,
+      activeUsers: mockAdminDashboardData.activeUsers,
       revenueGrowth: 8.5,
       userGrowth: 5.2,
       orderGrowth: 3.4,
@@ -491,8 +491,8 @@ export default function AdminDashboard() {
         <StatCard
           title="Complaints"
           value={stats.totalComplaints}
-          icon={<MessageSquare size={20} color={colors.adminDanger} />}
-          color={colors.adminDanger}
+          icon={<MessageSquare size={20} color={colors.adminError} />}
+          color={colors.adminError}
           percentChange={stats.complaintGrowth}
           isPositive={false}
           onPress={() => router.push('/admin/complaints')}
@@ -532,8 +532,8 @@ export default function AdminDashboard() {
           </View>
           
           <View style={styles.todayStat}>
-            <View style={[styles.todayStatIcon, { backgroundColor: `${colors.adminDanger}20` }]}>
-              <AlertTriangle size={20} color={colors.adminDanger} />
+            <View style={[styles.todayStatIcon, { backgroundColor: `${colors.adminError}20` }]}>
+              <AlertTriangle size={20} color={colors.adminError} />
             </View>
             <Text style={styles.todayStatValue}>{stats.newComplaintsToday}</Text>
             <Text style={styles.todayStatLabel}>Complaints</Text>
@@ -553,42 +553,42 @@ export default function AdminDashboard() {
             icon={<Tag size={24} color={colors.adminPrimary} />}
             title="Manage Listings"
             color={colors.adminPrimary}
-            onPress={() => router.push('/admin/listings')}
+            onPress={() => router.push('/(admin)/listings')}
           />
           
           <QuickActionButton
             icon={<Users size={24} color={colors.adminPrimary} />}
             title="Manage Users"
             color={colors.adminPrimary}
-            onPress={() => router.push('/admin/users')}
+            onPress={() => router.push('/(admin)/users')}
           />
           
           <QuickActionButton
             icon={<ShoppingBag size={24} color={colors.adminPrimary} />}
             title="View Orders"
             color={colors.adminPrimary}
-            onPress={() => router.push('/admin/orders')}
+            onPress={() => router.push('/(admin)/orders')}
           />
           
           <QuickActionButton
             icon={<MessageSquare size={24} color={colors.adminPrimary} />}
             title="Handle Complaints"
             color={colors.adminPrimary}
-            onPress={() => router.push('/admin/complaints')}
+            onPress={() => router.push('/(admin)/complaints')}
           />
           
           <QuickActionButton
             icon={<BarChart3 size={24} color={colors.adminPrimary} />}
             title="Create Campaign"
             color={colors.adminPrimary}
-            onPress={() => router.push('/admin/campaigns')}
+            onPress={() => router.push('/(admin)/campaigns')}
           />
           
           <QuickActionButton
             icon={<Settings size={24} color={colors.adminPrimary} />}
             title="Settings"
             color={colors.adminPrimary}
-            onPress={() => router.push('/admin/settings')}
+            onPress={() => router.push('/(admin)/settings')}
           />
         </View>
       </View>
@@ -607,7 +607,7 @@ export default function AdminDashboard() {
               description={`${stats.pendingApprovals} listings waiting for your approval`}
               icon={<Clock size={20} color={colors.adminWarning} />}
               color={colors.adminWarning}
-              onPress={() => router.push('/admin/listings')}
+              onPress={() => router.push('/(admin)/listings')}
             />
           )}
           
@@ -615,9 +615,9 @@ export default function AdminDashboard() {
             <AlertItem
               title="Unresolved Complaints"
               description={`${stats.pendingComplaints} complaints need your attention`}
-              icon={<AlertTriangle size={20} color={colors.adminDanger} />}
-              color={colors.adminDanger}
-              onPress={() => router.push('/admin/complaints')}
+              icon={<AlertTriangle size={20} color={colors.adminError} />}
+              color={colors.adminError}
+              onPress={() => router.push('/(admin)/complaints')}
             />
           )}
           
@@ -627,7 +627,7 @@ export default function AdminDashboard() {
               description={`${stats.pendingChefs} chefs waiting to be verified`}
               icon={<ChefHat size={20} color={colors.adminPrimary} />}
               color={colors.adminPrimary}
-              onPress={() => router.push('/admin/users')}
+              onPress={() => router.push('/(admin)/users')}
             />
           )}
           
@@ -723,7 +723,7 @@ export default function AdminDashboard() {
           <View style={styles.overviewCard}>
             <View style={styles.overviewHeader}>
               <Text style={styles.overviewTitle}>Complaints</Text>
-              <MessageSquare size={18} color={colors.adminDanger} />
+              <MessageSquare size={18} color={colors.adminError} />
             </View>
             
             <View style={styles.overviewStats}>
@@ -791,8 +791,8 @@ export default function AdminDashboard() {
                 title={`New Complaint: ${complaint.title}`}
                 subtitle={`${complaint.description.substring(0, 30)}...`}
                 time={formatDate(complaint.createdAt)}
-                icon={<AlertTriangle size={20} color={colors.adminDanger} />}
-                color={colors.adminDanger}
+                icon={<AlertTriangle size={20} color={colors.adminError} />}
+                color={colors.adminError}
                 onPress={() => router.push(`/admin/complaint-details/${complaint.id}`)}
               />
             ))
