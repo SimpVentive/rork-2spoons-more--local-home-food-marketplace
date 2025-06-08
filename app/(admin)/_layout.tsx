@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRightWidth: 1,
     borderRightColor: colors.border,
-    height: '100%', // Fixed: Using proper RN dimension value
+    height: '100%',
   },
   sidebarHeader: {
     padding: 16,

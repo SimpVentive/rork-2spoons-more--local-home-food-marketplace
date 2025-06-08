@@ -7,6 +7,7 @@ interface ListingsState {
   isLoading: boolean;
   error: string | null;
   fetchListings: () => Promise<void>;
+  getSellerListings: (sellerId: string) => FoodListing[];
   addListing: (listing: Omit<FoodListing, 'id' | 'createdAt'>) => Promise<FoodListing>;
   updateListing: (id: string, updates: Partial<FoodListing>) => Promise<FoodListing>;
   deleteListing: (id: string) => Promise<void>;
@@ -32,6 +33,10 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
     } catch (error) {
       set({ error: 'Failed to fetch listings', isLoading: false });
     }
+  },
+
+  getSellerListings: (sellerId: string) => {
+    return get().listings.filter(listing => listing.sellerId === sellerId);
   },
 
   addListing: async (listing) => {

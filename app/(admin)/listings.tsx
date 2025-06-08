@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-  Switch,
   Dimensions,
   Platform
 } from 'react-native';
