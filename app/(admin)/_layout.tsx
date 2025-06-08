@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRightWidth: 1,
     borderRightColor: colors.border,
-    height: '100%', // Fixed: Removed "100vh" which is not valid in RN
+    height: '100%', // Fixed: Using proper RN dimension value
   },
   sidebarHeader: {
     padding: 16,
