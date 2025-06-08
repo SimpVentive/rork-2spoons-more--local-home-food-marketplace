@@ -154,6 +154,7 @@ export interface Complaint {
   userId: string;
   orderId?: string;
   sellerId?: string;
+  buyerId?: string;
   type: 'order' | 'seller' | 'payment' | 'app' | 'other';
   title: string;
   description: string;
@@ -161,6 +162,7 @@ export interface Complaint {
   resolution?: string;
   createdAt: string;
   updatedAt: string;
+  resolvedAt?: string;
 }
 
 export interface Follow {
@@ -241,13 +243,13 @@ export interface TopChef {
   location: string;
   phone: string;
   cuisineTypes: string[];
-  isVerified: boolean; // Changed from optional to required
+  isVerified: boolean;
 }
 
 export interface AdminDashboardData {
   totalBuyers: number;
-  newUsersToday: number; // Changed from optional to required
-  activeUsers: number; // Changed from optional to required
+  newUsersToday: number;
+  activeUsers: number;
   topEarners: TopEarner[];
   topDishes: TopDish[];
   topChefs: TopChef[];

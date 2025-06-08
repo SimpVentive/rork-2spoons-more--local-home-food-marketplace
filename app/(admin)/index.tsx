@@ -217,10 +217,11 @@ export default function AdminDashboard() {
     orders.forEach(order => {
       const sellerId = order.sellerId;
       if (!sellerOrderCounts[sellerId]) {
+        const sellerImage = order.listingSnapshot.sellerImage || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d";
         sellerOrderCounts[sellerId] = {
           sellerId: order.sellerId,
           sellerName: order.listingSnapshot.sellerName,
-          sellerImage: order.listingSnapshot.sellerImage || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
+          sellerImage: sellerImage,
           orderCount: 0,
           revenue: 0
         };

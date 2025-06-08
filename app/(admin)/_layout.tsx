@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRightWidth: 1,
     borderRightColor: colors.border,
-    height: '100vh',
+    height: Platform.OS === 'web' ? '100%' : '100%',
   },
   sidebarHeader: {
     padding: 16,
