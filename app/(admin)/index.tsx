@@ -44,6 +44,7 @@ import { useComplaintsStore } from '@/store/complaints-store';
 import colors from '@/constants/colors';
 import { mockAdminDashboardData } from '@/mocks/data';
 import { Image } from 'expo-image';
+import { Order, FoodListing, Complaint, TopChef } from '@/types';
 
 export default function AdminDashboard() {
   const { user } = useAuthStore();
@@ -82,10 +83,16 @@ export default function AdminDashboard() {
     complaintGrowth: -2.1,
   });
   
-  const [recentOrders, setRecentOrders] = useState([]);
-  const [recentListings, setRecentListings] = useState([]);
-  const [recentComplaints, setRecentComplaints] = useState([]);
-  const [topSellers, setTopSellers] = useState([]);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [recentListings, setRecentListings] = useState<FoodListing[]>([]);
+  const [recentComplaints, setRecentComplaints] = useState<Complaint[]>([]);
+  const [topSellers, setTopSellers] = useState<{
+    sellerId: string;
+    sellerName: string;
+    sellerImage: string;
+    orderCount: number;
+    revenue: number;
+  }[]>([]);
   
   const router = useRouter();
   
@@ -145,7 +152,7 @@ export default function AdminDashboard() {
     
     // Calculate average rating
     const totalRatings = listings.reduce((sum, listing) => sum + (listing.rating || 0), 0);
-    const averageRating = listings.length > 0 ? (totalRatings / listings.length).toFixed(1) : 0;
+    const averageRating = listings.length > 0 ? parseFloat((totalRatings / listings.length).toFixed(1)) : 0;
     
     setStats({
       totalUsers: mockAdminDashboardData.totalBuyers + mockAdminDashboardData.topChefs.length,
@@ -199,21 +206,28 @@ export default function AdminDashboard() {
   
   const getTopSellers = () => {
     // Get top sellers based on order count
-    const sellerOrderCounts = {};
+    const sellerOrderCounts: Record<string, {
+      sellerId: string;
+      sellerName: string;
+      sellerImage: string;
+      orderCount: number;
+      revenue: number;
+    }> = {};
     
     orders.forEach(order => {
-      if (!sellerOrderCounts[order.sellerId]) {
-        sellerOrderCounts[order.sellerId] = {
+      const sellerId = order.sellerId;
+      if (!sellerOrderCounts[sellerId]) {
+        sellerOrderCounts[sellerId] = {
           sellerId: order.sellerId,
           sellerName: order.listingSnapshot.sellerName,
-          sellerImage: order.listingSnapshot.sellerImage,
+          sellerImage: order.listingSnapshot.sellerImage || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
           orderCount: 0,
           revenue: 0
         };
       }
       
-      sellerOrderCounts[order.sellerId].orderCount += 1;
-      sellerOrderCounts[order.sellerId].revenue += order.totalPrice;
+      sellerOrderCounts[sellerId].orderCount += 1;
+      sellerOrderCounts[sellerId].revenue += order.totalPrice;
     });
     
     const topSellers = Object.values(sellerOrderCounts)
@@ -316,7 +330,13 @@ export default function AdminDashboard() {
     index,
     onPress
   }: {
-    seller: any;
+    seller: {
+      sellerId: string;
+      sellerName: string;
+      sellerImage: string;
+      orderCount: number;
+      revenue: number;
+    };
     index: number;
     onPress?: () => void;
   }) => (

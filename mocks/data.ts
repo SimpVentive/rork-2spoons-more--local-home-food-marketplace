@@ -335,6 +335,7 @@ export const mockOrders: Order[] = [
       price: 250,
       image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591',
       sellerName: 'John Doe',
+      sellerImage: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d',
       location: {
         latitude: 12.9716,
         longitude: 77.5946,
@@ -368,6 +369,7 @@ export const mockOrders: Order[] = [
       price: 350,
       image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398',
       sellerName: 'Raj Kumar',
+      sellerImage: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d',
       location: {
         latitude: 28.7041,
         longitude: 77.1025,
@@ -396,6 +398,7 @@ export const mockOrders: Order[] = [
       price: 150,
       image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc',
       sellerName: 'Priya Sharma',
+      sellerImage: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
       location: {
         latitude: 13.0827,
         longitude: 80.2707,
@@ -613,6 +616,7 @@ export const mockTopChefs: TopChef[] = [
     location: 'Chennai',
     phone: '+91 9876543214',
     cuisineTypes: ['South Indian', 'Chinese'],
+    isVerified: true,
   },
   {
     id: 'user1',
@@ -623,6 +627,7 @@ export const mockTopChefs: TopChef[] = [
     location: 'Bangalore',
     phone: '+91 9876543210',
     cuisineTypes: ['Italian', 'Mexican'],
+    isVerified: true,
   },
   {
     id: 'user3',
@@ -633,11 +638,14 @@ export const mockTopChefs: TopChef[] = [
     location: 'Delhi',
     phone: '+91 9876543212',
     cuisineTypes: ['North Indian', 'South Indian'],
+    isVerified: true,
   },
 ];
 
 export const mockAdminDashboardData: AdminDashboardData = {
   totalBuyers: 2,
+  newUsersToday: 3,
+  activeUsers: 42,
   topEarners: mockTopEarners,
   topDishes: mockTopDishes,
   topChefs: mockTopChefs,

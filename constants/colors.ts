@@ -22,6 +22,7 @@ const colors = {
   adminError: '#B91C1C', // Red 700
   adminWarning: '#B45309', // Amber 700
   adminInfo: '#1D4ED8', // Blue 700
+  adminDanger: '#B91C1C', // Red 700 - Added missing property
   adminBackground: '#F8FAFC', // Slate 50
   adminCard: '#F1F5F9', // Slate 100
   adminBorder: '#CBD5E1', // Slate 300
