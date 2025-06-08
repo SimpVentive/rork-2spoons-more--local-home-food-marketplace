@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRightWidth: 1,
     borderRightColor: colors.border,
-    height: Platform.OS === 'web' ? '100%' : '100%',
+    height: '100%', // Fixed: Removed "100vh" which is not valid in RN
   },
   sidebarHeader: {
     padding: 16,

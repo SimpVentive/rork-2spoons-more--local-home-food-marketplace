@@ -37,7 +37,6 @@ import { useListingsStore } from '@/store/listings-store';
 import colors from '@/constants/colors';
 import { Image } from 'expo-image';
 import { FoodListing } from '@/types';
-import * as Clipboard from 'expo-clipboard';
 
 export default function ManageListings() {
   const { 
@@ -284,9 +283,8 @@ export default function ManageListings() {
       const data = await exportListings(format);
       
       // In a real app, this would download a file
-      // For this demo, we'll copy to clipboard
-      await Clipboard.setStringAsync(data);
-      Alert.alert('Export Successful', `Listings exported as ${format.toUpperCase()} and copied to clipboard`);
+      // For this demo, we'll show an alert
+      Alert.alert('Export Successful', `Listings exported as ${format.toUpperCase()}`);
     } catch (error) {
       Alert.alert('Export Failed', 'Could not export listings');
     }

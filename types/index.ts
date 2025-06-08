@@ -93,7 +93,7 @@ export interface Order {
     price: number;
     image: string;
     sellerName: string;
-    sellerImage?: string; // Added missing property
+    sellerImage: string; // Added missing property
     location: {
       latitude: number;
       longitude: number;
@@ -243,13 +243,13 @@ export interface TopChef {
   location: string;
   phone: string;
   cuisineTypes: string[];
-  isVerified: boolean;
+  isVerified: boolean; // Added missing property
 }
 
 export interface AdminDashboardData {
   totalBuyers: number;
-  newUsersToday: number;
-  activeUsers: number;
+  newUsersToday: number; // Added missing property
+  activeUsers: number; // Added missing property
   topEarners: TopEarner[];
   topDishes: TopDish[];
   topChefs: TopChef[];
