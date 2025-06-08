@@ -346,7 +346,7 @@ export default function ManageListings() {
           <View style={styles.listingInfo}>
             <Text style={styles.sellerName}>By {listing.sellerName}</Text>
             
-            <View style={styles.listingStats}>
+            <View style={styles.listingStatsContainer}>
               {listing.rating !== undefined && (
                 <View style={styles.statItem}>
                   <Star size={14} color={colors.adminWarning} />
@@ -1064,7 +1064,7 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginBottom: 2,
   },
-  listingStats: {
+  listingStatsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
