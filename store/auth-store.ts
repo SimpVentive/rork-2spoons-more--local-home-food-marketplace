@@ -13,7 +13,7 @@ interface AuthState {
   logout: () => void;
   register: (userData: Partial<User>) => Promise<boolean>;
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
-  isAdmin: () => boolean;
+  isAdmin: boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -22,6 +22,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       token: null,
+      isAdmin: false,
       
       login: async (email: string, password: string) => {
         try {
@@ -43,6 +44,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             user,
             isAuthenticated: true,
+            isAdmin: !!user.isAdmin,
             token: 'demo-token-' + Math.random().toString(36).substring(2, 15),
           });
           
@@ -74,6 +76,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             user: adminUser,
             isAuthenticated: true,
+            isAdmin: true,
             token: 'admin-token-' + Math.random().toString(36).substring(2, 15),
           });
           
@@ -88,6 +91,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: null,
           isAuthenticated: false,
+          isAdmin: false,
           token: null,
         });
       },
@@ -135,6 +139,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             user: newUser,
             isAuthenticated: true,
+            isAdmin: false,
             token: 'demo-token-' + Math.random().toString(36).substring(2, 15),
           });
           
@@ -161,18 +166,16 @@ export const useAuthStore = create<AuthState>()(
           // In a real app, we would update this in the database
           // For demo purposes, we'll just update it in the store
           
-          set({ user: updatedUser });
+          set({ 
+            user: updatedUser,
+            isAdmin: !!updatedUser.isAdmin
+          });
           
           return true;
         } catch (error) {
           console.error('Profile update error:', error);
           return false;
         }
-      },
-      
-      isAdmin: () => {
-        const { user } = get();
-        return !!user?.isAdmin;
       },
     }),
     {

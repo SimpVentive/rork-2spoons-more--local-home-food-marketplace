@@ -7,7 +7,7 @@ import colors from '@/constants/colors';
 import { Platform } from 'react-native';
 
 export default function TabLayout() {
-  const { isAuthenticated, isAdmin } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
@@ -103,20 +103,6 @@ export default function TabLayout() {
           title: 'Profile',
           tabBarIcon: ({ color }) => <User size={24} color={color} />,
           tabBarLabel: 'Profile',
-        }}
-      />
-      {/* Remove the create tab from the tab bar but keep it accessible via router */}
-      <Tabs.Screen
-        name="create"
-        options={{
-          href: null,
-        }}
-      />
-      {/* Remove analytics from tab bar */}
-      <Tabs.Screen
-        name="analytics"
-        options={{
-          href: null,
         }}
       />
     </Tabs>

@@ -93,7 +93,7 @@ export default function SearchScreen() {
     
     // Apply category-specific filters
     let filters: FilterOptions = { ...activeFilters };
-    let newFoodType = foodType;
+    let newFoodType: 'vegetarian' | 'non-vegetarian' | 'both' = foodType;
     
     if (categoryId === 'vegetarian') {
       filters.foodType = 'vegetarian';
@@ -151,7 +151,7 @@ export default function SearchScreen() {
           ]}
           onPress={() => {
             setFoodType('both');
-            const updatedFilters = { ...activeFilters, foodType: 'both' };
+            const updatedFilters = { ...activeFilters, foodType: 'both' as const };
             setActiveFilters(updatedFilters);
             if (searchQuery) {
               searchListings({ query: searchQuery, ...updatedFilters });
@@ -177,7 +177,7 @@ export default function SearchScreen() {
           ]}
           onPress={() => {
             setFoodType('vegetarian');
-            const updatedFilters = { ...activeFilters, foodType: 'vegetarian' };
+            const updatedFilters = { ...activeFilters, foodType: 'vegetarian' as const };
             setActiveFilters(updatedFilters);
             if (searchQuery) {
               searchListings({ query: searchQuery, ...updatedFilters });
@@ -208,7 +208,7 @@ export default function SearchScreen() {
           ]}
           onPress={() => {
             setFoodType('non-vegetarian');
-            const updatedFilters = { ...activeFilters, foodType: 'non-vegetarian' };
+            const updatedFilters = { ...activeFilters, foodType: 'non-vegetarian' as const };
             setActiveFilters(updatedFilters);
             if (searchQuery) {
               searchListings({ query: searchQuery, ...updatedFilters });
@@ -346,7 +346,7 @@ export default function SearchScreen() {
           ? `We couldn't find any results for "${searchQuery}"`
           : "Try adjusting your filters or search for something else"
       }
-      image="https://images.unsplash.com/photo-1594708053019-5c77bf8a8ee5"
+      icon={<Bell size={48} color={colors.textLight} />}
       buttonTitle="Notify Me When Available"
       onButtonPress={handleNotifyMe}
     />

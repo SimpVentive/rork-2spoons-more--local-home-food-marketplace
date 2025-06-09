@@ -1,40 +1,306 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
+import { Camera, ChefHat, Clock, DollarSign, FileText, Image as ImageIcon, MapPin, Plus, Tag, Utensils } from 'lucide-react-native';
+import { useAuthStore } from '@/store/auth-store';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
 
-// This is a placeholder screen that redirects to the create-listing modal
 export default function CreateScreen() {
+  const { user } = useAuthStore();
   const router = useRouter();
   
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  
+  const handleOptionSelect = (option: string) => {
+    setSelectedOption(option);
+    
+    switch (option) {
+      case 'food':
+        router.push('/create-listing');
+        break;
+      case 'scan':
+        router.push('/scan');
+        break;
+      case 'order':
+        Alert.alert('Coming Soon', 'This feature will be available soon!');
+        break;
+      default:
+        break;
+    }
+  };
+  
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Add a new food listing</Text>
-      <Button
-        title="Create Listing"
-        onPress={() => router.push('/create-listing')}
-        style={styles.button}
-      />
-    </View>
+    <>
+      <Stack.Screen options={{ 
+        title: 'Create',
+        headerTitleStyle: {
+          fontWeight: '700',
+        }
+      }} />
+      
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <Text style={styles.title}>What would you like to create?</Text>
+        
+        <View style={styles.optionsContainer}>
+          <TouchableOpacity
+            style={[styles.option, selectedOption === 'food' && styles.selectedOption]}
+            onPress={() => handleOptionSelect('food')}
+          >
+            <View style={[styles.iconContainer, { backgroundColor: '#E3F2FD' }]}>
+              <ChefHat size={24} color="#1976D2" />
+            </View>
+            <Text style={styles.optionTitle}>Food Listing</Text>
+            <Text style={styles.optionDescription}>
+              Create a new food listing to sell your homemade dishes
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.option, selectedOption === 'scan' && styles.selectedOption]}
+            onPress={() => handleOptionSelect('scan')}
+          >
+            <View style={[styles.iconContainer, { backgroundColor: '#E8F5E9' }]}>
+              <Camera size={24} color="#43A047" />
+            </View>
+            <Text style={styles.optionTitle}>Scan QR Code</Text>
+            <Text style={styles.optionDescription}>
+              Scan a QR code to quickly access orders or listings
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.option, selectedOption === 'order' && styles.selectedOption]}
+            onPress={() => handleOptionSelect('order')}
+          >
+            <View style={[styles.iconContainer, { backgroundColor: '#FFF3E0' }]}>
+              <FileText size={24} color="#EF6C00" />
+            </View>
+            <Text style={styles.optionTitle}>Create Order</Text>
+            <Text style={styles.optionDescription}>
+              Manually create an order for a customer (coming soon)
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.quickActionsContainer}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          
+          <View style={styles.quickActions}>
+            <TouchableOpacity 
+              style={styles.quickAction}
+              onPress={() => router.push('/create-listing')}
+            >
+              <Plus size={20} color={colors.primary} />
+              <Text style={styles.quickActionText}>New Listing</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.quickAction}
+              onPress={() => router.push('/scan')}
+            >
+              <Camera size={20} color={colors.primary} />
+              <Text style={styles.quickActionText}>Scan QR</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.quickAction}
+              onPress={() => router.push('/analytics')}
+            >
+              <Tag size={20} color={colors.primary} />
+              <Text style={styles.quickActionText}>Analytics</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        <View style={styles.tipsContainer}>
+          <Text style={styles.sectionTitle}>Tips for Success</Text>
+          
+          <View style={styles.tipCard}>
+            <View style={styles.tipIconContainer}>
+              <ImageIcon size={20} color="#FFFFFF" />
+            </View>
+            <View style={styles.tipContent}>
+              <Text style={styles.tipTitle}>Use High-Quality Images</Text>
+              <Text style={styles.tipDescription}>
+                Clear, well-lit photos of your food increase sales by up to 40%
+              </Text>
+            </View>
+          </View>
+          
+          <View style={styles.tipCard}>
+            <View style={[styles.tipIconContainer, { backgroundColor: '#9C27B0' }]}>
+              <DollarSign size={20} color="#FFFFFF" />
+            </View>
+            <View style={styles.tipContent}>
+              <Text style={styles.tipTitle}>Price Competitively</Text>
+              <Text style={styles.tipDescription}>
+                Research similar dishes in your area to set the right price point
+              </Text>
+            </View>
+          </View>
+          
+          <View style={styles.tipCard}>
+            <View style={[styles.tipIconContainer, { backgroundColor: '#43A047' }]}>
+              <Clock size={20} color="#FFFFFF" />
+            </View>
+            <View style={styles.tipContent}>
+              <Text style={styles.tipTitle}>Set Realistic Timings</Text>
+              <Text style={styles.tipDescription}>
+                Be clear about preparation time and availability windows
+              </Text>
+            </View>
+          </View>
+          
+          <View style={styles.tipCard}>
+            <View style={[styles.tipIconContainer, { backgroundColor: '#EF6C00' }]}>
+              <Utensils size={20} color="#FFFFFF" />
+            </View>
+            <View style={styles.tipContent}>
+              <Text style={styles.tipTitle}>Detailed Descriptions</Text>
+              <Text style={styles.tipDescription}>
+                Include ingredients, spice levels, and any special preparation methods
+              </Text>
+            </View>
+          </View>
+          
+          <View style={styles.tipCard}>
+            <View style={[styles.tipIconContainer, { backgroundColor: '#1976D2' }]}>
+              <MapPin size={20} color="#FFFFFF" />
+            </View>
+            <View style={styles.tipContent}>
+              <Text style={styles.tipTitle}>Accurate Location</Text>
+              <Text style={styles.tipDescription}>
+                Set your exact location for better visibility to nearby customers
+              </Text>
+            </View>
+          </View>
+        </View>
+        
+        <Button
+          title="Create New Food Listing"
+          onPress={() => router.push('/create-listing')}
+          style={styles.createButton}
+        />
+      </ScrollView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
     backgroundColor: colors.background,
   },
-  text: {
-    fontSize: 18,
-    marginBottom: 24,
-    textAlign: 'center',
-    color: colors.text,
+  content: {
+    padding: 16,
+    paddingBottom: 32,
   },
-  button: {
-    width: 200,
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 24,
+  },
+  optionsContainer: {
+    gap: 16,
+    marginBottom: 32,
+  },
+  option: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  selectedOption: {
+    borderColor: colors.primary,
+    backgroundColor: `${colors.primary}10`,
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  optionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  optionDescription: {
+    fontSize: 14,
+    color: colors.textLight,
+    lineHeight: 20,
+  },
+  quickActionsContainer: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  quickActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  quickAction: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    width: '30%',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  quickActionText: {
+    fontSize: 14,
+    color: colors.text,
+    marginTop: 8,
+  },
+  tipsContainer: {
+    marginBottom: 32,
+  },
+  tipCard: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  tipIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  tipContent: {
+    flex: 1,
+  },
+  tipTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  tipDescription: {
+    fontSize: 14,
+    color: colors.textLight,
+    lineHeight: 20,
+  },
+  createButton: {
+    marginTop: 16,
   },
 });

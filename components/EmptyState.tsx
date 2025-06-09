@@ -9,6 +9,7 @@ interface EmptyStateProps {
   buttonTitle?: string;
   onButtonPress?: () => void;
   icon?: React.ReactNode;
+  image?: string;
   style?: ViewStyle;
 }
 
@@ -18,6 +19,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   buttonTitle,
   onButtonPress,
   icon,
+  image,
   style,
 }) => {
   return (
