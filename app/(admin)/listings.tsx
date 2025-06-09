@@ -1102,7 +1102,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 18,
     backgroundColor: colors.card,
-    marginBottom: 8,
+    marginBottom: Platform.OS === 'web' ? 0 : 8,
     marginRight: Platform.OS === 'web' ? 8 : 0,
   },
   emptyState: {

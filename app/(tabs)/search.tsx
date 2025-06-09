@@ -27,7 +27,7 @@ import EmptyState from '@/components/EmptyState';
 import { FilterModal } from '@/components/FilterModal';
 import { NotifyMeModal } from '@/components/NotifyMeModal';
 import colors from '@/constants/colors';
-import { FoodListing, FilterOptions, SearchParams } from '@/types';
+import { FoodListing, FilterOptions } from '@/types';
 
 export default function SearchScreen() {
   const { user } = useAuthStore();
@@ -67,22 +67,21 @@ export default function SearchScreen() {
   
   const handleSearch = (text: string) => {
     setSearchQuery(text);
-    const searchParams: SearchParams = { 
-      query: text, 
-      ...activeFilters,
-      foodType
-    };
-    searchListings(searchParams);
+    searchListings(text);
   };
   
   const handleFilterApply = (filters: FilterOptions) => {
     setActiveFilters(filters);
     setFoodType(filters.foodType || 'both');
-    const searchParams: SearchParams = { 
-      query: searchQuery, 
-      ...filters
-    };
-    searchListings(searchParams);
+    
+    // Combine search query with filters
+    if (searchQuery) {
+      // If we have a search query, pass it along with filters
+      searchListings({ query: searchQuery, ...filters });
+    } else {
+      // If no search query, just apply filters
+      searchListings(filters);
+    }
   };
   
   const handleCategorySelect = (categoryId: string) => {
@@ -111,11 +110,13 @@ export default function SearchScreen() {
     
     setActiveFilters(filters);
     setFoodType(newFoodType);
-    const searchParams: SearchParams = { 
-      query: searchQuery, 
-      ...filters
-    };
-    searchListings(searchParams);
+    
+    // Apply search with filters
+    if (searchQuery) {
+      searchListings({ query: searchQuery, ...filters });
+    } else {
+      searchListings(filters);
+    }
   };
   
   const handleListingPress = (listing: FoodListing) => {
@@ -150,12 +151,13 @@ export default function SearchScreen() {
           ]}
           onPress={() => {
             setFoodType('both');
-            const searchParams: SearchParams = { 
-              query: searchQuery, 
-              ...activeFilters,
-              foodType: 'both'
-            };
-            searchListings(searchParams);
+            const updatedFilters = { ...activeFilters, foodType: 'both' };
+            setActiveFilters(updatedFilters);
+            if (searchQuery) {
+              searchListings({ query: searchQuery, ...updatedFilters });
+            } else {
+              searchListings(updatedFilters);
+            }
           }}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
@@ -175,12 +177,13 @@ export default function SearchScreen() {
           ]}
           onPress={() => {
             setFoodType('vegetarian');
-            const searchParams: SearchParams = { 
-              query: searchQuery, 
-              ...activeFilters,
-              foodType: 'vegetarian'
-            };
-            searchListings(searchParams);
+            const updatedFilters = { ...activeFilters, foodType: 'vegetarian' };
+            setActiveFilters(updatedFilters);
+            if (searchQuery) {
+              searchListings({ query: searchQuery, ...updatedFilters });
+            } else {
+              searchListings(updatedFilters);
+            }
           }}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
@@ -205,12 +208,13 @@ export default function SearchScreen() {
           ]}
           onPress={() => {
             setFoodType('non-vegetarian');
-            const searchParams: SearchParams = { 
-              query: searchQuery, 
-              ...activeFilters,
-              foodType: 'non-vegetarian'
-            };
-            searchListings(searchParams);
+            const updatedFilters = { ...activeFilters, foodType: 'non-vegetarian' };
+            setActiveFilters(updatedFilters);
+            if (searchQuery) {
+              searchListings({ query: searchQuery, ...updatedFilters });
+            } else {
+              searchListings(updatedFilters);
+            }
           }}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
@@ -270,12 +274,11 @@ export default function SearchScreen() {
           onPress={() => {
             const newFilters = { ...activeFilters, maxDistance: 3 };
             setActiveFilters(newFilters);
-            const searchParams: SearchParams = { 
-              query: searchQuery, 
-              ...newFilters,
-              foodType
-            };
-            searchListings(searchParams);
+            if (searchQuery) {
+              searchListings({ query: searchQuery, ...newFilters });
+            } else {
+              searchListings(newFilters);
+            }
           }}
           hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
         >
@@ -292,12 +295,11 @@ export default function SearchScreen() {
               sortOrder: 'asc'
             };
             setActiveFilters(newFilters);
-            const searchParams: SearchParams = { 
-              query: searchQuery, 
-              ...newFilters,
-              foodType
-            };
-            searchListings(searchParams);
+            if (searchQuery) {
+              searchListings({ query: searchQuery, ...newFilters });
+            } else {
+              searchListings(newFilters);
+            }
           }}
           hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
         >

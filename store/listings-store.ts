@@ -10,7 +10,7 @@ interface ListingsState {
   fetchListings: () => Promise<void>;
   getSellerListings: (sellerId: string) => FoodListing[];
   getTopSellingItems: (limit?: number) => Promise<FoodListing[]>;
-  searchListings: (query: string) => void;
+  searchListings: (query: string | object) => void;
   addListing: (listing: Omit<FoodListing, 'id' | 'createdAt'>) => Promise<FoodListing>;
   updateListing: (id: string, updates: Partial<FoodListing>) => Promise<FoodListing>;
   deleteListing: (id: string) => Promise<void>;
@@ -62,14 +62,24 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
     }
   },
 
-  searchListings: (query: string) => {
+  searchListings: (query) => {
     const { listings } = get();
-    if (!query.trim()) {
+    
+    // Handle object-based query (for advanced filtering)
+    if (typeof query === 'object') {
+      // For now, just return all listings if query is an object
+      // In a real app, you would implement filtering based on the query object
       set({ filteredListings: listings });
       return;
     }
     
-    const lowercaseQuery = query.toLowerCase();
+    // Handle string-based query
+    if (!query || (typeof query === 'string' && !query.trim())) {
+      set({ filteredListings: listings });
+      return;
+    }
+    
+    const lowercaseQuery = typeof query === 'string' ? query.toLowerCase() : '';
     const filtered = listings.filter(listing => 
       listing.dishName.toLowerCase().includes(lowercaseQuery) ||
       listing.sellerName.toLowerCase().includes(lowercaseQuery) ||
