@@ -57,6 +57,7 @@ export default function HomeScreen() {
   
   const loadTopSellingItems = async () => {
     try {
+      // Use the getTopSellingItems from the store
       const items = await getTopSellingItems(5);
       setTopSellingItems(items);
     } catch (error) {

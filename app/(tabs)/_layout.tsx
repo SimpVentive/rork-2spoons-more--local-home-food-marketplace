@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Tabs } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { Home, Search, ShoppingBag, Users, Wallet, Bell, User } from 'lucide-react-native';
@@ -7,16 +7,15 @@ import colors from '@/constants/colors';
 import { Platform } from 'react-native';
 
 export default function TabLayout() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const router = useRouter();
 
-  useEffect(() => {
-    // Check if the user is authenticated
+  // Check authentication in useEffect to avoid navigation during render
+  React.useEffect(() => {
     if (!isAuthenticated) {
-      // Redirect to the auth flow
       router.replace('/(auth)');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
   return (
     <Tabs

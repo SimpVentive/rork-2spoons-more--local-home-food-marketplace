@@ -1,27 +1,24 @@
-import { Stack } from "expo-router";
-import { useEffect } from "react";
-import { useRouter, useSegments } from "expo-router";
-import { useAuthStore } from "@/store/auth-store";
+import React from 'react';
+import { Stack, useRouter } from 'expo-router';
+import { useAuthStore } from '@/store/auth-store';
 
 export default function AuthLayout() {
-  const { isAuthenticated, isAdmin } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const router = useRouter();
-  const segments = useSegments();
 
-  useEffect(() => {
-    // Check if the user is authenticated
+  // Check authentication in useEffect to avoid navigation during render
+  React.useEffect(() => {
     if (isAuthenticated) {
-      // Redirect to the appropriate section based on user type
-      if (isAdmin()) {
-        router.replace("/admin");
-      } else {
-        router.replace("/(tabs)");
-      }
+      router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isAdmin]);
+  }, [isAuthenticated]);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
       <Stack.Screen name="index" />
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />

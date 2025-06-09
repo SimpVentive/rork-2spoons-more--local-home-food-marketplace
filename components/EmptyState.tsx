@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { Image } from 'expo-image';
 import Button from './Button';
 import colors from '@/constants/colors';
 
@@ -25,6 +26,13 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <View style={[styles.container, style]}>
       {icon && <View style={styles.iconContainer}>{icon}</View>}
+      {image && (
+        <Image
+          source={{ uri: image }}
+          style={styles.image}
+          contentFit="cover"
+        />
+      )}
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.message}>{message}</Text>
       {buttonTitle && onButtonPress && (
@@ -47,6 +55,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   iconContainer: {
+    marginBottom: 16,
+  },
+  image: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     marginBottom: 16,
   },
   title: {

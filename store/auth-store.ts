@@ -8,12 +8,12 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   token: string | null;
+  isAdmin: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   adminLogin: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   register: (userData: Partial<User>) => Promise<boolean>;
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
-  isAdmin: boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -44,7 +44,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             user,
             isAuthenticated: true,
-            isAdmin: !!user.isAdmin,
+            isAdmin: user.isAdmin === true,
             token: 'demo-token-' + Math.random().toString(36).substring(2, 15),
           });
           
@@ -62,7 +62,7 @@ export const useAuthStore = create<AuthState>()(
           
           // Find admin user with matching email
           const adminUser = mockUsers.find(u => 
-            u.email.toLowerCase() === email.toLowerCase() && u.isAdmin
+            u.email.toLowerCase() === email.toLowerCase() && u.isAdmin === true
           );
           
           if (!adminUser) {
@@ -168,7 +168,7 @@ export const useAuthStore = create<AuthState>()(
           
           set({ 
             user: updatedUser,
-            isAdmin: !!updatedUser.isAdmin
+            isAdmin: updatedUser.isAdmin === true
           });
           
           return true;

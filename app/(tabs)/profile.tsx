@@ -35,7 +35,7 @@ import colors from '@/constants/colors';
 import { FoodListing } from '@/types';
 
 export default function ProfileScreen() {
-  const { user, logout, isAdmin } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { getSellerListings, fetchListings } = useListingsStore();
   const { reviews, fetchSellerReviews } = useReviewsStore();
   const { getBuyerOrders, getSellerOrders } = useOrdersStore();

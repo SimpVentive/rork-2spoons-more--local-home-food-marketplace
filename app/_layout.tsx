@@ -55,7 +55,7 @@ export default function RootLayout() {
 function RootLayoutNav() {
   return (
     <View style={styles.container}>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(admin)" options={{ headerShown: false }} />

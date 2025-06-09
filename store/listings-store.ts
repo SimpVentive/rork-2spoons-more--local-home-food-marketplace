@@ -44,14 +44,16 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
   },
 
   getSellerListings: (sellerId: string) => {
-    return get().listings.filter(listing => listing.sellerId === sellerId);
+    const { listings } = get();
+    return listings.filter(listing => listing.sellerId === sellerId);
   },
 
   getTopSellingItems: async (limit = 5) => {
     try {
+      const { listings } = get();
       // In a real app, we would fetch from an API with sorting by orderCount
       // For now, we'll sort the mock data
-      const sortedListings = [...get().listings]
+      const sortedListings = [...listings]
         .sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0))
         .slice(0, limit);
       
