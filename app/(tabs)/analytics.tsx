@@ -5,7 +5,6 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity,
-  Dimensions,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -21,7 +20,6 @@ import { useAuthStore } from '@/store/auth-store';
 import { useListingsStore } from '@/store/listings-store';
 import { useOrdersStore } from '@/store/orders-store';
 import { useFollowsStore } from '@/store/follows-store';
-import Button from '@/components/Button';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
 
@@ -282,7 +280,7 @@ const styles = StyleSheet.create({
   },
   activeTimeRange: {
     backgroundColor: colors.white,
-    shadowColor: colors.shadow, // Now using the shadow color from constants
+    shadowColor: colors.black, // Using black instead of shadow
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
