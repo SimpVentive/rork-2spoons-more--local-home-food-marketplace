@@ -42,6 +42,7 @@ export default function ProfileScreen() {
   
   const [refreshing, setRefreshing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
+  const [userListings, setUserListings] = useState([]);
   
   const router = useRouter();
   
@@ -50,8 +51,16 @@ export default function ProfileScreen() {
     if (user) {
       fetchSellerReviews(user.id);
       setFollowerCount(getFollowerCount(user.id));
+      loadUserListings();
     }
   }, [user]);
+  
+  const loadUserListings = () => {
+    if (user && getSellerListings) {
+      const listings = getSellerListings(user.id);
+      setUserListings(listings);
+    }
+  };
   
   const onRefresh = async () => {
     setRefreshing(true);
@@ -59,6 +68,7 @@ export default function ProfileScreen() {
     if (user) {
       await fetchSellerReviews(user.id);
       setFollowerCount(getFollowerCount(user.id));
+      loadUserListings();
     }
     setRefreshing(false);
   };
@@ -84,7 +94,6 @@ export default function ProfileScreen() {
     router.push('/(admin)');
   };
   
-  const userListings = user ? getSellerListings(user.id) : [];
   const userReviews = user ? reviews.filter(review => review.sellerId === user.id) : [];
   const buyerOrders = user ? getBuyerOrders(user.id) : [];
   const sellerOrders = user ? getSellerOrders(user.id) : [];

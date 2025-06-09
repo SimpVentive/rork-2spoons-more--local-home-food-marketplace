@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { Home, Search, ShoppingBag, Users, Wallet, Bell, User } from 'lucide-react-native';
@@ -10,16 +10,13 @@ export default function TabLayout() {
   const { isAuthenticated, isAdmin } = useAuthStore();
   const router = useRouter();
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Check if the user is authenticated
     if (!isAuthenticated) {
       // Redirect to the auth flow
       router.replace('/(auth)');
-    } else if (isAdmin()) {
-      // Redirect admin users to admin dashboard
-      router.replace('/(admin)');
     }
-  }, [isAuthenticated, isAdmin]);
+  }, [isAuthenticated]);
 
   return (
     <Tabs

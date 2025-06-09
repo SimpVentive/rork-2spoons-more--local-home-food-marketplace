@@ -4,10 +4,13 @@ import { mockListings } from '@/mocks/data';
 
 interface ListingsState {
   listings: FoodListing[];
+  filteredListings: FoodListing[];
   isLoading: boolean;
   error: string | null;
   fetchListings: () => Promise<void>;
   getSellerListings: (sellerId: string) => FoodListing[];
+  getTopSellingItems: (limit?: number) => Promise<FoodListing[]>;
+  searchListings: (query: string) => void;
   addListing: (listing: Omit<FoodListing, 'id' | 'createdAt'>) => Promise<FoodListing>;
   updateListing: (id: string, updates: Partial<FoodListing>) => Promise<FoodListing>;
   deleteListing: (id: string) => Promise<void>;
@@ -21,6 +24,7 @@ interface ListingsState {
 
 export const useListingsStore = create<ListingsState>((set, get) => ({
   listings: [],
+  filteredListings: [],
   isLoading: false,
   error: null,
 
@@ -29,7 +33,11 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
-      set({ listings: mockListings, isLoading: false });
+      set({ 
+        listings: mockListings, 
+        filteredListings: mockListings,
+        isLoading: false 
+      });
     } catch (error) {
       set({ error: 'Failed to fetch listings', isLoading: false });
     }
@@ -37,6 +45,39 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
 
   getSellerListings: (sellerId: string) => {
     return get().listings.filter(listing => listing.sellerId === sellerId);
+  },
+
+  getTopSellingItems: async (limit = 5) => {
+    try {
+      // In a real app, we would fetch from an API with sorting by orderCount
+      // For now, we'll sort the mock data
+      const sortedListings = [...get().listings]
+        .sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0))
+        .slice(0, limit);
+      
+      return sortedListings;
+    } catch (error) {
+      console.error('Error getting top selling items:', error);
+      return [];
+    }
+  },
+
+  searchListings: (query: string) => {
+    const { listings } = get();
+    if (!query.trim()) {
+      set({ filteredListings: listings });
+      return;
+    }
+    
+    const lowercaseQuery = query.toLowerCase();
+    const filtered = listings.filter(listing => 
+      listing.dishName.toLowerCase().includes(lowercaseQuery) ||
+      listing.sellerName.toLowerCase().includes(lowercaseQuery) ||
+      (listing.cuisineType && listing.cuisineType.toLowerCase().includes(lowercaseQuery)) ||
+      (listing.description && listing.description.toLowerCase().includes(lowercaseQuery))
+    );
+    
+    set({ filteredListings: filtered });
   },
 
   addListing: async (listing) => {
@@ -53,10 +94,14 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
         isActive: true,
       };
       
-      set(state => ({
-        listings: [...state.listings, newListing],
-        isLoading: false,
-      }));
+      set(state => {
+        const updatedListings = [...state.listings, newListing];
+        return {
+          listings: updatedListings,
+          filteredListings: updatedListings,
+          isLoading: false,
+        };
+      });
       
       return newListing;
     } catch (error) {
@@ -82,7 +127,11 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
           return listing;
         });
         
-        return { listings: updatedListings, isLoading: false };
+        return { 
+          listings: updatedListings, 
+          filteredListings: updatedListings,
+          isLoading: false 
+        };
       });
       
       if (!updatedListing) {
@@ -102,10 +151,14 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      set(state => ({
-        listings: state.listings.filter(listing => listing.id !== id),
-        isLoading: false,
-      }));
+      set(state => {
+        const updatedListings = state.listings.filter(listing => listing.id !== id);
+        return {
+          listings: updatedListings,
+          filteredListings: updatedListings,
+          isLoading: false,
+        };
+      });
     } catch (error) {
       set({ error: 'Failed to delete listing', isLoading: false });
       throw error;
@@ -156,7 +209,11 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
           return listing;
         });
         
-        return { listings: updatedListings, isLoading: false };
+        return { 
+          listings: updatedListings, 
+          filteredListings: updatedListings,
+          isLoading: false 
+        };
       });
     } catch (error) {
       set({ error: 'Failed to update listings', isLoading: false });
@@ -170,10 +227,14 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      set(state => ({
-        listings: state.listings.filter(listing => !ids.includes(listing.id)),
-        isLoading: false,
-      }));
+      set(state => {
+        const updatedListings = state.listings.filter(listing => !ids.includes(listing.id));
+        return {
+          listings: updatedListings,
+          filteredListings: updatedListings,
+          isLoading: false,
+        };
+      });
     } catch (error) {
       set({ error: 'Failed to delete listings', isLoading: false });
       throw error;

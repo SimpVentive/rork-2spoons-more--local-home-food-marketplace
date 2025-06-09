@@ -56,8 +56,14 @@ export default function HomeScreen() {
   }, []);
   
   const loadTopSellingItems = async () => {
-    const items = await getTopSellingItems(5);
-    setTopSellingItems(items);
+    try {
+      const items = await getTopSellingItems(5);
+      setTopSellingItems(items);
+    } catch (error) {
+      console.error("Error loading top selling items:", error);
+      // Fallback to first 5 listings if there's an error
+      setTopSellingItems(listings.slice(0, 5));
+    }
   };
   
   const loadTopChefs = () => {
