@@ -76,7 +76,7 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
     }
     
     // Handle string-based query
-    if (!query || (typeof query === 'string' && !query.trim())) {
+    if (query === undefined || query === null || (typeof query === 'string' && !query.trim())) {
       set({ filteredListings: listings });
       return;
     }
