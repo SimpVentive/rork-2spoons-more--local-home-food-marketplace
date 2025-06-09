@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { Home, Search, ShoppingBag, Users, Wallet, Bell, User } from 'lucide-react-native';
@@ -11,11 +11,11 @@ export default function TabLayout() {
   const router = useRouter();
 
   // Check authentication in useEffect to avoid navigation during render
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isAuthenticated) {
       router.replace('/(auth)');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated]);
 
   return (
     <Tabs

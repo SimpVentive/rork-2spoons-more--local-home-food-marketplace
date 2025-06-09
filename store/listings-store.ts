@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FoodListing } from '@/types';
+import { FoodListing, FilterOptions } from '@/types';
 import { mockListings } from '@/mocks/data';
 
 interface ListingsState {

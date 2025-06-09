@@ -1,6 +1,6 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Slot, Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { Platform, View, StyleSheet } from "react-native";
@@ -55,37 +55,7 @@ export default function RootLayout() {
 function RootLayoutNav() {
   return (
     <View style={styles.container}>
-      <Stack>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(admin)" options={{ headerShown: false }} />
-        <Stack.Screen name="admin-login" options={{ headerShown: false }} />
-        <Stack.Screen 
-          name="listing/[id]" 
-          options={{ 
-            headerShown: true,
-            title: "Food Details",
-            headerBackTitle: "Back",
-          }} 
-        />
-        <Stack.Screen 
-          name="profile/[id]" 
-          options={{ 
-            headerShown: true,
-            title: "Seller Profile",
-            headerBackTitle: "Back",
-          }} 
-        />
-        <Stack.Screen 
-          name="create-listing" 
-          options={{ 
-            headerShown: true,
-            title: "Add New Listing",
-            headerBackTitle: "Back",
-            presentation: "modal",
-          }} 
-        />
-      </Stack>
+      <Slot />
     </View>
   );
 }

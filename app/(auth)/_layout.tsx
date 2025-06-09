@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -7,7 +7,7 @@ export default function AuthLayout() {
   const router = useRouter();
 
   // Check authentication in useEffect to avoid navigation during render
-  React.useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated) {
       router.replace('/(tabs)');
     }
