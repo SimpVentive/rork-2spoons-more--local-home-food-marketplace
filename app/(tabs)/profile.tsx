@@ -32,6 +32,7 @@ import { useFollowsStore } from '@/store/follows-store';
 import Button from '@/components/Button';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
+import { FoodListing } from '@/types';
 
 export default function ProfileScreen() {
   const { user, logout, isAdmin } = useAuthStore();
@@ -42,7 +43,7 @@ export default function ProfileScreen() {
   
   const [refreshing, setRefreshing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
-  const [userListings, setUserListings] = useState([]);
+  const [userListings, setUserListings] = useState<FoodListing[]>([]);
   
   const router = useRouter();
   
