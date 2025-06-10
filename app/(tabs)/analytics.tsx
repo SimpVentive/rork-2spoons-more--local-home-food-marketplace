@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   },
   activeTimeRange: {
     backgroundColor: colors.white,
-    shadowColor: colors.black, // Using black instead of shadow
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
