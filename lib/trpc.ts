@@ -1,4 +1,4 @@
-import { createTRPCReact } from "@trpc/react-query";
+/*import { createTRPCReact } from "@trpc/react-query";
 import { httpLink } from "@trpc/client";
 import type { AppRouter } from "@/backend/trpc/app-router";
 import superjson from "superjson";
@@ -22,4 +22,20 @@ export const trpcClient = trpc.createClient({
       transformer: superjson,
     }),
   ],
+});*/
+
+
+import axios from "axios";
+
+const baseURL = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
+
+if (!baseURL) {
+  throw new Error("No base url found, please set EXPO_PUBLIC_RORK_API_BASE_URL");
+}
+
+export const api = axios.create({
+  baseURL: baseURL, // Example: https://api.example.com
+  headers: {
+    "Content-Type": "application/json",
+  },
 });

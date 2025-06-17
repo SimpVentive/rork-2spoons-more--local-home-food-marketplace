@@ -19,6 +19,7 @@
     "@trpc/client": "^11.1.2",
     "@trpc/react-query": "^11.1.2",
     "@trpc/server": "^11.1.2",
+    "axios": "^1.10.0",
     "expo": "^53.0.4",
     "expo-blur": "~14.1.4",
     "expo-camera": "~16.1.7",
