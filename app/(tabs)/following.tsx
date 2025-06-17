@@ -11,62 +11,59 @@ import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Star, MapPin } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
-import { useFollowsStore } from '@/store/follows-store';
 import { useListingsStore } from '@/store/listings-store';
-import { mockUsers } from '@/mocks/data';
 import FoodCard from '@/components/FoodCard';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
 import { User, FoodListing } from '@/types';
+import { api } from '@/lib/api';
 
 export default function FollowingScreen() {
   const { user } = useAuthStore();
-  const { getFollowedSellers } = useFollowsStore();
-  const { listings } = useListingsStore();
-  
+  const { listings, fetchListings } = useListingsStore();
+
   const [followedSellers, setFollowedSellers] = useState<User[]>([]);
   const [followedListings, setFollowedListings] = useState<FoodListing[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   const router = useRouter();
-  
+
   useEffect(() => {
     if (user) {
       loadFollowedContent();
     }
   }, [user]);
-  
-  const loadFollowedContent = () => {
+
+  const loadFollowedContent = async () => {
     if (!user) return;
-    
-    // Get IDs of followed sellers
-    const followedIds = getFollowedSellers(user.id);
-    
-    // Get seller profiles
-    const sellers = mockUsers.filter(u => followedIds.includes(u.id));
-    setFollowedSellers(sellers);
-    
-    // Get listings from followed sellers
-    const sellerListings = listings.filter(listing => 
-      followedIds.includes(listing.sellerId)
-    );
-    setFollowedListings(sellerListings);
+
+    try {
+      const { data: sellers } = await api.get(`/users/${user.id}/followed/`);
+      setFollowedSellers(sellers);
+
+      await fetchListings();
+      const sellerIds = sellers.map((s: User) => s.id);
+      const sellerListings = listings.filter(listing => sellerIds.includes(listing.sellerId));
+      setFollowedListings(sellerListings);
+    } catch (error) {
+      console.error('Failed to load followed content:', error);
+    }
   };
-  
+
   const onRefresh = async () => {
     setRefreshing(true);
-    loadFollowedContent();
+    await loadFollowedContent();
     setRefreshing(false);
   };
-  
+
   const handleSellerPress = (sellerId: string) => {
     router.push(`/profile/${sellerId}`);
   };
-  
+
   const handleListingPress = (listing: FoodListing) => {
     router.push(`/listing/${listing.id}`);
   };
-  
+
   if (!user) {
     return (
       <EmptyState
@@ -77,7 +74,7 @@ export default function FollowingScreen() {
       />
     );
   }
-  
+
   if (followedSellers.length === 0) {
     return (
       <EmptyState
@@ -89,7 +86,7 @@ export default function FollowingScreen() {
       />
     );
   }
-  
+
   return (
     <FlatList
       style={styles.container}
@@ -137,7 +134,6 @@ export default function FollowingScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.sellersListContent}
           />
-          
           <Text style={styles.sectionTitle}>Recent Listings</Text>
           {followedListings.length === 0 && (
             <Text style={styles.emptyText}>

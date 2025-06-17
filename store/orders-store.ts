@@ -1,8 +1,23 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { mockOrders } from '@/mocks/data';
 import { Order, OrderStatus, DeliveryMethod, PaymentMethod } from '@/types';
+import { api } from '@/lib/api';
+
+const applyStatusTimestamps = (order: Order, status: OrderStatus): Partial<Order> => {
+  const now = new Date().toISOString();
+  const update: Partial<Order> = { status, updatedAt: now };
+
+  switch (status) {
+    case 'accepted': update.acceptedAt = now; break;
+    case 'ready': update.readyAt = now; break;
+    case 'delivered': update.deliveredAt = now; break;
+    case 'completed': update.completedAt = now; break;
+    case 'canceled': update.canceledAt = now; break;
+  }
+
+  return update;
+};
 
 interface OrdersState {
   orders: Order[];
@@ -12,305 +27,104 @@ interface OrdersState {
   getOrderById: (id: string) => Order | undefined;
   getBuyerOrders: (buyerId: string) => Order[];
   getSellerOrders: (sellerId: string) => Order[];
-  createOrder: (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => Promise<Order>;
+  placeOrder: (orderData: any) => Promise<Order>;
   updateOrderStatus: (id: string, status: OrderStatus) => Promise<Order>;
   cancelOrder: (id: string, reason: string) => Promise<Order>;
   requestRefund: (id: string, reason: string) => Promise<Order>;
   rateOrder: (id: string, rating: number, comment?: string) => Promise<Order>;
-  placeOrder: (orderData: {
-    buyerId: string;
-    sellerId: string;
-    listingId: string;
-    listingSnapshot: any;
-    quantity: number;
-    totalPrice: number;
-    deliveryAddress: string;
-    deliveryMethod: DeliveryMethod;
-    paymentMethod: PaymentMethod;
-    deliveryInstructions?: string;
-  }) => Promise<Order>;
 }
 
 export const useOrdersStore = create<OrdersState>()(
   persist(
     (set, get) => ({
-      orders: [...mockOrders],
+      orders: [],
       isLoading: false,
       error: null,
-      
+
       fetchOrders: async () => {
         set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // In a real app, we would fetch from an API
-          set({ 
-            orders: [...mockOrders], 
-            isLoading: false 
-          });
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          const { data } = await api.get('/orders/');
+          set({ orders: data, isLoading: false });
+        } catch (error: any) {
+          set({ error: error.message || 'Error fetching orders', isLoading: false });
         }
       },
-      
-      getOrderById: (id: string) => {
-        const { orders } = get();
-        return orders.find(order => order.id === id);
-      },
-      
-      getBuyerOrders: (buyerId: string) => {
-        const { orders } = get();
-        return orders.filter(order => order.buyerId === buyerId);
-      },
-      
-      getSellerOrders: (sellerId: string) => {
-        const { orders } = get();
-        return orders.filter(order => order.sellerId === sellerId);
-      },
-      
-      createOrder: async (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => {
-        set({ isLoading: true, error: null });
-        
-        try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const now = new Date().toISOString();
-          
-          const newOrder: Order = {
-            id: `order-${Date.now()}`,
-            ...orderData,
-            status: 'pending',
-            createdAt: now,
-            updatedAt: now,
-          };
-          
-          set(state => ({
-            orders: [...state.orders, newOrder],
-            isLoading: false,
-            error: null
-          }));
-          
-          return newOrder;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
-          throw error;
-        }
-      },
-      
+
+      getOrderById: (id: string) => get().orders.find(order => order.id === id),
+
+      getBuyerOrders: (buyerId: string) => get().orders.filter(order => order.buyerId === buyerId),
+
+      getSellerOrders: (sellerId: string) => get().orders.filter(order => order.sellerId === sellerId),
+
       placeOrder: async (orderData) => {
         set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const now = new Date().toISOString();
-          
-          const newOrder: Order = {
-            id: `order-${Date.now()}`,
-            ...orderData,
-            status: 'pending',
-            paymentStatus: 'pending',
-            createdAt: now,
-            updatedAt: now,
-          };
-          
+          const { data } = await api.post('/orders/', orderData);
+          set(state => ({ orders: [...state.orders, data], isLoading: false }));
+          return data;
+        } catch (error: any) {
+          set({ error: error.message || 'Error placing order', isLoading: false });
+          throw error;
+        }
+      },
+
+      updateOrderStatus: async (id, status) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data } = await api.patch(`/orders/${id}/`, applyStatusTimestamps({} as Order, status));
           set(state => ({
-            orders: [...state.orders, newOrder],
+            orders: state.orders.map(order => (order.id === id ? data : order)),
             isLoading: false,
-            error: null
           }));
-          
-          return newOrder;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          return data;
+        } catch (error: any) {
+          set({ error: error.message || 'Error updating order status', isLoading: false });
           throw error;
         }
       },
-      
-      updateOrderStatus: async (id: string, status: OrderStatus) => {
+
+      cancelOrder: async (id, reason) => {
         set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const { orders } = get();
-          const orderIndex = orders.findIndex(order => order.id === id);
-          
-          if (orderIndex === -1) {
-            throw new Error('Order not found');
-          }
-          
-          const now = new Date().toISOString();
-          
-          // Create a status timestamp field based on the new status
-          let statusUpdate: Partial<Order> = { status, updatedAt: now };
-          
-          if (status === 'accepted') {
-            statusUpdate.acceptedAt = now;
-          } else if (status === 'ready') {
-            statusUpdate.readyAt = now;
-          } else if (status === 'delivered') {
-            statusUpdate.deliveredAt = now;
-          } else if (status === 'completed') {
-            statusUpdate.completedAt = now;
-          }
-          
-          const updatedOrder = { 
-            ...orders[orderIndex], 
-            ...statusUpdate
-          };
-          
-          const updatedOrders = [...orders];
-          updatedOrders[orderIndex] = updatedOrder;
-          
-          set({
-            orders: updatedOrders,
+          const { data } = await api.post(`/orders/${id}/cancel/`, { reason });
+          set(state => ({
+            orders: state.orders.map(order => (order.id === id ? data : order)),
             isLoading: false,
-            error: null,
-          });
-          
-          return updatedOrder;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          }));
+          return data;
+        } catch (error: any) {
+          set({ error: error.message || 'Error canceling order', isLoading: false });
           throw error;
         }
       },
-      
-      cancelOrder: async (id: string, reason: string) => {
+
+      requestRefund: async (id, reason) => {
         set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const { orders } = get();
-          const orderIndex = orders.findIndex(order => order.id === id);
-          
-          if (orderIndex === -1) {
-            throw new Error('Order not found');
-          }
-          
-          const updatedOrder = { 
-            ...orders[orderIndex], 
-            status: 'canceled' as OrderStatus, 
-            cancellationReason: reason,
-            updatedAt: new Date().toISOString(),
-            canceledAt: new Date().toISOString()
-          };
-          
-          const updatedOrders = [...orders];
-          updatedOrders[orderIndex] = updatedOrder;
-          
-          set({
-            orders: updatedOrders,
+          const { data } = await api.post(`/orders/${id}/refund/`, { reason });
+          set(state => ({
+            orders: state.orders.map(order => (order.id === id ? data : order)),
             isLoading: false,
-            error: null,
-          });
-          
-          return updatedOrder;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          }));
+          return data;
+        } catch (error: any) {
+          set({ error: error.message || 'Error requesting refund', isLoading: false });
           throw error;
         }
       },
-      
-      requestRefund: async (id: string, reason: string) => {
+
+      rateOrder: async (id, rating, comment = '') => {
         set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const { orders } = get();
-          const orderIndex = orders.findIndex(order => order.id === id);
-          
-          if (orderIndex === -1) {
-            throw new Error('Order not found');
-          }
-          
-          const updatedOrder = { 
-            ...orders[orderIndex], 
-            status: 'refund_requested' as OrderStatus, 
-            refundReason: reason,
-            updatedAt: new Date().toISOString() 
-          };
-          
-          const updatedOrders = [...orders];
-          updatedOrders[orderIndex] = updatedOrder;
-          
-          set({
-            orders: updatedOrders,
+          const { data } = await api.post(`/orders/${id}/rate/`, { rating, comment });
+          set(state => ({
+            orders: state.orders.map(order => (order.id === id ? data : order)),
             isLoading: false,
-            error: null,
-          });
-          
-          return updatedOrder;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
-          throw error;
-        }
-      },
-      
-      rateOrder: async (id: string, rating: number, comment?: string) => {
-        set({ isLoading: true, error: null });
-        
-        try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const { orders } = get();
-          const orderIndex = orders.findIndex(order => order.id === id);
-          
-          if (orderIndex === -1) {
-            throw new Error('Order not found');
-          }
-          
-          const updatedOrder = { 
-            ...orders[orderIndex], 
-            rating,
-            reviewComment: comment || '',
-            isRated: true,
-            updatedAt: new Date().toISOString() 
-          };
-          
-          const updatedOrders = [...orders];
-          updatedOrders[orderIndex] = updatedOrder;
-          
-          set({
-            orders: updatedOrders,
-            isLoading: false,
-            error: null,
-          });
-          
-          return updatedOrder;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          }));
+          return data;
+        } catch (error: any) {
+          set({ error: error.message || 'Error rating order', isLoading: false });
           throw error;
         }
       },

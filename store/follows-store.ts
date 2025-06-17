@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { api } from '@/lib/api'; // Your configured Axios instance
+import { useAuthStore } from './auth-store';
 
 interface Follow {
   id: string;
@@ -15,66 +17,39 @@ interface FollowsState {
   followSeller: (followerId: string, followedId: string) => Promise<boolean>;
   unfollowSeller: (followerId: string, followedId: string) => Promise<boolean>;
   isFollowing: (followerId: string, followedId: string) => boolean;
-  getFollowedSellers: (followerId: string) => string[];
-  getFollowerCount: (followedId: string) => number;
+  getFollowedSellers: (followerId: string) => Promise<string[]>;
+  getFollowerCount: (followedId: string) => Promise<number>;
 }
-
-// Mock follows for demonstration
-const mockFollows: Follow[] = [
-  {
-    id: '1',
-    followerId: '1',
-    followedId: '2',
-    createdAt: '2023-06-10T14:30:00Z',
-  },
-  {
-    id: '2',
-    followerId: '1',
-    followedId: '3',
-    createdAt: '2023-06-12T09:15:00Z',
-  },
-  {
-    id: '3',
-    followerId: '2',
-    followedId: '1',
-    createdAt: '2023-06-14T16:45:00Z',
-  },
-];
 
 export const useFollowsStore = create<FollowsState>()(
   persist(
     (set, get) => ({
-      follows: mockFollows,
+      follows: [],
       isLoading: false,
 
       followSeller: async (followerId, followedId) => {
-        // Don't allow following yourself
-        if (followerId === followedId) return false;
-        
-        // Check if already following
-        if (get().isFollowing(followerId, followedId)) return true;
-        
+        if (followerId === followedId || get().isFollowing(followerId, followedId)) return false;
+
         set({ isLoading: true });
-        
+        const token = useAuthStore.getState().token;
+
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const newFollow: Follow = {
-            id: `follow_${Date.now()}`,
-            followerId,
-            followedId,
-            createdAt: new Date().toISOString(),
-          };
-          
+          const response = await api.post(
+            `/api/follows/`,
+            { follower: followerId, followed: followedId },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
           set(state => ({
-            follows: [...state.follows, newFollow],
+            follows: [...state.follows, response.data],
             isLoading: false,
           }));
-          
+
           return true;
         } catch (error) {
-          console.error('Follow seller error:', error);
+          console.error('Follow error:', error);
           set({ isLoading: false });
           return false;
         }
@@ -82,21 +57,23 @@ export const useFollowsStore = create<FollowsState>()(
 
       unfollowSeller: async (followerId, followedId) => {
         set({ isLoading: true });
-        
+        const token = useAuthStore.getState().token;
+
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
+          await api.delete(`/api/follows/${followerId}/${followedId}/`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
           set(state => ({
             follows: state.follows.filter(
               follow => !(follow.followerId === followerId && follow.followedId === followedId)
             ),
             isLoading: false,
           }));
-          
+
           return true;
         } catch (error) {
-          console.error('Unfollow seller error:', error);
+          console.error('Unfollow error:', error);
           set({ isLoading: false });
           return false;
         }
@@ -108,18 +85,45 @@ export const useFollowsStore = create<FollowsState>()(
         );
       },
 
-      getFollowedSellers: (followerId) => {
-        return get().follows
-          .filter(follow => follow.followerId === followerId)
-          .map(follow => follow.followedId);
+      getFollowedSellers: async (followerId) => {
+        set({ isLoading: true });
+        const token = useAuthStore.getState().token;
+
+        try {
+          const response = await api.get(`/api/follows/?follower=${followerId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          set({ follows: response.data, isLoading: false });
+
+          return response.data.map((follow: Follow) => follow.followedId);
+        } catch (error) {
+          console.error('Get followed sellers error:', error);
+          set({ isLoading: false });
+          return [];
+        }
       },
 
-      getFollowerCount: (followedId) => {
-        return get().follows.filter(follow => follow.followedId === followedId).length;
+      getFollowerCount: async (followedId) => {
+        set({ isLoading: true });
+        const token = useAuthStore.getState().token;
+
+        try {
+          const response = await api.get(`/api/follows/?followed=${followedId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          set({ isLoading: false });
+          return response.data.length;
+        } catch (error) {
+          console.error('Get follower count error:', error);
+          set({ isLoading: false });
+          return 0;
+        }
       },
     }),
     {
-      name: '2spoons-follows-storage',
+      name: 'follows-storage',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

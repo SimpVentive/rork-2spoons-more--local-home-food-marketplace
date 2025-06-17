@@ -1,18 +1,20 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { mockReviews } from '@/mocks/data';
 import { Review } from '@/types';
+import { api } from '@/lib/api';
 
 interface ReviewsState {
   reviews: Review[];
   isLoading: boolean;
   error: string | null;
+
   fetchReviews: () => Promise<void>;
   fetchSellerReviews: (sellerId: string) => Promise<Review[]>;
   fetchListingReviews: (listingId: string) => Promise<Review[]>;
   fetchBuyerReviews: (buyerId: string) => Promise<Review[]>;
   fetchRecentReviews: (limit?: number) => Promise<Review[]>;
+
   addReview: (review: Omit<Review, 'id' | 'createdAt'>) => Promise<Review>;
   updateReview: (id: string, data: Partial<Review>) => Promise<Review>;
   deleteReview: (id: string) => Promise<void>;
@@ -21,205 +23,105 @@ interface ReviewsState {
 export const useReviewsStore = create<ReviewsState>()(
   persist(
     (set, get) => ({
-      reviews: [...mockReviews],
+      reviews: [],
       isLoading: false,
       error: null,
-      
+
       fetchReviews: async () => {
         set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // In a real app, we would fetch from an API
-          set({ 
-            reviews: [...mockReviews], 
-            isLoading: false 
-          });
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          const { data } = await api.get<Review[]>('/reviews/');
+          set({ reviews: data, isLoading: false });
+        } catch (error: any) {
+          set({ error: error?.message || 'Error fetching reviews', isLoading: false });
         }
       },
-      
+
       fetchSellerReviews: async (sellerId: string) => {
-        set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const { reviews } = get();
-          const sellerReviews = reviews.filter(review => review.sellerId === sellerId);
-          
-          set({ isLoading: false });
-          
-          return sellerReviews;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
+          const { data } = await api.get<Review[]>('/reviews/', {
+            params: { seller_id: sellerId },
           });
+          return data;
+        } catch (error: any) {
+          set({ error: error?.message || 'Error fetching seller reviews' });
           return [];
         }
       },
-      
+
       fetchListingReviews: async (listingId: string) => {
-        set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const { reviews } = get();
-          const listingReviews = reviews.filter(review => review.listingId === listingId);
-          
-          set({ isLoading: false });
-          
-          return listingReviews;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
+          const { data } = await api.get<Review[]>('/reviews/', {
+            params: { listing_id: listingId },
           });
+          return data;
+        } catch (error: any) {
+          set({ error: error?.message || 'Error fetching listing reviews' });
           return [];
         }
       },
-      
+
       fetchBuyerReviews: async (buyerId: string) => {
-        set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const { reviews } = get();
-          const buyerReviews = reviews.filter(review => review.buyerId === buyerId);
-          
-          set({ isLoading: false });
-          
-          return buyerReviews;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
+          const { data } = await api.get<Review[]>('/reviews/', {
+            params: { buyer_id: buyerId },
           });
+          return data;
+        } catch (error: any) {
+          set({ error: error?.message || 'Error fetching buyer reviews' });
           return [];
         }
       },
-      
+
       fetchRecentReviews: async (limit = 5) => {
-        set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const { reviews } = get();
-          // Sort by date (newest first) and take the specified limit
-          const recentReviews = [...reviews]
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, limit);
-          
-          set({ isLoading: false });
-          
-          return recentReviews;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
+          const { data } = await api.get<Review[]>('/reviews/', {
+            params: { ordering: '-created_at', limit },
           });
+          return data;
+        } catch (error: any) {
+          set({ error: error?.message || 'Error fetching recent reviews' });
           return [];
         }
       },
-      
-      addReview: async (reviewData: Omit<Review, 'id' | 'createdAt'>) => {
+
+      addReview: async (reviewData) => {
         set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const newReview: Review = {
-            id: `review-${Date.now()}`,
-            ...reviewData,
-            createdAt: new Date().toISOString(),
-          };
-          
+          const { data } = await api.post<Review>('/reviews/', reviewData);
+          set(state => ({ reviews: [...state.reviews, data], isLoading: false }));
+          return data;
+        } catch (error: any) {
+          set({ error: error?.message || 'Error adding review', isLoading: false });
+          throw error;
+        }
+      },
+
+      updateReview: async (id, data) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data: updated } = await api.patch<Review>(`/reviews/${id}/`, data);
           set(state => ({
-            reviews: [...state.reviews, newReview],
+            reviews: state.reviews.map(r => (r.id === id ? updated : r)),
             isLoading: false,
           }));
-          
-          return newReview;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          return updated;
+        } catch (error: any) {
+          set({ error: error?.message || 'Error updating review', isLoading: false });
           throw error;
         }
       },
-      
-      updateReview: async (id: string, data: Partial<Review>) => {
+
+      deleteReview: async (id) => {
         set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const { reviews } = get();
-          const reviewIndex = reviews.findIndex(review => review.id === id);
-          
-          if (reviewIndex === -1) {
-            throw new Error('Review not found');
-          }
-          
-          const updatedReview = { 
-            ...reviews[reviewIndex], 
-            ...data 
-          };
-          
-          const updatedReviews = [...reviews];
-          updatedReviews[reviewIndex] = updatedReview;
-          
-          set({
-            reviews: updatedReviews,
+          await api.delete(`/reviews/${id}/`);
+          set(state => ({
+            reviews: state.reviews.filter(r => r.id !== id),
             isLoading: false,
-          });
-          
-          return updatedReview;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
-          throw error;
-        }
-      },
-      
-      deleteReview: async (id: string) => {
-        set({ isLoading: true, error: null });
-        
-        try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const { reviews } = get();
-          const updatedReviews = reviews.filter(review => review.id !== id);
-          
-          set({
-            reviews: updatedReviews,
-            isLoading: false,
-          });
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          }));
+        } catch (error: any) {
+          set({ error: error?.message || 'Error deleting review', isLoading: false });
           throw error;
         }
       },

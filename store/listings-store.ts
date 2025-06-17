@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { FoodListing, FilterOptions } from '@/types';
-import { mockListings } from '@/mocks/data';
+import { api } from '@/lib/api';
+import { FoodListing } from '@/types';
+import { useAuthStore } from './auth-store';
 
 interface ListingsState {
   listings: FoodListing[];
@@ -11,7 +12,7 @@ interface ListingsState {
   getSellerListings: (sellerId: string) => FoodListing[];
   getTopSellingItems: (limit?: number) => Promise<FoodListing[]>;
   searchListings: (query: string | object) => void;
-  addListing: (listing: Omit<FoodListing, 'id' | 'createdAt'>) => Promise<FoodListing>;
+  addListing: (listing: Partial<FoodListing>) => Promise<FoodListing>;
   updateListing: (id: string, updates: Partial<FoodListing>) => Promise<FoodListing>;
   deleteListing: (id: string) => Promise<void>;
   toggleListingApproval: (id: string) => Promise<void>;
@@ -31,33 +32,22 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
   fetchListings: async () => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      set({ 
-        listings: mockListings, 
-        filteredListings: mockListings,
-        isLoading: false 
-      });
+      const response = await api.get('/api/food-listings/');
+      set({ listings: response.data, filteredListings: response.data, isLoading: false });
     } catch (error) {
       set({ error: 'Failed to fetch listings', isLoading: false });
     }
   },
 
-  getSellerListings: (sellerId: string) => {
+  getSellerListings: (sellerId) => {
     const { listings } = get();
     return listings.filter(listing => listing.sellerId === sellerId);
   },
 
   getTopSellingItems: async (limit = 5) => {
     try {
-      const { listings } = get();
-      // In a real app, we would fetch from an API with sorting by orderCount
-      // For now, we'll sort the mock data
-      const sortedListings = [...listings]
-        .sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0))
-        .slice(0, limit);
-      
-      return sortedListings;
+      const response = await api.get(`/api/food-listings/top-selling/?limit=${limit}`);
+      return response.data;
     } catch (error) {
       console.error('Error getting top selling items:', error);
       return [];
@@ -66,90 +56,76 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
 
   searchListings: (query) => {
     const { listings } = get();
-    
-    // Handle object-based query (for advanced filtering)
+
     if (typeof query === 'object') {
-      // For now, just return all listings if query is an object
-      // In a real app, you would implement filtering based on the query object
       set({ filteredListings: listings });
       return;
     }
-    
-    // Handle string-based query
-    if (query === undefined || query === null || (typeof query === 'string' && !query.trim())) {
+
+    if (!query || typeof query !== 'string') {
       set({ filteredListings: listings });
       return;
     }
-    
-    const lowercaseQuery = typeof query === 'string' ? query.toLowerCase() : '';
-    const filtered = listings.filter(listing => 
+
+    const lowercaseQuery = query.toLowerCase();
+    const filtered = listings.filter(listing =>
       listing.dishName.toLowerCase().includes(lowercaseQuery) ||
       listing.sellerName.toLowerCase().includes(lowercaseQuery) ||
-      (listing.cuisineType && listing.cuisineType.toLowerCase().includes(lowercaseQuery)) ||
-      (listing.description && listing.description.toLowerCase().includes(lowercaseQuery))
+      (listing.cuisineType?.toLowerCase().includes(lowercaseQuery)) ||
+      (listing.description?.toLowerCase().includes(lowercaseQuery))
     );
-    
+
     set({ filteredListings: filtered });
   },
 
   addListing: async (listing) => {
-    set({ isLoading: true, error: null });
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const newListing: FoodListing = {
-        ...listing,
-        id: `listing${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        isApproved: false,
-        isActive: true,
+  const token = useAuthStore.getState().token;
+  console.log('Update Token:', token);
+
+  set({ isLoading: true, error: null });
+
+  if (!token) {
+    set({ isLoading: false, error: 'User not authenticated' });
+    throw new Error('User not authenticated');
+  }
+
+  try {
+    const response = await api.post('/api/food-listing-create/', listing, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const newListing = response.data;
+
+    set(state => {
+      const updated = [...state.listings, newListing];
+      return {
+        listings: updated,
+        filteredListings: updated,
+        isLoading: false
       };
-      
-      set(state => {
-        const updatedListings = [...state.listings, newListing];
-        return {
-          listings: updatedListings,
-          filteredListings: updatedListings,
-          isLoading: false,
-        };
-      });
-      
-      return newListing;
-    } catch (error) {
-      set({ error: 'Failed to add listing', isLoading: false });
-      throw error;
-    }
-  },
+    });
+
+    return newListing;
+  } catch (error) {
+    console.error('Add listing error:', error);
+    set({ error: 'Failed to add listing', isLoading: false });
+    throw error;
+  }
+},
 
   updateListing: async (id, updates) => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      let updatedListing: FoodListing | undefined;
-      
+      const response = await api.put(`/api/food-listings/${id}/`, updates);
+      const updatedListing = response.data;
+
       set(state => {
-        const updatedListings = state.listings.map(listing => {
-          if (listing.id === id) {
-            updatedListing = { ...listing, ...updates };
-            return updatedListing;
-          }
-          return listing;
-        });
-        
-        return { 
-          listings: updatedListings, 
-          filteredListings: updatedListings,
-          isLoading: false 
-        };
+        const updated = state.listings.map(listing => listing.id === id ? updatedListing : listing);
+        return { listings: updated, filteredListings: updated, isLoading: false };
       });
-      
-      if (!updatedListing) {
-        throw new Error('Listing not found');
-      }
-      
+
       return updatedListing;
     } catch (error) {
       set({ error: 'Failed to update listing', isLoading: false });
@@ -160,16 +136,10 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
   deleteListing: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await api.delete(`/api/food-listings/${id}/`);
       set(state => {
-        const updatedListings = state.listings.filter(listing => listing.id !== id);
-        return {
-          listings: updatedListings,
-          filteredListings: updatedListings,
-          isLoading: false,
-        };
+        const updated = state.listings.filter(listing => listing.id !== id);
+        return { listings: updated, filteredListings: updated, isLoading: false };
       });
     } catch (error) {
       set({ error: 'Failed to delete listing', isLoading: false });
@@ -179,105 +149,48 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
 
   toggleListingApproval: async (id) => {
     const listing = get().listings.find(l => l.id === id);
-    if (!listing) {
-      set({ error: 'Listing not found' });
-      return;
-    }
-    
+    if (!listing) return set({ error: 'Listing not found' });
     await get().updateListing(id, { isApproved: !listing.isApproved });
   },
 
   toggleListingActive: async (id) => {
     const listing = get().listings.find(l => l.id === id);
-    if (!listing) {
-      set({ error: 'Listing not found' });
-      return;
-    }
-    
+    if (!listing) return set({ error: 'Listing not found' });
     await get().updateListing(id, { isActive: !listing.isActive });
   },
 
   toggleListingFeatured: async (id) => {
     const listing = get().listings.find(l => l.id === id);
-    if (!listing) {
-      set({ error: 'Listing not found' });
-      return;
-    }
-    
+    if (!listing) return set({ error: 'Listing not found' });
     await get().updateListing(id, { isFeatured: !listing.isFeatured });
   },
 
   bulkUpdateListings: async (ids, updates) => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      set(state => {
-        const updatedListings = state.listings.map(listing => {
-          if (ids.includes(listing.id)) {
-            return { ...listing, ...updates };
-          }
-          return listing;
-        });
-        
-        return { 
-          listings: updatedListings, 
-          filteredListings: updatedListings,
-          isLoading: false 
-        };
-      });
+      await api.put('/api/food-listings/bulk-update/', { ids, updates });
+      await get().fetchListings();
     } catch (error) {
-      set({ error: 'Failed to update listings', isLoading: false });
-      throw error;
+      set({ error: 'Failed to bulk update', isLoading: false });
     }
   },
 
   bulkDeleteListings: async (ids) => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      set(state => {
-        const updatedListings = state.listings.filter(listing => !ids.includes(listing.id));
-        return {
-          listings: updatedListings,
-          filteredListings: updatedListings,
-          isLoading: false,
-        };
-      });
+      await api.post('/api/food-listings/bulk-delete/', { ids });
+      await get().fetchListings();
     } catch (error) {
-      set({ error: 'Failed to delete listings', isLoading: false });
-      throw error;
+      set({ error: 'Failed to bulk delete', isLoading: false });
     }
   },
 
   exportListings: async (format) => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const listings = get().listings;
-      
-      if (format === 'json') {
-        const jsonData = JSON.stringify(listings, null, 2);
-        set({ isLoading: false });
-        return jsonData;
-      } else if (format === 'csv') {
-        // Simple CSV conversion
-        const headers = 'id,dishName,sellerName,price,isVegetarian,isApproved,isActive,isFeatured\n';
-        const rows = listings.map(listing => 
-          `${listing.id},${listing.dishName},${listing.sellerName},${listing.price},${listing.isVegetarian},${listing.isApproved},${listing.isActive},${listing.isFeatured || false}`
-        ).join('\n');
-        
-        const csvData = headers + rows;
-        set({ isLoading: false });
-        return csvData;
-      }
-      
-      throw new Error('Unsupported format');
+      const response = await api.get(`/api/food-listings/export/?format=${format}`);
+      set({ isLoading: false });
+      return response.data;
     } catch (error) {
       set({ error: 'Failed to export listings', isLoading: false });
       throw error;

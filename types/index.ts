@@ -313,3 +313,28 @@ export interface DetailedAddress {
     longitude: number;
   };
 }
+
+export type DishNotificationType =
+  | 'new_dish'
+  | 'dish_updated'
+  | 'dish_removed'
+  | 'price_drop'
+  | 'back_in_stock'
+  | 'limited_offer'
+  | 'trending'
+  | 'sold_out';
+
+export interface DishNotification {
+  id: string;
+  userId: string;
+  dishId: string;
+  title: string;
+  message: string;
+  type: DishNotificationType;
+  createdAt: string;
+  isRead: boolean;
+  isActive: boolean;
+  imageUrl?: string;
+  actionUrl?: string; // Optional link to dish detail or promotion
+}
+

@@ -93,7 +93,7 @@ export default function EditProfileScreen() {
       district,
       state,
       pinCode
-    ].filter(Boolean);
+    ];//a.filter(Boolean);
     
     return addressParts.join(', ');
   };

@@ -13,7 +13,7 @@ interface AuthState {
   adminLogin: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   register: (userData: Partial<User>) => Promise<boolean>;
-  updateProfile: (updates: Partial<User>) => Promise<boolean>;
+  updateUser: (updates: Partial<User>) => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -28,7 +28,6 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await api.post('/api/auth/login/', { email, password });
           const { user, token } = response.data;
-
           set({
             user,
             isAuthenticated: true,
@@ -46,6 +45,7 @@ export const useAuthStore = create<AuthState>()(
       adminLogin: async (email: string, password: string) => {
         try {
           const response = await api.post('/api/auth/admin-login/', { email, password });
+          console.log(response.data);
           const { user, token } = response.data;
 
           if (!user.isAdmin) {
@@ -95,7 +95,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      updateProfile: async (updates: Partial<User>) => {
+      updateUser: async (updates: Partial<User>) => {
         try {
           const { token } = get();
           if (!token) throw new Error('Not authenticated');
@@ -106,8 +106,7 @@ export const useAuthStore = create<AuthState>()(
             },
           });
 
-          const updatedUser = response.data;
-
+          const updatedUser = response.data.user;
           set({
             user: updatedUser,
             isAdmin: updatedUser.isAdmin === true,
