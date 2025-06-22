@@ -250,34 +250,6 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Cuisine Types</Text>
-              <View style={styles.cuisineContainer}>
-                {CUISINE_TYPES.map((cuisine) => (
-                  <TouchableOpacity
-                    key={cuisine}
-                    style={[
-                      styles.cuisineTag,
-                      selectedCuisines.includes(cuisine) && styles.selectedCuisine,
-                    ]}
-                    onPress={() => toggleCuisine(cuisine)}
-                  >
-                    <Text
-                      style={[
-                        styles.cuisineText,
-                        selectedCuisines.includes(cuisine) && styles.selectedCuisineText,
-                      ]}
-                    >
-                      {cuisine}
-                    </Text>
-                    {selectedCuisines.includes(cuisine) && (
-                      <Check size={12} color={colors.white} style={styles.checkIcon} />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.section}>
               <Text style={styles.sectionTitle}>Maximum Distance</Text>
               <View style={styles.distanceContainer}>
                 <MapPin size={16} color={colors.primary} />
@@ -404,6 +376,34 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                     thumbColor={colors.white}
                   />
                 </View>
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Cuisine Types</Text>
+              <View style={styles.cuisineContainer}>
+                {CUISINE_TYPES.map((cuisine) => (
+                  <TouchableOpacity
+                    key={cuisine}
+                    style={[
+                      styles.cuisineTag,
+                      selectedCuisines.includes(cuisine) && styles.selectedCuisine,
+                    ]}
+                    onPress={() => toggleCuisine(cuisine)}
+                  >
+                    <Text
+                      style={[
+                        styles.cuisineText,
+                        selectedCuisines.includes(cuisine) && styles.selectedCuisineText,
+                      ]}
+                    >
+                      {cuisine}
+                    </Text>
+                    {selectedCuisines.includes(cuisine) && (
+                      <Check size={12} color={colors.white} style={styles.checkIcon} />
+                    )}
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
 

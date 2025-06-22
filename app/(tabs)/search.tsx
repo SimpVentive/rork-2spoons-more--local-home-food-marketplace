@@ -71,7 +71,7 @@ export default function SearchScreen() {
   
   const handleSearch = (text: string) => {
     setSearchQuery(text);
-    searchListings(text);
+    searchListings({ query: text, ...activeFilters });
   };
   
   const handleFilterApply = (filters: FilterOptions) => {
@@ -79,13 +79,7 @@ export default function SearchScreen() {
     setFoodType(filters.foodType || 'both');
     
     // Combine search query with filters
-    if (searchQuery) {
-      // If we have a search query, pass it along with filters
-      searchListings({ query: searchQuery, ...filters });
-    } else {
-      // If no search query, just apply filters
-      searchListings(filters);
-    }
+    searchListings({ ...filters, query: searchQuery });
   };
   
   const handleCategorySelect = (categoryId: string) => {
@@ -120,11 +114,7 @@ export default function SearchScreen() {
     setFoodType(newFoodType);
     
     // Apply search with filters
-    if (searchQuery) {
-      searchListings({ query: searchQuery, ...filters });
-    } else {
-      searchListings(filters);
-    }
+    searchListings({ ...filters, query: searchQuery });
   };
   
   const handleListingPress = (listing: FoodListing) => {
@@ -161,11 +151,7 @@ export default function SearchScreen() {
             setFoodType('both');
             const updatedFilters = { ...activeFilters, foodType: 'both' as const };
             setActiveFilters(updatedFilters);
-            if (searchQuery) {
-              searchListings({ query: searchQuery, ...updatedFilters });
-            } else {
-              searchListings(updatedFilters);
-            }
+            searchListings({ ...updatedFilters, query: searchQuery });
           }}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
@@ -187,11 +173,7 @@ export default function SearchScreen() {
             setFoodType('vegetarian');
             const updatedFilters = { ...activeFilters, foodType: 'vegetarian' as const };
             setActiveFilters(updatedFilters);
-            if (searchQuery) {
-              searchListings({ query: searchQuery, ...updatedFilters });
-            } else {
-              searchListings(updatedFilters);
-            }
+            searchListings({ ...updatedFilters, query: searchQuery });
           }}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
@@ -218,11 +200,7 @@ export default function SearchScreen() {
             setFoodType('non-vegetarian');
             const updatedFilters = { ...activeFilters, foodType: 'non-vegetarian' as const };
             setActiveFilters(updatedFilters);
-            if (searchQuery) {
-              searchListings({ query: searchQuery, ...updatedFilters });
-            } else {
-              searchListings(updatedFilters);
-            }
+            searchListings({ ...updatedFilters, query: searchQuery });
           }}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
@@ -282,11 +260,7 @@ export default function SearchScreen() {
           onPress={() => {
             const newFilters = { ...activeFilters, maxDistance: 3 };
             setActiveFilters(newFilters);
-            if (searchQuery) {
-              searchListings({ query: searchQuery, ...newFilters });
-            } else {
-              searchListings(newFilters);
-            }
+            searchListings({ ...newFilters, query: searchQuery });
           }}
           hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
         >
@@ -303,11 +277,7 @@ export default function SearchScreen() {
               sortOrder: 'asc'
             };
             setActiveFilters(newFilters);
-            if (searchQuery) {
-              searchListings({ query: searchQuery, ...newFilters });
-            } else {
-              searchListings(newFilters);
-            }
+            searchListings({ ...newFilters, query: searchQuery });
           }}
           hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
         >
@@ -323,11 +293,7 @@ export default function SearchScreen() {
               availableNow: true
             };
             setActiveFilters(newFilters);
-            if (searchQuery) {
-              searchListings({ query: searchQuery, ...newFilters });
-            } else {
-              searchListings(newFilters);
-            }
+            searchListings({ ...newFilters, query: searchQuery });
           }}
           hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
         >

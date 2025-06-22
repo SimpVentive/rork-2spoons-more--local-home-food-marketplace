@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { useRouter } from 'expo-router';
-import { Home, Search, ShoppingBag, Users, Wallet, Bell, User, PlusCircle, BarChart } from 'lucide-react-native';
+import { Home, Search, ShoppingBag, Users, Wallet, Bell, User } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
 import { Platform, StyleSheet } from 'react-native';
@@ -74,22 +74,6 @@ export default function TabLayout() {
           title: 'Wallet',
           tabBarIcon: ({ color }) => <Wallet size={24} color={color} />,
           tabBarLabel: 'Wallet',
-        }}
-      />
-      <Tabs.Screen
-        name="create"
-        options={{
-          title: 'Create',
-          tabBarIcon: ({ color }) => <PlusCircle size={24} color={color} />,
-          tabBarLabel: 'Create',
-        }}
-      />
-      <Tabs.Screen
-        name="analytics"
-        options={{
-          title: 'Analytics',
-          tabBarIcon: ({ color }) => <BarChart size={24} color={color} />,
-          tabBarLabel: 'Analytics',
         }}
       />
       <Tabs.Screen

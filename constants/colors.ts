@@ -14,7 +14,6 @@ const colors = {
   info: '#3B82F6', // Blue 500
   vegetarian: '#22C55E', // Green 500
   nonVegetarian: '#EF4444', // Red 500
-  shadow: '#000000', // Added shadow color
   
   // Admin panel specific colors
   adminPrimary: '#1E40AF', // Blue 800

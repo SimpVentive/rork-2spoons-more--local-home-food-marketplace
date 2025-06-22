@@ -10,7 +10,7 @@ interface ListingsState {
   fetchListings: () => Promise<void>;
   getSellerListings: (sellerId: string) => FoodListing[];
   getTopSellingItems: (limit?: number) => Promise<FoodListing[]>;
-  searchListings: (query: string | object) => void;
+  searchListings: (query: string | FilterOptions) => void;
   addListing: (listing: Omit<FoodListing, 'id' | 'createdAt'>) => Promise<FoodListing>;
   updateListing: (id: string, updates: Partial<FoodListing>) => Promise<FoodListing>;
   deleteListing: (id: string) => Promise<void>;
@@ -153,7 +153,7 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       }
       
       // Apply text search if query.query exists
-      if (typeof filters.query === 'string' && filters.query.trim()) {
+      if (filters.query && typeof filters.query === 'string' && filters.query.trim()) {
         const lowercaseQuery = filters.query.toLowerCase();
         filtered = filtered.filter(listing => 
           listing.dishName.toLowerCase().includes(lowercaseQuery) ||
