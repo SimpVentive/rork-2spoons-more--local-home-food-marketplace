@@ -6,6 +6,7 @@ import {
   ScrollView, 
   TouchableOpacity,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { 
@@ -13,7 +14,7 @@ import {
   Users, 
   Wallet, 
   Star, 
-  BarChart3,
+  BarChart,
   ChevronRight,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
@@ -79,7 +80,7 @@ export default function AnalyticsScreen() {
   const averageRating = user.rating || 0;
   
   // Simple bar chart component
-  const BarChart = ({ data, valueKey, color }: any) => {
+  const BarChartComponent = ({ data, valueKey, color }: any) => {
     const maxValue = Math.max(...data.map((item: any) => item[valueKey]));
     
     return (
@@ -168,23 +169,25 @@ export default function AnalyticsScreen() {
             <Wallet size={24} color="#1976D2" />
           </View>
           <Text style={styles.metricValue}>₹{totalRevenue}</Text>
-          <Text style={styles.metricLabel}>Total Revenue</Text>
+          <Text style={styles.metricLabel}>Revenue</Text>
         </View>
         
         <View style={styles.metricCard}>
           <View style={[styles.metricIconContainer, { backgroundColor: '#E8F5E9' }]}>
-            <BarChart3 size={24} color="#43A047" />
+            <BarChart size={24} color="#43A047" />
           </View>
           <Text style={styles.metricValue}>{completedOrders}</Text>
-          <Text style={styles.metricLabel}>Completed Orders</Text>
+          <Text style={styles.metricLabel}>Orders</Text>
         </View>
-        
+      </View>
+
+      <View style={styles.metricsContainer}>
         <View style={styles.metricCard}>
           <View style={[styles.metricIconContainer, { backgroundColor: '#FFF3E0' }]}>
             <Star size={24} color="#FF9800" />
           </View>
           <Text style={styles.metricValue}>{averageRating.toFixed(1)}</Text>
-          <Text style={styles.metricLabel}>Average Rating</Text>
+          <Text style={styles.metricLabel}>Rating</Text>
         </View>
         
         <View style={styles.metricCard}>
@@ -202,7 +205,7 @@ export default function AnalyticsScreen() {
           <TrendingUp size={20} color={colors.primary} />
         </View>
         
-        <BarChart 
+        <BarChartComponent 
           data={mockRevenueData} 
           valueKey="amount" 
           color={colors.primary} 
@@ -212,10 +215,10 @@ export default function AnalyticsScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Orders</Text>
-          <BarChart3 size={20} color={colors.primary} />
+          <BarChart size={20} color={colors.primary} />
         </View>
         
-        <BarChart 
+        <BarChartComponent 
           data={mockOrdersData} 
           valueKey="count" 
           color={colors.secondary} 
@@ -248,6 +251,8 @@ export default function AnalyticsScreen() {
   );
 }
 
+const { width } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -255,7 +260,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 100, // Add extra padding at the bottom to avoid tab bar overlap
   },
   header: {
     marginBottom: 16,
@@ -296,16 +301,14 @@ const styles = StyleSheet.create({
   },
   metricsContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: 16,
   },
   metricCard: {
-    width: '48%',
+    width: (width - 40) / 2, // Adjust for padding and gap
     backgroundColor: colors.white,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
     alignItems: 'center',
   },
   metricIconContainer: {
@@ -402,6 +405,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: colors.white,
     borderRadius: 12,
+    marginBottom: 24,
   },
   viewMoreText: {
     fontSize: 16,

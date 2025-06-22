@@ -177,7 +177,11 @@ export interface FilterOptions {
   maxPrice?: number;
   cuisineTypes?: string[];
   maxDistance?: number;
-  sortBy?: 'price' | 'rating' | 'distance' | 'availableUntil';
+  minServings?: number;
+  maxServings?: number;
+  availableNow?: boolean;
+  availableDate?: string;
+  sortBy?: 'price' | 'rating' | 'distance' | 'availableUntil' | 'servings';
   sortOrder?: 'asc' | 'desc';
   foodType?: 'vegetarian' | 'non-vegetarian' | 'both';
 }
@@ -189,7 +193,11 @@ export interface SearchParams {
   minPrice?: number;
   maxPrice?: number;
   maxDistance?: number;
-  sortBy?: 'price' | 'rating' | 'distance' | 'availableUntil';
+  minServings?: number;
+  maxServings?: number;
+  availableNow?: boolean;
+  availableDate?: string;
+  sortBy?: 'price' | 'rating' | 'distance' | 'availableUntil' | 'servings';
   sortOrder?: 'asc' | 'desc';
 }
 

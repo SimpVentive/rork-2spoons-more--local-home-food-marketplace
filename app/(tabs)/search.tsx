@@ -18,6 +18,8 @@ import {
   Utensils,
   Bell,
   TrendingUp,
+  Users,
+  Calendar,
 } from 'lucide-react-native';
 import { useListingsStore } from '@/store/listings-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -51,6 +53,8 @@ export default function SearchScreen() {
     { id: 'non-vegetarian', name: 'Non-Veg', active: false, icon: Utensils },
     { id: 'trending', name: 'Trending', active: false, icon: TrendingUp },
     { id: 'new', name: 'New', active: false, icon: Clock },
+    { id: 'available', name: 'Available Now', active: false, icon: Calendar },
+    { id: 'servings', name: 'Family Size', active: false, icon: Users },
   ]);
   
   const router = useRouter();
@@ -103,6 +107,10 @@ export default function SearchScreen() {
       newFoodType = 'non-vegetarian';
     } else if (categoryId === 'nearby') {
       filters.maxDistance = 3; // 3km radius
+    } else if (categoryId === 'available') {
+      filters.availableNow = true;
+    } else if (categoryId === 'servings') {
+      filters.minServings = 4; // Family size (4+ servings)
     } else if (categoryId === 'all') {
       filters = {}; // Reset filters
       newFoodType = 'both';
@@ -308,6 +316,26 @@ export default function SearchScreen() {
         </TouchableOpacity>
         
         <TouchableOpacity 
+          style={styles.quickFilter}
+          onPress={() => {
+            const newFilters: FilterOptions = { 
+              ...activeFilters, 
+              availableNow: true
+            };
+            setActiveFilters(newFilters);
+            if (searchQuery) {
+              searchListings({ query: searchQuery, ...newFilters });
+            } else {
+              searchListings(newFilters);
+            }
+          }}
+          hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+        >
+          <Calendar size={16} color={colors.primary} />
+          <Text style={styles.quickFilterText}>Available Now</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
           style={styles.notifyMeButton}
           onPress={handleNotifyMe}
           hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
@@ -403,7 +431,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   listContent: {
-    paddingBottom: 16,
+    paddingBottom: 100, // Add extra padding to avoid tab bar overlap
   },
   header: {
     backgroundColor: colors.white,
@@ -515,6 +543,7 @@ const styles = StyleSheet.create({
   quickFilters: {
     flexDirection: 'row',
     marginBottom: 16,
+    flexWrap: 'wrap',
   },
   quickFilter: {
     flexDirection: 'row',
@@ -524,6 +553,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: colors.card,
     marginRight: 8,
+    marginBottom: 8,
   },
   quickFilterText: {
     fontSize: 14,

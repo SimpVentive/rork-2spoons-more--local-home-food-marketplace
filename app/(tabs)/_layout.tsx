@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { useRouter } from 'expo-router';
-import { Home, Search, ShoppingBag, Users, Wallet, Bell, User } from 'lucide-react-native';
+import { Home, Search, ShoppingBag, Users, Wallet, Bell, User, PlusCircle, BarChart } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 export default function TabLayout() {
   const { isAuthenticated } = useAuthStore();
@@ -22,17 +22,8 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textLight,
-        tabBarStyle: {
-          borderTopColor: colors.border,
-          height: Platform.OS === 'ios' ? 90 : 70,
-          paddingBottom: Platform.OS === 'ios' ? 30 : 10,
-          paddingTop: 10,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          marginTop: 0,
-          paddingTop: 0,
-        },
+        tabBarStyle: styles.tabBar,
+        tabBarLabelStyle: styles.tabBarLabel,
         headerStyle: {
           borderBottomColor: colors.border,
           borderBottomWidth: 1,
@@ -41,10 +32,7 @@ export default function TabLayout() {
           fontWeight: '600',
           fontSize: 18,
         },
-        tabBarItemStyle: {
-          paddingVertical: 10,
-          height: 50,
-        },
+        tabBarItemStyle: styles.tabBarItem,
         tabBarHideOnKeyboard: true,
       }}
     >
@@ -89,6 +77,22 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="create"
+        options={{
+          title: 'Create',
+          tabBarIcon: ({ color }) => <PlusCircle size={24} color={color} />,
+          tabBarLabel: 'Create',
+        }}
+      />
+      <Tabs.Screen
+        name="analytics"
+        options={{
+          title: 'Analytics',
+          tabBarIcon: ({ color }) => <BarChart size={24} color={color} />,
+          tabBarLabel: 'Analytics',
+        }}
+      />
+      <Tabs.Screen
         name="notifications"
         options={{
           title: 'Notifications',
@@ -107,3 +111,31 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    borderTopColor: colors.border,
+    height: Platform.OS === 'ios' ? 85 : 60,
+    paddingBottom: Platform.OS === 'ios' ? 25 : 5,
+    paddingTop: 5,
+    elevation: 8, // Add elevation for Android
+    shadowColor: '#000', // Add shadow for iOS
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    position: 'absolute', // Make sure it's positioned absolutely
+    bottom: 0, // Position at the bottom
+    left: 0,
+    right: 0,
+    zIndex: 100, // Ensure it's above other content
+  },
+  tabBarLabel: {
+    fontSize: 10,
+    marginTop: 0,
+    paddingTop: 0,
+  },
+  tabBarItem: {
+    height: 50,
+    paddingVertical: 5,
+  },
+});

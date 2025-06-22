@@ -7,8 +7,9 @@ import {
   TouchableOpacity, 
   ScrollView,
   Platform,
+  Switch,
 } from 'react-native';
-import { X, Check, MapPin, Star, DollarSign, Clock } from 'lucide-react-native';
+import { X, Check, MapPin, Star, DollarSign, Clock, Users, Calendar } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
 import { CUISINE_TYPES } from '@/mocks/data';
 import colors from '@/constants/colors';
@@ -36,7 +37,16 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   const [maxDistance, setMaxDistance] = useState<number>(
     initialFilters.maxDistance || 10
   );
-  const [sortBy, setSortBy] = useState<'rating' | 'price' | 'distance' | 'availableUntil' | undefined>(
+  const [minServings, setMinServings] = useState<number>(
+    initialFilters.minServings || 1
+  );
+  const [maxServings, setMaxServings] = useState<number>(
+    initialFilters.maxServings || 10
+  );
+  const [availableNow, setAvailableNow] = useState<boolean>(
+    initialFilters.availableNow || false
+  );
+  const [sortBy, setSortBy] = useState<'rating' | 'price' | 'distance' | 'availableUntil' | 'servings' | undefined>(
     initialFilters.sortBy
   );
   const [foodType, setFoodType] = useState<'vegetarian' | 'non-vegetarian' | 'both'>(
@@ -47,6 +57,8 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   const minPriceRef = useRef(minPrice);
   const maxPriceRef = useRef(maxPrice);
   const maxDistanceRef = useRef(maxDistance);
+  const minServingsRef = useRef(minServings);
+  const maxServingsRef = useRef(maxServings);
 
   useEffect(() => {
     if (visible) {
@@ -55,6 +67,9 @@ export const FilterModal: React.FC<FilterModalProps> = ({
       setMaxPrice(initialFilters.maxPrice || 500);
       setSelectedCuisines(initialFilters.cuisineTypes || []);
       setMaxDistance(initialFilters.maxDistance || 10);
+      setMinServings(initialFilters.minServings || 1);
+      setMaxServings(initialFilters.maxServings || 10);
+      setAvailableNow(initialFilters.availableNow || false);
       setSortBy(initialFilters.sortBy);
       setFoodType(initialFilters.foodType || 'both');
       
@@ -62,6 +77,8 @@ export const FilterModal: React.FC<FilterModalProps> = ({
       minPriceRef.current = initialFilters.minPrice || 0;
       maxPriceRef.current = initialFilters.maxPrice || 500;
       maxDistanceRef.current = initialFilters.maxDistance || 10;
+      minServingsRef.current = initialFilters.minServings || 1;
+      maxServingsRef.current = initialFilters.maxServings || 10;
     }
   }, [visible, initialFilters]);
 
@@ -71,6 +88,9 @@ export const FilterModal: React.FC<FilterModalProps> = ({
       maxPrice,
       cuisineTypes: selectedCuisines.length > 0 ? selectedCuisines : undefined,
       maxDistance,
+      minServings,
+      maxServings,
+      availableNow,
       sortBy,
       foodType,
     };
@@ -84,6 +104,9 @@ export const FilterModal: React.FC<FilterModalProps> = ({
     setMaxPrice(500);
     setSelectedCuisines([]);
     setMaxDistance(10);
+    setMinServings(1);
+    setMaxServings(10);
+    setAvailableNow(false);
     setSortBy(undefined);
     setFoodType('both');
     
@@ -91,6 +114,8 @@ export const FilterModal: React.FC<FilterModalProps> = ({
     minPriceRef.current = 0;
     maxPriceRef.current = 500;
     maxDistanceRef.current = 10;
+    minServingsRef.current = 1;
+    maxServingsRef.current = 10;
   };
 
   const toggleCuisine = (cuisine: string) => {
@@ -117,6 +142,18 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   const handleDistanceChange = (value: number) => {
     maxDistanceRef.current = value;
     setMaxDistance(value);
+  };
+
+  const handleMinServingsChange = (value: number) => {
+    const newMinServings = Math.min(value, maxServingsRef.current - 1);
+    minServingsRef.current = newMinServings;
+    setMinServings(newMinServings);
+  };
+
+  const handleMaxServingsChange = (value: number) => {
+    const newMaxServings = Math.max(value, minServingsRef.current + 1);
+    maxServingsRef.current = newMaxServings;
+    setMaxServings(newMaxServings);
   };
 
   return (
@@ -279,6 +316,98 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             </View>
 
             <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Number of Servings</Text>
+              <View style={styles.servingsContainer}>
+                <Users size={16} color={colors.primary} />
+                <Text style={styles.servingsText}>
+                  {minServings === maxServings 
+                    ? `${minServings} servings` 
+                    : `${minServings} - ${maxServings} servings`}
+                </Text>
+              </View>
+              
+              {/* Min servings slider */}
+              <View style={styles.sliderContainer}>
+                <Text style={styles.sliderLabel}>Min: {minServings} servings</Text>
+                {Platform.OS === 'web' ? (
+                  <input
+                    type="range"
+                    min={1}
+                    max={9}
+                    step={1}
+                    value={minServings}
+                    onChange={(e) => handleMinServingsChange(parseInt(e.target.value))}
+                    style={{ 
+                      width: '100%', 
+                      height: 40,
+                      accentColor: colors.primary,
+                    }}
+                  />
+                ) : (
+                  <Slider
+                    value={minServings}
+                    onValueChange={handleMinServingsChange}
+                    minimumValue={1}
+                    maximumValue={9}
+                    step={1}
+                    minimumTrackTintColor={colors.primary}
+                    maximumTrackTintColor={colors.border}
+                    thumbTintColor={colors.primary}
+                  />
+                )}
+              </View>
+              
+              {/* Max servings slider */}
+              <View style={styles.sliderContainer}>
+                <Text style={styles.sliderLabel}>Max: {maxServings} servings</Text>
+                {Platform.OS === 'web' ? (
+                  <input
+                    type="range"
+                    min={2}
+                    max={10}
+                    step={1}
+                    value={maxServings}
+                    onChange={(e) => handleMaxServingsChange(parseInt(e.target.value))}
+                    style={{ 
+                      width: '100%', 
+                      height: 40,
+                      accentColor: colors.primary,
+                    }}
+                  />
+                ) : (
+                  <Slider
+                    value={maxServings}
+                    onValueChange={handleMaxServingsChange}
+                    minimumValue={2}
+                    maximumValue={10}
+                    step={1}
+                    minimumTrackTintColor={colors.primary}
+                    maximumTrackTintColor={colors.border}
+                    thumbTintColor={colors.primary}
+                  />
+                )}
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Availability</Text>
+              <View style={styles.availabilityContainer}>
+                <View style={styles.availabilityOption}>
+                  <View style={styles.availabilityLabelContainer}>
+                    <Calendar size={16} color={colors.primary} />
+                    <Text style={styles.availabilityLabel}>Available Now</Text>
+                  </View>
+                  <Switch
+                    value={availableNow}
+                    onValueChange={setAvailableNow}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={colors.white}
+                  />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.section}>
               <Text style={styles.sectionTitle}>Sort By</Text>
               <View style={styles.sortContainer}>
                 <TouchableOpacity
@@ -365,6 +494,27 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                   ]}
                 >
                   Ending Soon
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.sortOption,
+                  sortBy === 'servings' && styles.selectedSortOption,
+                ]}
+                onPress={() => setSortBy('servings')}
+              >
+                <Users
+                  size={16}
+                  color={sortBy === 'servings' ? colors.white : colors.primary}
+                />
+                <Text
+                  style={[
+                    styles.sortText,
+                    sortBy === 'servings' && styles.selectedSortText,
+                  ]}
+                >
+                  Servings
                 </Text>
               </TouchableOpacity>
             </View>
@@ -543,6 +693,34 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   distanceText: {
+    fontSize: 14,
+    color: colors.text,
+    marginLeft: 8,
+  },
+  servingsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  servingsText: {
+    fontSize: 14,
+    color: colors.text,
+    marginLeft: 8,
+  },
+  availabilityContainer: {
+    marginBottom: 8,
+  },
+  availabilityOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  availabilityLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  availabilityLabel: {
     fontSize: 14,
     color: colors.text,
     marginLeft: 8,
