@@ -173,6 +173,7 @@ export interface Follow {
 }
 
 export interface FilterOptions {
+  query?: string; // Added query property for text search
   minPrice?: number;
   maxPrice?: number;
   cuisineTypes?: string[];
