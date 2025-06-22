@@ -187,19 +187,8 @@ export interface FilterOptions {
   foodType?: 'vegetarian' | 'non-vegetarian' | 'both';
 }
 
-export interface SearchParams {
+export interface SearchParams extends FilterOptions {
   query: string;
-  cuisineTypes?: string[]; // Changed from cuisineType to cuisineTypes array
-  foodType?: 'vegetarian' | 'non-vegetarian' | 'both';
-  minPrice?: number;
-  maxPrice?: number;
-  maxDistance?: number;
-  minServings?: number;
-  maxServings?: number;
-  availableNow?: boolean;
-  availableDate?: string;
-  sortBy?: 'price' | 'rating' | 'distance' | 'availableUntil' | 'servings';
-  sortOrder?: 'asc' | 'desc';
 }
 
 // Admin-specific types

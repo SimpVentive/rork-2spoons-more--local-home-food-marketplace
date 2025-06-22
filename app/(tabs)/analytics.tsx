@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { 
   TrendingUp, 
   Users, 
@@ -16,6 +17,7 @@ import {
   Star, 
   BarChart,
   ChevronRight,
+  PieChart,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { useListingsStore } from '@/store/listings-store';
@@ -111,10 +113,15 @@ export default function AnalyticsScreen() {
   };
   
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Seller Analytics</Text>
-        
+    <>
+      <Stack.Screen options={{ 
+        title: 'Analytics',
+        headerTitleStyle: {
+          fontWeight: '700',
+        }
+      }} />
+      
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <View style={styles.timeRangeContainer}>
           <TouchableOpacity
             style={[
@@ -161,93 +168,94 @@ export default function AnalyticsScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
-      
-      <View style={styles.metricsContainer}>
-        <View style={styles.metricCard}>
-          <View style={[styles.metricIconContainer, { backgroundColor: '#E3F2FD' }]}>
-            <Wallet size={24} color="#1976D2" />
-          </View>
-          <Text style={styles.metricValue}>₹{totalRevenue}</Text>
-          <Text style={styles.metricLabel}>Revenue</Text>
-        </View>
         
-        <View style={styles.metricCard}>
-          <View style={[styles.metricIconContainer, { backgroundColor: '#E8F5E9' }]}>
-            <BarChart size={24} color="#43A047" />
-          </View>
-          <Text style={styles.metricValue}>{completedOrders}</Text>
-          <Text style={styles.metricLabel}>Orders</Text>
-        </View>
-      </View>
-
-      <View style={styles.metricsContainer}>
-        <View style={styles.metricCard}>
-          <View style={[styles.metricIconContainer, { backgroundColor: '#FFF3E0' }]}>
-            <Star size={24} color="#FF9800" />
-          </View>
-          <Text style={styles.metricValue}>{averageRating.toFixed(1)}</Text>
-          <Text style={styles.metricLabel}>Rating</Text>
-        </View>
-        
-        <View style={styles.metricCard}>
-          <View style={[styles.metricIconContainer, { backgroundColor: '#F3E5F5' }]}>
-            <Users size={24} color="#9C27B0" />
-          </View>
-          <Text style={styles.metricValue}>{followerCount}</Text>
-          <Text style={styles.metricLabel}>Followers</Text>
-        </View>
-      </View>
-      
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Revenue</Text>
-          <TrendingUp size={20} color={colors.primary} />
-        </View>
-        
-        <BarChartComponent 
-          data={mockRevenueData} 
-          valueKey="amount" 
-          color={colors.primary} 
-        />
-      </View>
-      
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Orders</Text>
-          <BarChart size={20} color={colors.primary} />
-        </View>
-        
-        <BarChartComponent 
-          data={mockOrdersData} 
-          valueKey="count" 
-          color={colors.secondary} 
-        />
-      </View>
-      
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Popular Dishes</Text>
-        </View>
-        
-        {mockPopularDishes.map((dish, index) => (
-          <View key={index} style={styles.popularDishItem}>
-            <Text style={styles.popularDishName}>{dish.name}</Text>
-            <View style={styles.popularDishCount}>
-              <Text style={styles.popularDishCountText}>{dish.count} orders</Text>
+        <View style={styles.metricsContainer}>
+          <View style={styles.metricCard}>
+            <View style={[styles.metricIconContainer, { backgroundColor: '#E3F2FD' }]}>
+              <Wallet size={24} color="#1976D2" />
             </View>
+            <Text style={styles.metricValue}>₹{totalRevenue}</Text>
+            <Text style={styles.metricLabel}>Revenue</Text>
           </View>
-        ))}
-      </View>
-      
-      <TouchableOpacity 
-        style={styles.viewMoreButton}
-        onPress={() => Alert.alert('Coming Soon', 'Detailed analytics will be available in a future update.')}
-      >
-        <Text style={styles.viewMoreText}>View Detailed Analytics</Text>
-        <ChevronRight size={20} color={colors.primary} />
-      </TouchableOpacity>
-    </ScrollView>
+          
+          <View style={styles.metricCard}>
+            <View style={[styles.metricIconContainer, { backgroundColor: '#E8F5E9' }]}>
+              <BarChart size={24} color="#43A047" />
+            </View>
+            <Text style={styles.metricValue}>{completedOrders}</Text>
+            <Text style={styles.metricLabel}>Orders</Text>
+          </View>
+        </View>
+
+        <View style={styles.metricsContainer}>
+          <View style={styles.metricCard}>
+            <View style={[styles.metricIconContainer, { backgroundColor: '#FFF3E0' }]}>
+              <Star size={24} color="#FF9800" />
+            </View>
+            <Text style={styles.metricValue}>{averageRating.toFixed(1)}</Text>
+            <Text style={styles.metricLabel}>Rating</Text>
+          </View>
+          
+          <View style={styles.metricCard}>
+            <View style={[styles.metricIconContainer, { backgroundColor: '#F3E5F5' }]}>
+              <Users size={24} color="#9C27B0" />
+            </View>
+            <Text style={styles.metricValue}>{followerCount}</Text>
+            <Text style={styles.metricLabel}>Followers</Text>
+          </View>
+        </View>
+        
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Revenue</Text>
+            <TrendingUp size={20} color={colors.primary} />
+          </View>
+          
+          <BarChartComponent 
+            data={mockRevenueData} 
+            valueKey="amount" 
+            color={colors.primary} 
+          />
+        </View>
+        
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Orders</Text>
+            <BarChart size={20} color={colors.primary} />
+          </View>
+          
+          <BarChartComponent 
+            data={mockOrdersData} 
+            valueKey="count" 
+            color={colors.secondary} 
+          />
+        </View>
+        
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Popular Dishes</Text>
+            <PieChart size={20} color={colors.primary} />
+          </View>
+          
+          {mockPopularDishes.map((dish, index) => (
+            <View key={index} style={styles.popularDishItem}>
+              <Text style={styles.popularDishName}>{dish.name}</Text>
+              <View style={styles.popularDishCount}>
+                <Text style={styles.popularDishCountText}>{dish.count} orders</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+        
+        <TouchableOpacity 
+          style={styles.viewMoreButton}
+          onPress={() => Alert.alert('Coming Soon', 'Detailed analytics will be available in a future update.')}
+        >
+          <Text style={styles.viewMoreText}>View Detailed Analytics</Text>
+          <ChevronRight size={20} color={colors.primary} />
+        </TouchableOpacity>
+      </ScrollView>
+    </>
   );
 }
 
@@ -260,22 +268,14 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 16,
-    paddingBottom: 100, // Add extra padding at the bottom to avoid tab bar overlap
-  },
-  header: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 16,
+    paddingBottom: 120, // Increased padding to avoid tab bar overlap
   },
   timeRangeContainer: {
     flexDirection: 'row',
     backgroundColor: colors.card,
     borderRadius: 8,
     padding: 4,
+    marginBottom: 16,
   },
   timeRangeButton: {
     flex: 1,
@@ -310,6 +310,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   metricIconContainer: {
     width: 48,
@@ -334,6 +339,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -406,6 +416,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 12,
     marginBottom: 24,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   viewMoreText: {
     fontSize: 16,

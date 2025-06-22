@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
-import { Camera, ChefHat, Clock, DollarSign, FileText, Image as ImageIcon, MapPin, Plus, Tag, Utensils } from 'lucide-react-native';
+import { Camera, ChefHat, Clock, DollarSign, FileText, Image as ImageIcon, MapPin, Plus, Tag, Utensils, PlusCircle } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
@@ -37,7 +37,15 @@ export default function CreateScreen() {
         title: 'Create',
         headerTitleStyle: {
           fontWeight: '700',
-        }
+        },
+        headerRight: () => (
+          <TouchableOpacity 
+            onPress={() => router.push('/create-listing')}
+            style={styles.headerButton}
+          >
+            <PlusCircle size={24} color={colors.primary} />
+          </TouchableOpacity>
+        ),
       }} />
       
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -195,7 +203,10 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 120, // Increased padding to avoid tab bar overlap
+  },
+  headerButton: {
+    padding: 8,
   },
   title: {
     fontSize: 24,
@@ -213,6 +224,11 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   selectedOption: {
     borderColor: colors.primary,
@@ -258,6 +274,11 @@ const styles = StyleSheet.create({
     width: '30%',
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   quickActionText: {
     fontSize: 14,
@@ -276,6 +297,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   tipIconContainer: {
     width: 40,
@@ -302,5 +328,6 @@ const styles = StyleSheet.create({
   },
   createButton: {
     marginTop: 16,
+    marginBottom: 32,
   },
 });

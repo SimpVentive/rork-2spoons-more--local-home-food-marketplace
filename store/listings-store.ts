@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FoodListing, FilterOptions } from '@/types';
+import { FoodListing, FilterOptions, SearchParams } from '@/types';
 import { mockListings } from '@/mocks/data';
 
 interface ListingsState {
@@ -10,7 +10,7 @@ interface ListingsState {
   fetchListings: () => Promise<void>;
   getSellerListings: (sellerId: string) => FoodListing[];
   getTopSellingItems: (limit?: number) => Promise<FoodListing[]>;
-  searchListings: (query: string | FilterOptions) => void;
+  searchListings: (params: FilterOptions | SearchParams) => void;
   addListing: (listing: Omit<FoodListing, 'id' | 'createdAt'>) => Promise<FoodListing>;
   updateListing: (id: string, updates: Partial<FoodListing>) => Promise<FoodListing>;
   deleteListing: (id: string) => Promise<void>;
@@ -64,122 +64,102 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
     }
   },
 
-  searchListings: (query) => {
+  searchListings: (params) => {
     const { listings } = get();
     
-    // Handle object-based query (for advanced filtering)
-    if (typeof query === 'object') {
-      const filters = query as FilterOptions;
-      let filtered = [...listings];
-      
-      // Apply price filters
-      if (filters.minPrice !== undefined) {
-        filtered = filtered.filter(listing => listing.price >= filters.minPrice!);
-      }
-      
-      if (filters.maxPrice !== undefined) {
-        filtered = filtered.filter(listing => listing.price <= filters.maxPrice!);
-      }
-      
-      // Apply cuisine type filters
-      if (filters.cuisineTypes && filters.cuisineTypes.length > 0) {
-        filtered = filtered.filter(listing => 
-          listing.cuisineType && filters.cuisineTypes!.includes(listing.cuisineType)
-        );
-      }
-      
-      // Apply distance filter
-      if (filters.maxDistance !== undefined) {
-        // In a real app, we would calculate the actual distance
-        // For now, we'll use a mock implementation
-        filtered = filtered.filter(listing => {
-          // Mock distance calculation (random for demo)
-          const distance = Math.random() * 20;
-          return distance <= filters.maxDistance!;
-        });
-      }
-      
-      // Apply servings filter
-      if (filters.minServings !== undefined) {
-        filtered = filtered.filter(listing => 
-          (listing.servings || 1) >= filters.minServings!
-        );
-      }
-      
-      if (filters.maxServings !== undefined) {
-        filtered = filtered.filter(listing => 
-          (listing.servings || 10) <= filters.maxServings!
-        );
-      }
-      
-      // Apply availability filter
-      if (filters.availableNow) {
-        const now = new Date();
-        filtered = filtered.filter(listing => {
-          const availableFrom = new Date(listing.availableFrom);
-          const availableUntil = new Date(listing.availableUntil);
-          return now >= availableFrom && now <= availableUntil && listing.remainingQuantity > 0;
-        });
-      }
-      
-      // Apply food type filter
-      if (filters.foodType && filters.foodType !== 'both') {
-        filtered = filtered.filter(listing => 
-          filters.foodType === 'vegetarian' ? listing.isVegetarian : !listing.isVegetarian
-        );
-      }
-      
-      // Apply sorting
-      if (filters.sortBy) {
-        const sortOrder = filters.sortOrder === 'desc' ? -1 : 1;
-        
-        filtered.sort((a, b) => {
-          switch (filters.sortBy) {
-            case 'price':
-              return sortOrder * (a.price - b.price);
-            case 'rating':
-              return sortOrder * ((b.rating || 0) - (a.rating || 0));
-            case 'distance':
-              // Mock distance sorting (random for demo)
-              return sortOrder * (Math.random() - 0.5);
-            case 'availableUntil':
-              return sortOrder * (new Date(a.availableUntil).getTime() - new Date(b.availableUntil).getTime());
-            case 'servings':
-              return sortOrder * ((a.servings || 1) - (b.servings || 1));
-            default:
-              return 0;
-          }
-        });
-      }
-      
-      // Apply text search if query.query exists
-      if (filters.query && typeof filters.query === 'string' && filters.query.trim()) {
-        const lowercaseQuery = filters.query.toLowerCase();
-        filtered = filtered.filter(listing => 
-          listing.dishName.toLowerCase().includes(lowercaseQuery) ||
-          listing.sellerName.toLowerCase().includes(lowercaseQuery) ||
-          (listing.cuisineType && listing.cuisineType.toLowerCase().includes(lowercaseQuery)) ||
-          (listing.description && listing.description.toLowerCase().includes(lowercaseQuery))
-        );
-      }
-      
-      set({ filteredListings: filtered });
-      return;
+    // Handle object-based params (for advanced filtering)
+    let filtered = [...listings];
+    
+    // Apply price filters
+    if (params.minPrice !== undefined) {
+      filtered = filtered.filter(listing => listing.price >= params.minPrice!);
     }
     
-    // Handle string-based query
-    if (query === undefined || query === null || (typeof query === 'string' && !query.trim())) {
-      set({ filteredListings: listings });
-      return;
+    if (params.maxPrice !== undefined) {
+      filtered = filtered.filter(listing => listing.price <= params.maxPrice!);
     }
     
-    const lowercaseQuery = typeof query === 'string' ? query.toLowerCase() : '';
-    const filtered = listings.filter(listing => 
-      listing.dishName.toLowerCase().includes(lowercaseQuery) ||
-      listing.sellerName.toLowerCase().includes(lowercaseQuery) ||
-      (listing.cuisineType && listing.cuisineType.toLowerCase().includes(lowercaseQuery)) ||
-      (listing.description && listing.description.toLowerCase().includes(lowercaseQuery))
-    );
+    // Apply cuisine type filters
+    if (params.cuisineTypes && params.cuisineTypes.length > 0) {
+      filtered = filtered.filter(listing => 
+        listing.cuisineType && params.cuisineTypes!.includes(listing.cuisineType)
+      );
+    }
+    
+    // Apply distance filter
+    if (params.maxDistance !== undefined) {
+      // In a real app, we would calculate the actual distance
+      // For now, we'll use a mock implementation
+      filtered = filtered.filter(listing => {
+        // Mock distance calculation (random for demo)
+        const distance = Math.random() * 20;
+        return distance <= params.maxDistance!;
+      });
+    }
+    
+    // Apply servings filter
+    if (params.minServings !== undefined) {
+      filtered = filtered.filter(listing => 
+        (listing.servings || 1) >= params.minServings!
+      );
+    }
+    
+    if (params.maxServings !== undefined) {
+      filtered = filtered.filter(listing => 
+        (listing.servings || 10) <= params.maxServings!
+      );
+    }
+    
+    // Apply availability filter
+    if (params.availableNow) {
+      const now = new Date();
+      filtered = filtered.filter(listing => {
+        const availableFrom = new Date(listing.availableFrom);
+        const availableUntil = new Date(listing.availableUntil);
+        return now >= availableFrom && now <= availableUntil && listing.remainingQuantity > 0;
+      });
+    }
+    
+    // Apply food type filter
+    if (params.foodType && params.foodType !== 'both') {
+      filtered = filtered.filter(listing => 
+        params.foodType === 'vegetarian' ? listing.isVegetarian : !listing.isVegetarian
+      );
+    }
+    
+    // Apply sorting
+    if (params.sortBy) {
+      const sortOrder = params.sortOrder === 'desc' ? -1 : 1;
+      
+      filtered.sort((a, b) => {
+        switch (params.sortBy) {
+          case 'price':
+            return sortOrder * (a.price - b.price);
+          case 'rating':
+            return sortOrder * ((b.rating || 0) - (a.rating || 0));
+          case 'distance':
+            // Mock distance sorting (random for demo)
+            return sortOrder * (Math.random() - 0.5);
+          case 'availableUntil':
+            return sortOrder * (new Date(a.availableUntil).getTime() - new Date(b.availableUntil).getTime());
+          case 'servings':
+            return sortOrder * ((a.servings || 1) - (b.servings || 1));
+          default:
+            return 0;
+        }
+      });
+    }
+    
+    // Apply text search if params.query exists
+    if (params.query && typeof params.query === 'string' && params.query.trim()) {
+      const lowercaseQuery = params.query.toLowerCase();
+      filtered = filtered.filter(listing => 
+        listing.dishName.toLowerCase().includes(lowercaseQuery) ||
+        listing.sellerName.toLowerCase().includes(lowercaseQuery) ||
+        (listing.cuisineType && listing.cuisineType.toLowerCase().includes(lowercaseQuery)) ||
+        (listing.description && listing.description.toLowerCase().includes(lowercaseQuery))
+      );
+    }
     
     set({ filteredListings: filtered });
   },

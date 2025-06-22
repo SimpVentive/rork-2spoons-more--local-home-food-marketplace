@@ -71,7 +71,7 @@ export default function SearchScreen() {
   
   const handleSearch = (text: string) => {
     setSearchQuery(text);
-    searchListings({ query: text, ...activeFilters });
+    searchListings({ ...activeFilters, query: text });
   };
   
   const handleFilterApply = (filters: FilterOptions) => {
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   listContent: {
-    paddingBottom: 100, // Add extra padding to avoid tab bar overlap
+    paddingBottom: 120, // Increased padding to avoid tab bar overlap
   },
   header: {
     backgroundColor: colors.white,
