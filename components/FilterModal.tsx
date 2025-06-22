@@ -8,12 +8,14 @@ import {
   ScrollView,
   Platform,
   Switch,
+  TextInput,
 } from 'react-native';
 import { X, Check, MapPin, Star, DollarSign, Clock, Users, Calendar } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
 import { CUISINE_TYPES } from '@/mocks/data';
 import colors from '@/constants/colors';
 import Button from './Button';
+import Input from './Input';
 import { FilterOptions } from '@/types';
 
 interface FilterModalProps {
@@ -154,6 +156,25 @@ export const FilterModal: React.FC<FilterModalProps> = ({
     const newMaxServings = Math.max(value, minServingsRef.current + 1);
     maxServingsRef.current = newMaxServings;
     setMaxServings(newMaxServings);
+  };
+
+  // Direct input handlers for servings
+  const handleMinServingsInput = (text: string) => {
+    const value = parseInt(text);
+    if (!isNaN(value) && value >= 1) {
+      const newMinServings = Math.min(value, maxServingsRef.current - 1);
+      minServingsRef.current = newMinServings;
+      setMinServings(newMinServings);
+    }
+  };
+
+  const handleMaxServingsInput = (text: string) => {
+    const value = parseInt(text);
+    if (!isNaN(value) && value >= 2) {
+      const newMaxServings = Math.max(value, minServingsRef.current + 1);
+      maxServingsRef.current = newMaxServings;
+      setMaxServings(newMaxServings);
+    }
   };
 
   return (
@@ -298,9 +319,20 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                 </Text>
               </View>
               
+              {/* Min servings input */}
+              <View style={styles.servingsInputContainer}>
+                <Text style={styles.servingsInputLabel}>Min Servings:</Text>
+                <TextInput
+                  style={styles.servingsInput}
+                  value={minServings.toString()}
+                  onChangeText={handleMinServingsInput}
+                  keyboardType="numeric"
+                  maxLength={2}
+                />
+              </View>
+              
               {/* Min servings slider */}
               <View style={styles.sliderContainer}>
-                <Text style={styles.sliderLabel}>Min: {minServings} servings</Text>
                 {Platform.OS === 'web' ? (
                   <input
                     type="range"
@@ -329,9 +361,20 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                 )}
               </View>
               
+              {/* Max servings input */}
+              <View style={styles.servingsInputContainer}>
+                <Text style={styles.servingsInputLabel}>Max Servings:</Text>
+                <TextInput
+                  style={styles.servingsInput}
+                  value={maxServings.toString()}
+                  onChangeText={handleMaxServingsInput}
+                  keyboardType="numeric"
+                  maxLength={2}
+                />
+              </View>
+              
               {/* Max servings slider */}
               <View style={styles.sliderContainer}>
-                <Text style={styles.sliderLabel}>Max: {maxServings} servings</Text>
                 {Platform.OS === 'web' ? (
                   <input
                     type="range"
@@ -609,7 +652,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingTop: 16,
     paddingBottom: 32,
-    maxHeight: '80%',
+    maxHeight: '90%', // Increased from 80% to 90%
   },
   header: {
     flexDirection: 'row',
@@ -706,6 +749,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text,
     marginLeft: 8,
+  },
+  servingsInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  servingsInputLabel: {
+    fontSize: 14,
+    color: colors.text,
+  },
+  servingsInput: {
+    width: 60,
+    height: 40,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    textAlign: 'center',
+    fontSize: 16,
+    color: colors.text,
+    backgroundColor: colors.card,
   },
   availabilityContainer: {
     marginBottom: 8,

@@ -151,7 +151,7 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
     }
     
     // Apply text search if params.query exists
-    if (params.query && typeof params.query === 'string' && params.query.trim()) {
+    if ('query' in params && params.query && typeof params.query === 'string' && params.query.trim()) {
       const lowercaseQuery = params.query.toLowerCase();
       filtered = filtered.filter(listing => 
         listing.dishName.toLowerCase().includes(lowercaseQuery) ||

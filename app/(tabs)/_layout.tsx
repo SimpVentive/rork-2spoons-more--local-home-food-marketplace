@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Home, Search, ShoppingBag, Users, Wallet, Bell, User, PieChart, PlusCircle } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, SafeAreaView } from 'react-native';
 
 export default function TabLayout() {
   const { isAuthenticated } = useAuthStore();
