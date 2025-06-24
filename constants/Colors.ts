@@ -1,26 +1,32 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+const colors = {
+  primary: '#4F46E5', // Indigo
+  secondary: '#10B981', // Emerald
+  background: '#F8FAFC', // Slate 50
+  card: '#F1F5F9', // Slate 100
+  text: '#1E293B', // Slate 800
+  textLight: '#64748B', // Slate 500
+  border: '#E2E8F0', // Slate 200
+  white: '#FFFFFF',
+  black: '#000000',
+  error: '#EF4444', // Red 500
+  success: '#22C55E', // Green 500
+  warning: '#F59E0B', // Amber 500
+  info: '#3B82F6', // Blue 500
+  vegetarian: '#22C55E', // Green 500
+  nonVegetarian: '#EF4444', // Red 500
+  shadow: '#000000', // Added shadow color
+  
+  // Admin panel specific colors
+  adminPrimary: '#1E40AF', // Blue 800
+  adminSecondary: '#0369A1', // Sky 700
+  adminSuccess: '#15803D', // Green 700
+  adminError: '#B91C1C', // Red 700
+  adminWarning: '#B45309', // Amber 700
+  adminInfo: '#1D4ED8', // Blue 700
+  adminDanger: '#B91C1C', // Red 700 - Added missing property
+  adminBackground: '#F8FAFC', // Slate 50
+  adminCard: '#F1F5F9', // Slate 100
+  adminBorder: '#CBD5E1', // Slate 300
 };
+
+export default colors;
