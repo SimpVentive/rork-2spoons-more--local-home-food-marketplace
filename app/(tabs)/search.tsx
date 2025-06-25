@@ -20,6 +20,8 @@ import {
   TrendingUp,
   Users,
   Calendar,
+  Route,
+  Navigation,
 } from 'lucide-react-native';
 import { useListingsStore } from '@/store/listings-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -28,8 +30,9 @@ import SearchBar from '@/components/SearchBar';
 import EmptyState from '@/components/EmptyState';
 import { FilterModal } from '@/components/FilterModal';
 import { NotifyMeModal } from '@/components/NotifyMeModal';
+import { RouteSearchModal } from '@/components/RouteSearchModal';
 import colors from '@/constants/colors';
-import { FoodListing, FilterOptions } from '@/types';
+import { FoodListing, FilterOptions, RouteSearchParams } from '@/types';
 
 export default function SearchScreen() {
   const { user } = useAuthStore();
@@ -37,6 +40,7 @@ export default function SearchScreen() {
     filteredListings, 
     fetchListings, 
     searchListings, 
+    searchListingsOnRoute,
     isLoading 
   } = useListingsStore();
   
@@ -44,6 +48,7 @@ export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [notifyModalVisible, setNotifyModalVisible] = useState(false);
+  const [routeSearchModalVisible, setRouteSearchModalVisible] = useState(false);
   const [activeFilters, setActiveFilters] = useState<FilterOptions>({});
   const [foodType, setFoodType] = useState<'vegetarian' | 'non-vegetarian' | 'both'>('both');
   const [categories, setCategories] = useState([
@@ -55,6 +60,7 @@ export default function SearchScreen() {
     { id: 'new', name: 'New', active: false, icon: Clock },
     { id: 'available', name: 'Available Now', active: false, icon: Calendar },
     { id: 'servings', name: 'Family Size', active: false, icon: Users },
+    { id: 'route', name: 'On My Route', active: false, icon: Route },
   ]);
   
   const router = useRouter();
@@ -82,6 +88,20 @@ export default function SearchScreen() {
     searchListings({ ...filters, query: searchQuery });
   };
   
+  const handleRouteSearchApply = (params: RouteSearchParams) => {
+    // Update category selection
+    const updatedCategories = categories.map(cat => ({
+      ...cat,
+      active: cat.id === 'route',
+    }));
+    setCategories(updatedCategories);
+    
+    // Call the route-based search function
+    searchListingsOnRoute(params);
+    
+    setRouteSearchModalVisible(false);
+  };
+  
   const handleCategorySelect = (categoryId: string) => {
     const updatedCategories = categories.map(cat => ({
       ...cat,
@@ -105,6 +125,10 @@ export default function SearchScreen() {
       filters.availableNow = true;
     } else if (categoryId === 'servings') {
       filters.minServings = 4; // Family size (4+ servings)
+    } else if (categoryId === 'route') {
+      // Open route search modal
+      setRouteSearchModalVisible(true);
+      return;
     } else if (categoryId === 'all') {
       filters = {}; // Reset filters
       newFoodType = 'both';
@@ -302,12 +326,12 @@ export default function SearchScreen() {
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={styles.notifyMeButton}
-          onPress={handleNotifyMe}
+          style={styles.routeFilterButton}
+          onPress={() => setRouteSearchModalVisible(true)}
           hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
         >
-          <Bell size={16} color={colors.white} />
-          <Text style={styles.notifyMeText}>Notify Me</Text>
+          <Route size={16} color={colors.white} />
+          <Text style={styles.routeFilterText}>Check on My Route</Text>
         </TouchableOpacity>
       </View>
       
@@ -386,6 +410,12 @@ export default function SearchScreen() {
         visible={notifyModalVisible}
         onClose={() => setNotifyModalVisible(false)}
         initialDishName={searchQuery}
+      />
+      
+      <RouteSearchModal
+        visible={routeSearchModalVisible}
+        onClose={() => setRouteSearchModalVisible(false)}
+        onApply={handleRouteSearchApply}
       />
     </View>
   );
@@ -526,16 +556,16 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginLeft: 6,
   },
-  notifyMeButton: {
+  routeFilterButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 12, // Increased touch target
     borderRadius: 16,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.secondary,
     marginLeft: 'auto',
   },
-  notifyMeText: {
+  routeFilterText: {
     fontSize: 14,
     color: colors.white,
     marginLeft: 6,

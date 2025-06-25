@@ -24,8 +24,30 @@ export interface User {
     packagingType?: string;
     mealTypes?: string[];
   };
-  isAdmin?: boolean; // Added admin role flag
-  isVerified?: boolean; // Added verification status for chefs
+  isAdmin?: boolean;
+  isVerified?: boolean;
+  // New fields for route-based features
+  officeAddress?: string;
+  officeLocation?: {
+    latitude: number;
+    longitude: number;
+  };
+  homeToOfficeRoute?: RouteLocation[];
+  officeToHomeRoute?: RouteLocation[];
+  routesSameAsHomeToOffice?: boolean;
+  detourPreference?: number; // in meters
+}
+
+export interface RouteLocation {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface UserPreference {
+  type: 'buyer' | 'seller';
 }
 
 export interface FoodListing {
@@ -58,13 +80,13 @@ export interface FoodListing {
   reviewCount?: number;
   orderCount?: number;
   createdAt: string;
-  isFeatured?: boolean; // Added featured flag for admin promotion
-  isApproved?: boolean; // Added approval status for admin moderation
-  isActive?: boolean; // Added active status based on availability
-  calories?: number; // Added calories information
-  portionSize?: string; // Added portion size information
-  preparationTime?: string; // Added preparation time information
-  dietaryTags?: string[]; // Added dietary tags (gluten-free, dairy-free, etc.)
+  isFeatured?: boolean;
+  isApproved?: boolean;
+  isActive?: boolean;
+  calories?: number;
+  portionSize?: string;
+  preparationTime?: string;
+  dietaryTags?: string[];
 }
 
 export type OrderStatus = 
@@ -93,7 +115,7 @@ export interface Order {
     price: number;
     image: string;
     sellerName: string;
-    sellerImage: string; // Added missing property
+    sellerImage: string;
     location: {
       latitude: number;
       longitude: number;
@@ -173,7 +195,7 @@ export interface Follow {
 }
 
 export interface FilterOptions {
-  query?: string; // Added query property for text search
+  query?: string;
   minPrice?: number;
   maxPrice?: number;
   cuisineTypes?: string[];
@@ -185,10 +207,20 @@ export interface FilterOptions {
   sortBy?: 'price' | 'rating' | 'distance' | 'availableUntil' | 'servings';
   sortOrder?: 'asc' | 'desc';
   foodType?: 'vegetarian' | 'non-vegetarian' | 'both';
+  onRoute?: 'homeToOffice' | 'officeToHome';
+  maxDetour?: number;
 }
 
 export interface SearchParams extends FilterOptions {
   query: string;
+}
+
+export interface RouteSearchParams {
+  routeType: 'homeToOffice' | 'officeToHome';
+  dishName?: string;
+  maxDetour?: number;
+  cuisineTypes?: string[];
+  foodType?: 'vegetarian' | 'non-vegetarian' | 'both';
 }
 
 // Admin-specific types
@@ -241,13 +273,13 @@ export interface TopChef {
   location: string;
   phone: string;
   cuisineTypes: string[];
-  isVerified: boolean; // Added missing property
+  isVerified: boolean;
 }
 
 export interface AdminDashboardData {
   totalBuyers: number;
-  newUsersToday: number; // Added missing property
-  activeUsers: number; // Added missing property
+  newUsersToday: number;
+  activeUsers: number;
   topEarners: TopEarner[];
   topDishes: TopDish[];
   topChefs: TopChef[];

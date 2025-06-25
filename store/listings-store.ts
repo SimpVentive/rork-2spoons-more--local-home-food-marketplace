@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { FoodListing, FilterOptions, SearchParams } from '@/types';
+import { FoodListing, FilterOptions, SearchParams, RouteSearchParams } from '@/types';
 import { mockListings } from '@/mocks/data';
+import { useAuthStore } from '@/store/auth-store';
 
 interface ListingsState {
   listings: FoodListing[];
@@ -11,6 +12,7 @@ interface ListingsState {
   getSellerListings: (sellerId: string) => FoodListing[];
   getTopSellingItems: (limit?: number) => Promise<FoodListing[]>;
   searchListings: (params: FilterOptions | SearchParams) => void;
+  searchListingsOnRoute: (params: RouteSearchParams) => void;
   addListing: (listing: Omit<FoodListing, 'id' | 'createdAt'>) => Promise<FoodListing>;
   updateListing: (id: string, updates: Partial<FoodListing>) => Promise<FoodListing>;
   deleteListing: (id: string) => Promise<void>;
@@ -20,6 +22,7 @@ interface ListingsState {
   bulkUpdateListings: (ids: string[], updates: Partial<FoodListing>) => Promise<void>;
   bulkDeleteListings: (ids: string[]) => Promise<void>;
   exportListings: (format: 'csv' | 'json') => Promise<string>;
+  pruneExpiredListings: () => Promise<void>;
 }
 
 export const useListingsStore = create<ListingsState>((set, get) => ({
@@ -33,9 +36,18 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Prune expired listings that are more than 3 hours old
+      await get().pruneExpiredListings();
+      
+      // Get the updated listings after pruning
+      const currentListings = get().listings.length > 0 
+        ? get().listings 
+        : mockListings;
+      
       set({ 
-        listings: mockListings, 
-        filteredListings: mockListings,
+        listings: currentListings, 
+        filteredListings: currentListings,
         isLoading: false 
       });
     } catch (error) {
@@ -160,6 +172,69 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
         (listing.description && listing.description.toLowerCase().includes(lowercaseQuery))
       );
     }
+    
+    set({ filteredListings: filtered });
+  },
+
+  searchListingsOnRoute: (params: RouteSearchParams) => {
+    const { listings } = get();
+    const authStore = useAuthStore.getState();
+    const { user } = authStore;
+    
+    if (!user) {
+      set({ filteredListings: [], error: 'User not logged in' });
+      return;
+    }
+    
+    // Get the route locations based on the selected route type
+    const routeLocations = params.routeType === 'homeToOffice' 
+      ? user.homeToOfficeRoute || []
+      : user.officeToHomeRoute || [];
+    
+    if (routeLocations.length === 0) {
+      set({ filteredListings: [], error: 'No route locations defined' });
+      return;
+    }
+    
+    // Get the maximum detour distance
+    const maxDetour = params.maxDetour || user.detourPreference || 500;
+    
+    // Filter listings based on route proximity
+    // In a real app, we would use actual geospatial calculations
+    // For this demo, we'll use a simplified approach with random distances
+    let filtered = [...listings].filter(listing => {
+      // Simulate checking if the listing is within the detour distance of any route point
+      // In a real app, this would be a proper distance calculation
+      const minDistanceToRoute = Math.random() * 1000; // Random distance in meters
+      return minDistanceToRoute <= maxDetour;
+    });
+    
+    // Apply dish name filter if provided
+    if (params.dishName) {
+      const lowercaseDishName = params.dishName.toLowerCase();
+      filtered = filtered.filter(listing => 
+        listing.dishName.toLowerCase().includes(lowercaseDishName) ||
+        (listing.description && listing.description.toLowerCase().includes(lowercaseDishName))
+      );
+    }
+    
+    // Apply cuisine type filters if provided
+    if (params.cuisineTypes && params.cuisineTypes.length > 0) {
+      filtered = filtered.filter(listing => 
+        listing.cuisineType && params.cuisineTypes!.includes(listing.cuisineType)
+      );
+    }
+    
+    // Apply food type filter if provided
+    if (params.foodType && params.foodType !== 'both') {
+      filtered = filtered.filter(listing => 
+        params.foodType === 'vegetarian' ? listing.isVegetarian : !listing.isVegetarian
+      );
+    }
+    
+    // Sort by proximity to route (in a real app)
+    // For demo, we'll just randomize the order
+    filtered.sort(() => Math.random() - 0.5);
     
     set({ filteredListings: filtered });
   },
@@ -353,6 +428,28 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
     } catch (error) {
       set({ error: 'Failed to export listings', isLoading: false });
       throw error;
+    }
+  },
+
+  pruneExpiredListings: async () => {
+    try {
+      const now = new Date();
+      const threeHoursAgo = new Date(now.getTime() - (3 * 60 * 60 * 1000)); // 3 hours ago
+      
+      set(state => {
+        // Filter out listings that expired more than 3 hours ago
+        const updatedListings = state.listings.filter(listing => {
+          const expiryTime = new Date(listing.availableUntil);
+          return expiryTime > threeHoursAgo;
+        });
+        
+        return {
+          listings: updatedListings,
+          filteredListings: updatedListings,
+        };
+      });
+    } catch (error) {
+      console.error('Error pruning expired listings:', error);
     }
   },
 }));
