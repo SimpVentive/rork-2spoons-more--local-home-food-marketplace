@@ -37,7 +37,7 @@ export default function RouteSettingsScreen() {
   const [officeLocation, setOfficeLocation] = useState(user?.officeLocation || { latitude: 0, longitude: 0 });
   const [homeToOfficeRoute, setHomeToOfficeRoute] = useState<RouteLocation[]>(user?.homeToOfficeRoute || []);
   const [officeToHomeRoute, setOfficeToHomeRoute] = useState<RouteLocation[]>(user?.officeToHomeRoute || []);
-  const [routesSameAsHomeToOffice, setRoutesSameAsHomeToOffice] = useState(user?.routesSameAsHomeToOffice !== false);
+  const [isSameRoute, setIsSameRoute] = useState(user?.routesSameAsHomeToOffice !== false);
   const [detourPreference, setDetourPreference] = useState(user?.detourPreference || 500);
   
   const [locationPickerVisible, setLocationPickerVisible] = useState(false);
@@ -54,7 +54,7 @@ export default function RouteSettingsScreen() {
     setOfficeLocation(user.officeLocation || { latitude: 0, longitude: 0 });
     setHomeToOfficeRoute(user.homeToOfficeRoute || []);
     setOfficeToHomeRoute(user.officeToHomeRoute || []);
-    setRoutesSameAsHomeToOffice(user.routesSameAsHomeToOffice !== false);
+    setIsSameRoute(user.routesSameAsHomeToOffice !== false);
     setDetourPreference(user.detourPreference || 500);
   }, [user]);
   
@@ -120,6 +120,7 @@ export default function RouteSettingsScreen() {
   const handleToggleRoutesSync = async (value: boolean) => {
     try {
       await setRoutesSameAsHomeToOffice(value);
+      setIsSameRoute(value);
     } catch (error) {
       Alert.alert("Error", "Failed to update route settings");
     }
@@ -246,10 +247,10 @@ export default function RouteSettingsScreen() {
           <View style={styles.switchContainer}>
             <Text style={styles.switchLabel}>Same as Home to Office</Text>
             <Switch
-              value={routesSameAsHomeToOffice}
+              value={isSameRoute}
               onValueChange={handleToggleRoutesSync}
               trackColor={{ false: colors.border, true: `${colors.primary}80` }}
-              thumbColor={routesSameAsHomeToOffice ? colors.primary : '#f4f3f4'}
+              thumbColor={isSameRoute ? colors.primary : '#f4f3f4'}
             />
           </View>
         </View>
@@ -258,7 +259,7 @@ export default function RouteSettingsScreen() {
           Add locations along your route from office to home
         </Text>
         
-        {routesSameAsHomeToOffice ? (
+        {isSameRoute ? (
           <View style={styles.sameRouteMessage}>
             <ArrowLeft size={20} color={colors.textLight} />
             <Text style={styles.sameRouteText}>

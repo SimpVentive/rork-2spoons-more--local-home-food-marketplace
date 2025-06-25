@@ -31,6 +31,7 @@ interface InputProps {
   disabled?: boolean;
   maxLength?: number;
   rightIcon?: React.ReactNode;
+  leftIcon?: React.ReactNode;
   isPassword?: boolean;
   textAlignVertical?: 'auto' | 'top' | 'bottom' | 'center';
   style?: StyleProp<ViewStyle>;
@@ -55,6 +56,7 @@ const Input: React.FC<InputProps> = ({
   disabled = false,
   maxLength,
   rightIcon,
+  leftIcon,
   isPassword,
   textAlignVertical,
   style,
@@ -63,6 +65,11 @@ const Input: React.FC<InputProps> = ({
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
       <View style={[styles.inputContainer, error && styles.inputContainerError, style]}>
+        {leftIcon && (
+          <View style={styles.leftIconContainer}>
+            {leftIcon}
+          </View>
+        )}
         <TextInput
           style={[
             styles.input,
@@ -70,6 +77,7 @@ const Input: React.FC<InputProps> = ({
             error && styles.inputError,
             disabled && styles.inputDisabled,
             rightIcon && { paddingRight: 40 },
+            leftIcon && { paddingLeft: 40 },
             inputStyle,
           ]}
           placeholder={placeholder}
@@ -143,6 +151,13 @@ const styles = StyleSheet.create({
     right: 12,
     height: '100%',
     justifyContent: 'center',
+  },
+  leftIconContainer: {
+    position: 'absolute',
+    left: 12,
+    height: '100%',
+    justifyContent: 'center',
+    zIndex: 1,
   },
 });
 
