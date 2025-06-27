@@ -192,7 +192,7 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
                     <>
                       <Text style={styles.sectionTitle}>Sub-Cuisine (Optional)</Text>
                       <View style={styles.cuisineContainer}>
-                        {getAvailableSubcuisines().map((subcuisine) => (
+                        {getAvailableSubcuisines().map((subcuisine: string) => (
                           <TouchableOpacity
                             key={subcuisine}
                             style={[

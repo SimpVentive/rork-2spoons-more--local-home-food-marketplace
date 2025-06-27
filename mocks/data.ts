@@ -104,6 +104,21 @@ export const CUISINE_TYPES = [
   'Turkish',
 ];
 
+// South Indian Subcuisines
+export const SOUTH_INDIAN_SUBCUISINES: Record<string, string[]> = {
+  'Tamil': ['Chettinad', 'Madurai', 'Kongunadu', 'Tirunelveli'],
+  'Kerala': ['Malabar', 'Travancore', 'Kuttanad', 'Central Kerala'],
+  'Andhra': ['Rayalaseema', 'Coastal Andhra', 'Telangana Style'],
+  'Karnataka': ['Udupi', 'Mangalorean', 'North Karnataka', 'Kodagu'],
+  'General': ['Breakfast', 'Rice Dishes', 'Curries', 'Snacks', 'Desserts']
+};
+
+// Flattened list of all South Indian cuisines
+export const SOUTH_INDIAN_CUISINES_FLAT: string[] = [
+  'Tamil', 'Kerala', 'Andhra', 'Karnataka', 'General',
+  ...Object.values(SOUTH_INDIAN_SUBCUISINES).flat()
+];
+
 // Payment Methods
 export const PAYMENT_METHODS = [
   'UPI',

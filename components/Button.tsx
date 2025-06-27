@@ -21,6 +21,7 @@ interface ButtonProps {
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
+  icon?: React.ReactNode; // Added icon prop
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -32,6 +33,7 @@ const Button: React.FC<ButtonProps> = ({
   disabled = false,
   style,
   textStyle,
+  icon, // Added icon prop
 }) => {
   const getButtonStyle = () => {
     const baseStyle: ViewStyle = {
@@ -121,7 +123,8 @@ const Button: React.FC<ButtonProps> = ({
       {isLoading ? (
         <ActivityIndicator size="small" color={variant === 'outline' ? colors.primary : colors.white} />
       ) : (
-        <View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+          {icon && <View style={{ marginRight: 8 }}>{icon}</View>}
           <Text style={[getTextStyle(), textStyle]}>{title}</Text>
         </View>
       )}
