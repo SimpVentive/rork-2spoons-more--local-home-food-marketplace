@@ -19,18 +19,19 @@ import colors from '@/constants/colors';
 import { Platform, StyleSheet, View, TouchableOpacity, Text, Modal, Pressable } from 'react-native';
 
 export default function TabLayout() {
-  const { isAuthenticated, userPreference } = useAuthStore();
   const router = useRouter();
   const [moreMenuVisible, setMoreMenuVisible] = useState(false);
   
   // Check authentication in useEffect to avoid navigation during render
   useEffect(() => {
+    const { isAuthenticated, userPreference } = useAuthStore.getState();
+    
     if (!isAuthenticated) {
       router.replace('/(auth)');
     } else if (!userPreference) {
       router.replace('/user-preference');
     }
-  }, [isAuthenticated, userPreference]);
+  }, []);
 
   const toggleMoreMenu = () => {
     setMoreMenuVisible(!moreMenuVisible);

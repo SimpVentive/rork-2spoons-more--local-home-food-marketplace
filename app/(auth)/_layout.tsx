@@ -3,11 +3,13 @@ import { Stack, useRouter } from 'expo-router';
 import { useAuthStore } from '@/store/auth-store';
 
 export default function AuthLayout() {
-  const { isAuthenticated, userPreference } = useAuthStore();
   const router = useRouter();
-
-  // Check authentication in useEffect to avoid navigation during render
+  // Move store access into useEffect to prevent navigation during initial render
+  
   useEffect(() => {
+    // Access the store inside useEffect to prevent navigation during initial render
+    const { isAuthenticated, userPreference } = useAuthStore.getState();
+    
     if (isAuthenticated) {
       // If user has no preference set, redirect to preference selection
       if (!userPreference) {
@@ -22,7 +24,7 @@ export default function AuthLayout() {
         }
       }
     }
-  }, [isAuthenticated, userPreference]);
+  }, []);
 
   return (
     <Stack
