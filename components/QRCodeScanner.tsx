@@ -92,7 +92,6 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
         facing="back"
         barcodeScannerSettings={{
           barcodeTypes: ['qr'],
-          scanFromImage: true,
         }}
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
       >
