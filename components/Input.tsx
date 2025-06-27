@@ -35,6 +35,7 @@ interface InputProps {
   isPassword?: boolean;
   textAlignVertical?: 'auto' | 'top' | 'bottom' | 'center';
   style?: StyleProp<ViewStyle>;
+  helperText?: string;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -60,6 +61,7 @@ const Input: React.FC<InputProps> = ({
   isPassword,
   textAlignVertical,
   style,
+  helperText,
 }) => {
   return (
     <View style={[styles.container, containerStyle]}>
@@ -100,6 +102,7 @@ const Input: React.FC<InputProps> = ({
         )}
       </View>
       {error && <Text style={[styles.errorText, errorStyle]}>{error}</Text>}
+      {helperText && !error && <Text style={styles.helperText}>{helperText}</Text>}
     </View>
   );
 };
@@ -143,6 +146,11 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.error,
+    fontSize: 14,
+    marginTop: 4,
+  },
+  helperText: {
+    color: colors.textLight,
     fontSize: 14,
     marginTop: 4,
   },

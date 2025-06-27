@@ -12,6 +12,7 @@ export default function RootLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="(admin)" />
       <Stack.Screen name="user-preference" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="seller-onboarding" options={{ gestureEnabled: false }} />
       <Stack.Screen name="edit-profile" />
       <Stack.Screen name="create-listing" />
       <Stack.Screen name="listing/[id]" />

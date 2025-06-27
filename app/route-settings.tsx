@@ -30,7 +30,7 @@ import LocationPicker from '@/components/LocationPicker';
 import { RouteLocation } from '@/types';
 
 export default function RouteSettingsScreen() {
-  const { user, updateOfficeAddress, addRouteLocation, removeRouteLocation, updateDetourPreference, setRoutesSameAsHomeToOffice } = useAuthStore();
+  const { user, updateOfficeAddress, addRouteLocation, removeRouteLocation, updateDetourPreference, setRoutesSameAsHomeToOffice: updateRoutesSameAsHomeToOffice } = useAuthStore();
   const router = useRouter();
   
   const [officeAddress, setOfficeAddress] = useState(user?.officeAddress || '');
@@ -119,7 +119,7 @@ export default function RouteSettingsScreen() {
   
   const handleToggleRoutesSync = async (value: boolean) => {
     try {
-      await setRoutesSameAsHomeToOffice(value);
+      await updateRoutesSameAsHomeToOffice(value);
       setIsSameRoute(value);
     } catch (error) {
       Alert.alert("Error", "Failed to update route settings");

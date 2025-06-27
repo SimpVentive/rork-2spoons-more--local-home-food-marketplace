@@ -27,7 +27,8 @@ export default function UserPreferenceScreen() {
     if (selectedOption === 'buyer') {
       router.replace('/(tabs)');
     } else {
-      router.replace('/(tabs)/profile');
+      // Navigate to seller onboarding screen
+      router.push('/seller-onboarding');
     }
   };
 
