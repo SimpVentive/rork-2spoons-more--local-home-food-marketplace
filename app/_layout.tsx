@@ -1,9 +1,25 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { useAuthStore } from '@/store/auth-store';
+import { Platform } from 'react-native';
+import * as Permissions from 'expo-permissions';
 
 export default function RootLayout() {
   const { isAuthenticated } = useAuthStore();
+
+  // Request camera permissions early on Android
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      (async () => {
+        try {
+          const { status } = await Permissions.askAsync(Permissions.CAMERA);
+          console.log("Camera permission status:", status);
+        } catch (error) {
+          console.error("Error requesting camera permission:", error);
+        }
+      })();
+    }
+  }, []);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

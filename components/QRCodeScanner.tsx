@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
@@ -15,19 +15,23 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   const [scanned, setScanned] = useState(false);
   const [hasError, setHasError] = useState(false);
   const router = useRouter();
+  const cameraRef = useRef(null);
 
   useEffect(() => {
     if (!permission?.granted) {
       requestPermission();
     }
-  }, []);
+  }, [permission, requestPermission]);
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     if (!scanned && data) {
       console.log("Barcode scanned:", data); // Debug log
       setScanned(true);
       try {
-        onScan(data);
+        // Add a slight delay to ensure UI updates before processing
+        setTimeout(() => {
+          onScan(data);
+        }, 300);
       } catch (error) {
         console.error("Error in scan handler:", error);
         setHasError(true);
@@ -83,10 +87,12 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   return (
     <View style={styles.container}>
       <CameraView
+        ref={cameraRef}
         style={styles.camera}
         facing="back"
         barcodeScannerSettings={{
           barcodeTypes: ['qr'],
+          scanFromImage: true,
         }}
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
       >

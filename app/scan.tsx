@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import QRCodeScanner from '@/components/QRCodeScanner';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
+import { parseQRCode } from '@/utils/qrCodeHelper';
 
 export default function ScanScreen() {
   const [scanning, setScanning] = useState(true);
@@ -24,26 +25,34 @@ export default function ScanScreen() {
     
     // Process the scanned data
     try {
-      // Check if it's a valid URL or order ID
-      if (data.startsWith('http') || data.startsWith('https')) {
-        // It's a URL, extract relevant parts
-        console.log("URL detected:", data);
-        
-        if (data.includes('/order/')) {
-          // Extract order ID and navigate to order details
-          const orderId = data.split('/order/')[1].split('?')[0].split('#')[0];
-          console.log("Navigating to order:", orderId);
-          router.push(`/order/${orderId}`);
-        } else if (data.includes('/listing/')) {
-          // Extract listing ID and navigate to listing details
-          const listingId = data.split('/listing/')[1].split('?')[0].split('#')[0];
-          console.log("Navigating to listing:", listingId);
-          router.push(`/listing/${listingId}`);
-        } else {
-          // Generic URL, show alert
+      // Use the helper function to parse the QR code
+      const parsedData = parseQRCode(data);
+      console.log("Parsed QR data:", parsedData); // Debug log
+      
+      switch (parsedData.type) {
+        case 'order':
+          if (parsedData.id) {
+            console.log("Navigating to order:", parsedData.id);
+            router.push(`/order/${parsedData.id}`);
+          } else {
+            throw new Error('Invalid order ID');
+          }
+          break;
+          
+        case 'listing':
+          if (parsedData.id) {
+            console.log("Navigating to listing:", parsedData.id);
+            router.push(`/listing/${parsedData.id}`);
+          } else {
+            throw new Error('Invalid listing ID');
+          }
+          break;
+          
+        case 'url':
+          // Handle URL
           Alert.alert(
             'External URL',
-            `Detected URL: ${data}`,
+            `Detected URL: ${parsedData.url}`,
             [
               { text: 'Cancel', style: 'cancel' },
               { 
@@ -55,71 +64,53 @@ export default function ScanScreen() {
               }
             ]
           );
-        }
-      } else if (data.startsWith('ORDER:')) {
-        // It's an order ID
-        const orderId = data.replace('ORDER:', '').trim();
-        console.log("Order ID detected:", orderId);
-        if (orderId) {
-          router.push(`/order/${orderId}`);
-        } else {
-          throw new Error('Invalid order ID format');
-        }
-      } else if (data.startsWith('LISTING:')) {
-        // It's a listing ID
-        const listingId = data.replace('LISTING:', '').trim();
-        console.log("Listing ID detected:", listingId);
-        if (listingId) {
-          router.push(`/listing/${listingId}`);
-        } else {
-          throw new Error('Invalid listing ID format');
-        }
-      } else {
-        // Try to detect if it's a raw ID (without prefix)
-        const idPattern = /^[a-zA-Z0-9-_]{4,}$/;
-        if (idPattern.test(data)) {
-          // It looks like an ID, try to navigate to both possibilities
-          Alert.alert(
-            'ID Detected',
-            'What type of item is this?',
-            [
-              { 
-                text: 'Order', 
-                onPress: () => router.push(`/order/${data}`)
-              },
-              { 
-                text: 'Listing', 
-                onPress: () => router.push(`/listing/${data}`)
-              },
-              {
-                text: 'Cancel',
-                style: 'cancel',
-                onPress: () => {
-                  setScanning(true);
-                  setResult(null);
+          break;
+          
+        case 'unknown':
+          // Try to detect if it's a raw ID (without prefix)
+          if (parsedData.id) {
+            Alert.alert(
+              'ID Detected',
+              'What type of item is this?',
+              [
+                { 
+                  text: 'Order', 
+                  onPress: () => router.push(`/order/${parsedData.id}`)
+                },
+                { 
+                  text: 'Listing', 
+                  onPress: () => router.push(`/listing/${parsedData.id}`)
+                },
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
+                  onPress: () => {
+                    setScanning(true);
+                    setResult(null);
+                  }
                 }
-              }
-            ]
-          );
-        } else {
-          // Unknown format
-          setError('Unrecognized QR code format');
-          Alert.alert(
-            'Unrecognized QR Code',
-            'The scanned QR code is not in a format recognized by this app.',
-            [
-              { text: 'OK' },
-              { 
-                text: 'Scan Again', 
-                onPress: () => {
-                  setScanning(true);
-                  setResult(null);
-                  setError(null);
+              ]
+            );
+          } else {
+            // Unknown format
+            setError('Unrecognized QR code format');
+            Alert.alert(
+              'Unrecognized QR Code',
+              'The scanned QR code is not in a format recognized by this app.',
+              [
+                { text: 'OK' },
+                { 
+                  text: 'Scan Again', 
+                  onPress: () => {
+                    setScanning(true);
+                    setResult(null);
+                    setError(null);
+                  }
                 }
-              }
-            ]
-          );
-        }
+              ]
+            );
+          }
+          break;
       }
     } catch (error) {
       console.error('QR code processing error:', error);
