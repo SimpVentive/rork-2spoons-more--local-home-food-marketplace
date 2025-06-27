@@ -41,6 +41,7 @@ export interface User {
   firstPostDate?: string | null;
   postCount?: number;
   freePostsRemaining?: number;
+  commissionPercentage?: number; // Added for commission percentage
 }
 
 export interface UserPreference {

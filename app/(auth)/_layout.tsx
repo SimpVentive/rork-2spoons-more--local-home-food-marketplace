@@ -4,7 +4,6 @@ import { useAuthStore } from '@/store/auth-store';
 
 export default function AuthLayout() {
   const router = useRouter();
-  // Move store access into useEffect to prevent navigation during initial render
   
   useEffect(() => {
     // Access the store inside useEffect to prevent navigation during initial render

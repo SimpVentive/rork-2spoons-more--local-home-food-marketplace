@@ -1,491 +1,309 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
   TouchableOpacity,
   Alert,
+  Switch,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { 
-  Camera, 
-  MapPin, 
-  ChefHat, 
-  CreditCard, 
+import {
+  User as UserIcon,
+  Mail,
+  Phone,
+  MapPin,
+  Camera,
+  ChefHat,
   X,
-  Check,
-  Plus,
+  Edit3,
+  Save,
+  LogOut,
 } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '@/store/auth-store';
-import Button from '@/components/Button';
 import Input from '@/components/Input';
+import Button from '@/components/Button';
 import colors from '@/constants/colors';
-import { CUISINE_TYPES, PAYMENT_METHODS } from '@/mocks/data';
-import LocationPicker from '@/components/LocationPicker';
 
 export default function EditProfileScreen() {
-  const { user, updateUser } = useAuthStore();
+  const { user, updateProfile, logout } = useAuthStore();
   const router = useRouter();
-  
+
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
-  const [bio, setBio] = useState(user?.experience || '');
-  const [profileImage, setProfileImage] = useState(user?.profileImage || '');
+  const [address, setAddress] = useState(user?.address || '');
+  const [experience, setExperience] = useState(user?.experience || '');
   const [cuisineTypes, setCuisineTypes] = useState<string[]>(user?.cuisineTypes || []);
-  const [paymentMethods, setPaymentMethods] = useState<string[]>(user?.paymentMethods || []);
-  const [location, setLocation] = useState(user?.location || { latitude: 17.4123, longitude: 78.2679 });
-  const [isChef, setIsChef] = useState(user?.isChef || false);
+  const [profileImage, setProfileImage] = useState(user?.profileImage || '');
   const [allowProfileDisplay, setAllowProfileDisplay] = useState(user?.allowProfileDisplay !== false);
-  
-  // Detailed address fields
-  const [doorNumber, setDoorNumber] = useState('');
-  const [buildingName, setBuildingName] = useState('');
-  const [streetName, setStreetName] = useState('');
-  const [area, setArea] = useState('');
-  const [landmark, setLandmark] = useState('');
-  const [city, setCity] = useState('');
-  const [district, setDistrict] = useState('');
-  const [state, setState] = useState('');
-  const [pinCode, setPinCode] = useState('');
-  
-  const [locationPickerVisible, setLocationPickerVisible] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  
+  const [isChef, setIsChef] = useState(user?.isChef || false);
+  const [commissionPercentage, setCommissionPercentage] = useState(user?.commissionPercentage || 10);
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     if (!user) {
       router.replace('/(auth)');
-      return;
-    }
-    
-    // Parse address if it exists
-    if (user.address) {
-      parseAddress(user.address);
     }
   }, [user]);
-  
-  const parseAddress = (address: string) => {
-    // This is a simple parsing logic - in a real app, you'd have a more robust solution
-    const parts = address.split(',').map(part => part.trim());
-    
-    if (parts.length >= 1) setDoorNumber(parts[0]);
-    if (parts.length >= 2) setBuildingName(parts[1]);
-    if (parts.length >= 3) setStreetName(parts[2]);
-    if (parts.length >= 4) setArea(parts[3]);
-    if (parts.length >= 5) setLandmark(parts[4]);
-    if (parts.length >= 6) setCity(parts[5]);
-    if (parts.length >= 7) setDistrict(parts[6]);
-    if (parts.length >= 8) setState(parts[7]);
-    if (parts.length >= 9) setPinCode(parts[8]);
-  };
-  
-  const formatAddress = () => {
-    const addressParts = [
-      doorNumber,
-      buildingName,
-      streetName,
-      area,
-      landmark,
-      city,
-      district,
-      state,
-      pinCode
-    ].filter(Boolean);
-    
-    return addressParts.join(', ');
-  };
-  
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    
+
+  const handleSave = async () => {
     if (!name.trim()) {
-      newErrors.name = 'Name is required';
+      Alert.alert('Error', 'Please enter your name');
+      return;
     }
-    
+
     if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email is invalid';
+      Alert.alert('Error', 'Please enter your email');
+      return;
     }
-    
-    if (phone && !/^\d{10}$/.test(phone)) {
-      newErrors.phone = 'Phone number should be 10 digits';
+
+    try {
+      setIsLoading(true);
+      const success = await updateProfile({
+        name,
+        email,
+        phone,
+        address,
+        experience,
+        cuisineTypes,
+        profileImage,
+        allowProfileDisplay,
+        isChef,
+        commissionPercentage,
+      });
+
+      if (success) {
+        Alert.alert('Success', 'Profile updated successfully');
+        router.back();
+      } else {
+        Alert.alert('Error', 'Failed to update profile');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
-    
-    if (!doorNumber.trim()) {
-      newErrors.doorNumber = 'Door/Flat number is required';
-    }
-    
-    if (!streetName.trim()) {
-      newErrors.streetName = 'Street name is required';
-    }
-    
-    if (!area.trim()) {
-      newErrors.area = 'Area/Locality is required';
-    }
-    
-    if (!city.trim()) {
-      newErrors.city = 'City is required';
-    }
-    
-    if (!state.trim()) {
-      newErrors.state = 'State is required';
-    }
-    
-    if (!pinCode.trim()) {
-      newErrors.pinCode = 'PIN code is required';
-    } else if (!/^\d{6}$/.test(pinCode)) {
-      newErrors.pinCode = 'PIN code should be 6 digits';
-    }
-    
-    if (isChef && cuisineTypes.length === 0) {
-      newErrors.cuisineTypes = 'Please select at least one cuisine type';
-    }
-    
-    if (paymentMethods.length === 0) {
-      newErrors.paymentMethods = 'Please select at least one payment method';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
-  
-  const handleSave = () => {
-    if (!validateForm()) return;
-    
-    const formattedAddress = formatAddress();
-    
-    const updatedUser = {
-      name,
-      email,
-      phone,
-      address: formattedAddress,
-      experience: bio,
-      profileImage,
-      cuisineTypes,
-      paymentMethods,
-      location,
-      isChef,
-      allowProfileDisplay,
-    };
-    
-    updateUser(updatedUser);
-    Alert.alert('Success', 'Profile updated successfully');
-    router.back();
+
+  const handlePickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setProfileImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image');
+    }
   };
-  
-  const handleLocationSelect = (selectedLocation: { latitude: number; longitude: number; address: string }) => {
-    setLocation({
-      latitude: selectedLocation.latitude,
-      longitude: selectedLocation.longitude,
-    });
-    parseAddress(selectedLocation.address);
-    setLocationPickerVisible(false);
-  };
-  
-  const toggleCuisineType = (cuisine: string) => {
-    if (cuisineTypes.includes(cuisine)) {
-      setCuisineTypes(cuisineTypes.filter(item => item !== cuisine));
-    } else {
+
+  const handleAddCuisine = (cuisine: string) => {
+    if (!cuisineTypes.includes(cuisine)) {
       setCuisineTypes([...cuisineTypes, cuisine]);
-    }
-  };
-  
-  const togglePaymentMethod = (method: string) => {
-    if (paymentMethods.includes(method)) {
-      setPaymentMethods(paymentMethods.filter(item => item !== method));
     } else {
-      setPaymentMethods([...paymentMethods, method]);
+      setCuisineTypes(cuisineTypes.filter(c => c !== cuisine));
     }
   };
-  
-  const handleImagePicker = () => {
-    // In a real app, this would use expo-image-picker
-    // For now, we'll just use a placeholder image
-    const placeholderImages = [
-      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836',
-      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd',
-      'https://images.unsplash.com/photo-1493770348161-369560ae357d',
-    ];
-    
-    const randomImage = placeholderImages[Math.floor(Math.random() * placeholderImages.length)];
-    setProfileImage(randomImage);
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          onPress: () => {
+            logout();
+            router.replace('/(auth)');
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
-  
+
+  const cuisineOptions = [
+    'South Indian',
+    'North Indian',
+    'Chinese',
+    'Italian',
+    'Mexican',
+    'Thai',
+    'Japanese',
+    'Continental',
+    'Middle Eastern',
+    'Desserts',
+  ];
+
+  if (!user) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      )}
+
       <View style={styles.header}>
         <Text style={styles.title}>Edit Profile</Text>
         <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
           <X size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.profileImageContainer}>
         <Image
           source={{ uri: profileImage || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167' }}
           style={styles.profileImage}
           contentFit="cover"
         />
-        <TouchableOpacity style={styles.cameraButton} onPress={handleImagePicker}>
+        <TouchableOpacity style={styles.editImageButton} onPress={handlePickImage}>
           <Camera size={20} color={colors.white} />
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.formContainer}>
         <Input
           label="Full Name"
-          placeholder="Enter your full name"
           value={name}
           onChangeText={setName}
-          error={errors.name}
+          placeholder="Enter your full name"
+          leftIcon={<UserIcon size={20} color={colors.textLight} />}
         />
-        
+
         <Input
           label="Email"
-          placeholder="Enter your email"
           value={email}
           onChangeText={setEmail}
+          placeholder="Enter your email"
           keyboardType="email-address"
-          error={errors.email}
+          leftIcon={<Mail size={20} color={colors.textLight} />}
         />
-        
+
         <Input
-          label="Phone Number"
-          placeholder="Enter your phone number"
+          label="Phone"
           value={phone}
           onChangeText={setPhone}
+          placeholder="Enter your phone number"
           keyboardType="phone-pad"
-          error={errors.phone}
+          leftIcon={<Phone size={20} color={colors.textLight} />}
         />
-        
-        <Text style={styles.sectionTitle}>Address Details</Text>
-        
+
         <Input
-          label="House/Flat/Door Number *"
-          placeholder="e.g., 42, Flat 3B"
-          value={doorNumber}
-          onChangeText={setDoorNumber}
-          error={errors.doorNumber}
+          label="Address"
+          value={address}
+          onChangeText={setAddress}
+          placeholder="Enter your address"
+          leftIcon={<MapPin size={20} color={colors.textLight} />}
         />
-        
-        <Input
-          label="Building Name (optional)"
-          placeholder="e.g., Sunshine Apartments"
-          value={buildingName}
-          onChangeText={setBuildingName}
-        />
-        
-        <Input
-          label="Street/Road Name *"
-          placeholder="e.g., MG Road, 4th Cross"
-          value={streetName}
-          onChangeText={setStreetName}
-          error={errors.streetName}
-        />
-        
-        <Input
-          label="Area/Locality/Colony *"
-          placeholder="e.g., Jayanagar, Koramangala"
-          value={area}
-          onChangeText={setArea}
-          error={errors.area}
-        />
-        
-        <Input
-          label="Landmark (optional)"
-          placeholder="e.g., Near Post Office"
-          value={landmark}
-          onChangeText={setLandmark}
-        />
-        
-        <Input
-          label="City/Town/Village *"
-          placeholder="e.g., Bangalore"
-          value={city}
-          onChangeText={setCity}
-          error={errors.city}
-        />
-        
-        <Input
-          label="District (optional)"
-          placeholder="e.g., Bangalore Urban"
-          value={district}
-          onChangeText={setDistrict}
-        />
-        
-        <Input
-          label="State/Union Territory *"
-          placeholder="e.g., Karnataka"
-          value={state}
-          onChangeText={setState}
-          error={errors.state}
-        />
-        
-        <Input
-          label="PIN Code *"
-          placeholder="e.g., 560001"
-          value={pinCode}
-          onChangeText={setPinCode}
-          keyboardType="number-pad"
-          error={errors.pinCode}
-        />
-        
-        <View style={styles.mapContainer}>
-          <Text style={styles.label}>Location on Map</Text>
-          <TouchableOpacity 
-            style={styles.mapButton}
-            onPress={() => setLocationPickerVisible(true)}
-          >
-            <MapPin size={20} color={colors.primary} />
-            <Text style={styles.mapButtonText}>
-              {location ? 'Change Location on Map' : 'Select Location on Map'}
-            </Text>
-          </TouchableOpacity>
-          {location && (
-            <View style={styles.locationInfo}>
-              <Text style={styles.locationCoordinates}>
-                Latitude: {location.latitude.toFixed(6)}
-              </Text>
-              <Text style={styles.locationCoordinates}>
-                Longitude: {location.longitude.toFixed(6)}
-              </Text>
-            </View>
-          )}
+
+        <View style={styles.switchContainer}>
+          <View style={styles.switchRow}>
+            <ChefHat size={20} color={colors.textLight} />
+            <Text style={styles.switchLabel}>I am a Chef/Home Cook</Text>
+            <Switch
+              value={isChef}
+              onValueChange={setIsChef}
+              trackColor={{ false: colors.border, true: `${colors.primary}80` }}
+              thumbColor={isChef ? colors.primary : '#f4f3f4'}
+            />
+          </View>
         </View>
-        
-        <Input
-          label="Bio"
-          placeholder="Tell us about yourself"
-          value={bio}
-          onChangeText={setBio}
-          multiline
-          numberOfLines={4}
-          style={styles.bioInput}
-        />
-        
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>I am a Chef</Text>
-          <TouchableOpacity 
-            style={[
-              styles.toggleButton,
-              isChef && styles.toggleButtonActive,
-            ]}
-            onPress={() => setIsChef(!isChef)}
-          >
-            <View style={[
-              styles.toggleIndicator,
-              isChef && styles.toggleIndicatorActive,
-            ]}>
-              {isChef && <Check size={12} color={colors.white} />}
-            </View>
-          </TouchableOpacity>
-        </View>
-        
+
         {isChef && (
-          <View style={styles.sectionContainer}>
+          <>
+            <Input
+              label="Cooking Experience"
+              value={experience}
+              onChangeText={setExperience}
+              placeholder="Describe your cooking experience"
+              multiline
+              numberOfLines={3}
+              leftIcon={<ChefHat size={20} color={colors.textLight} />}
+            />
+
             <Text style={styles.sectionTitle}>Cuisine Types</Text>
-            {errors.cuisineTypes && <Text style={styles.errorText}>{errors.cuisineTypes}</Text>}
-            <View style={styles.tagsContainer}>
-              {CUISINE_TYPES.map((cuisine) => (
+            <View style={styles.cuisineContainer}>
+              {cuisineOptions.map((cuisine) => (
                 <TouchableOpacity
                   key={cuisine}
                   style={[
-                    styles.tag,
-                    cuisineTypes.includes(cuisine) && styles.tagActive,
+                    styles.cuisineTag,
+                    cuisineTypes.includes(cuisine) && styles.selectedCuisineTag,
                   ]}
-                  onPress={() => toggleCuisineType(cuisine)}
+                  onPress={() => handleAddCuisine(cuisine)}
                 >
-                  <Text 
+                  <Text
                     style={[
-                      styles.tagText,
-                      cuisineTypes.includes(cuisine) && styles.tagTextActive,
+                      styles.cuisineTagText,
+                      cuisineTypes.includes(cuisine) && styles.selectedCuisineTagText,
                     ]}
                   >
                     {cuisine}
                   </Text>
-                  {cuisineTypes.includes(cuisine) && (
-                    <Check size={12} color={colors.white} style={styles.tagIcon} />
-                  )}
                 </TouchableOpacity>
               ))}
             </View>
-          </View>
-        )}
-        
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Payment Methods</Text>
-          {errors.paymentMethods && <Text style={styles.errorText}>{errors.paymentMethods}</Text>}
-          <View style={styles.tagsContainer}>
-            {PAYMENT_METHODS.map((method) => (
-              <TouchableOpacity
-                key={method}
-                style={[
-                  styles.tag,
-                  paymentMethods.includes(method) && styles.tagActive,
-                ]}
-                onPress={() => togglePaymentMethod(method)}
-              >
-                <Text 
-                  style={[
-                    styles.tagText,
-                    paymentMethods.includes(method) && styles.tagTextActive,
-                  ]}
-                >
-                  {method}
-                </Text>
-                {paymentMethods.includes(method) && (
-                  <Check size={12} color={colors.white} style={styles.tagIcon} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-        
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Display Profile Publicly</Text>
-          <TouchableOpacity 
-            style={[
-              styles.toggleButton,
-              allowProfileDisplay && styles.toggleButtonActive,
-            ]}
-            onPress={() => setAllowProfileDisplay(!allowProfileDisplay)}
-          >
-            <View style={[
-              styles.toggleIndicator,
-              allowProfileDisplay && styles.toggleIndicatorActive,
-            ]}>
-              {allowProfileDisplay && <Check size={12} color={colors.white} />}
+
+            <View style={styles.switchContainer}>
+              <View style={styles.switchRow}>
+                <UserIcon size={20} color={colors.textLight} />
+                <Text style={styles.switchLabel}>Allow Profile Display</Text>
+                <Switch
+                  value={allowProfileDisplay}
+                  onValueChange={setAllowProfileDisplay}
+                  trackColor={{ false: colors.border, true: `${colors.primary}80` }}
+                  thumbColor={allowProfileDisplay ? colors.primary : '#f4f3f4'}
+                />
+              </View>
             </View>
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.buttonsContainer}>
-          <Button
-            title="Cancel"
-            onPress={() => router.back()}
-            variant="outline"
-            style={styles.cancelButton}
-          />
-          <Button
-            title="Save Changes"
-            onPress={handleSave}
-            style={styles.saveButton}
-          />
-        </View>
-      </View>
-      
-      {locationPickerVisible && (
-        <LocationPicker
-          initialLocation={location ? { ...location, address: formatAddress() } : undefined}
-          onSelectLocation={handleLocationSelect}
-          onClose={() => setLocationPickerVisible(false)}
+
+            <View style={styles.commissionContainer}>
+              <Text style={styles.commissionTitle}>Commission Percentage</Text>
+              <Text style={styles.commissionValue}>{commissionPercentage}%</Text>
+              <Text style={styles.commissionDescription}>
+                This is the platform fee charged on each sale. Commission rates are set by the platform and cannot be modified by sellers.
+              </Text>
+            </View>
+          </>
+        )}
+
+        <Button
+          title="Save Changes"
+          onPress={handleSave}
+          style={styles.saveButton}
+          icon={<Save size={20} color={colors.white} />}
         />
-      )}
+
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <LogOut size={20} color={colors.error} />
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -496,7 +314,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   contentContainer: {
-    paddingBottom: 32,
+    paddingBottom: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
   },
   header: {
     flexDirection: 'row',
@@ -519,7 +354,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 24,
     marginBottom: 16,
-    position: 'relative',
   },
   profileImage: {
     width: 120,
@@ -527,10 +361,10 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     backgroundColor: colors.border,
   },
-  cameraButton: {
+  editImageButton: {
     position: 'absolute',
     bottom: 0,
-    right: Platform.OS === 'web' ? '30%' : 30,
+    right: Platform.OS === 'web' ? '35%' : '30%',
     backgroundColor: colors.primary,
     width: 36,
     height: 36,
@@ -542,94 +376,37 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     padding: 16,
+  },
+  switchContainer: {
+    marginVertical: 16,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: colors.white,
+    padding: 16,
+    borderRadius: 8,
+  },
+  switchLabel: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text,
+    marginLeft: 12,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: colors.text,
     marginTop: 16,
     marginBottom: 12,
   },
-  mapContainer: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  mapButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.card,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
-  },
-  mapButtonText: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: colors.primary,
-    fontWeight: '500',
-  },
-  locationInfo: {
-    marginTop: 8,
-    padding: 12,
-    backgroundColor: colors.card,
-    borderRadius: 8,
-  },
-  locationCoordinates: {
-    fontSize: 14,
-    color: colors.text,
-    marginBottom: 4,
-  },
-  bioInput: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  sectionContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 16,
-  },
-  toggleButton: {
-    width: 50,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.border,
-    padding: 2,
-    justifyContent: 'center',
-  },
-  toggleButtonActive: {
-    backgroundColor: colors.primary,
-  },
-  toggleIndicator: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  toggleIndicatorActive: {
-    transform: [{ translateX: 22 }],
-  },
-  tagsContainer: {
+  cuisineContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 8,
+    marginBottom: 8,
   },
-  tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  cuisineTag: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 16,
@@ -637,33 +414,56 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginBottom: 8,
   },
-  tagActive: {
+  selectedCuisineTag: {
     backgroundColor: colors.primary,
   },
-  tagText: {
+  cuisineTagText: {
     fontSize: 14,
     color: colors.text,
   },
-  tagTextActive: {
+  selectedCuisineTagText: {
     color: colors.white,
   },
-  tagIcon: {
-    marginLeft: 4,
-  },
-  buttonsContainer: {
-    flexDirection: 'row',
+  saveButton: {
     marginTop: 24,
   },
-  cancelButton: {
-    flex: 1,
-    marginRight: 8,
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.error,
+    borderRadius: 8,
   },
-  saveButton: {
-    flex: 2,
-  },
-  errorText: {
+  logoutText: {
+    marginLeft: 8,
+    fontSize: 16,
     color: colors.error,
+    fontWeight: '500',
+  },
+  commissionContainer: {
+    backgroundColor: colors.card,
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  commissionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  commissionValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: 8,
+  },
+  commissionDescription: {
     fontSize: 14,
-    marginTop: 4,
+    color: colors.textLight,
+    lineHeight: 20,
   },
 });

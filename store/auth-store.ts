@@ -60,6 +60,8 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isAdmin: user.isAdmin === true,
             token: 'demo-token-' + Math.random().toString(36).substring(2, 15),
+            // Set default user preference based on isChef flag
+            userPreference: user.isChef ? { type: 'seller' } : { type: 'buyer' }
           });
           
           return true;
@@ -92,6 +94,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isAdmin: true,
             token: 'admin-token-' + Math.random().toString(36).substring(2, 15),
+            userPreference: { type: 'seller' } // Admins are always sellers
           });
           
           return true;

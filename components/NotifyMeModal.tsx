@@ -296,6 +296,13 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
                     onPress={handleSubmit}
                     style={styles.button}
                   />
+                  
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={handleClose}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
                 </View>
               </ScrollView>
             </View>
@@ -431,6 +438,19 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 8,
+  },
+  cancelButton: {
+    marginTop: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: colors.textLight,
+    fontWeight: '500',
   },
 });
 

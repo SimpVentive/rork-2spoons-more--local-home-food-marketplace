@@ -35,15 +35,27 @@ export default function LoginScreen() {
     try {
       setIsLoading(true);
       setError('');
+      
+      // Call login function from auth store
       const success = await login(email, password);
       
       if (!success) {
         setError('Invalid email or password. Try using john@example.com');
+      } else {
+        // If login is successful, manually navigate to ensure it works
+        const { isAuthenticated, userPreference } = useAuthStore.getState();
+        
+        if (isAuthenticated) {
+          if (!userPreference) {
+            router.replace('/user-preference');
+          } else if (userPreference.type === 'seller') {
+            router.replace('/(tabs)/profile');
+          } else {
+            router.replace('/(tabs)');
+          }
+        }
       }
-      // If login is successful, the store will update isAuthenticated
-      // and the _layout.tsx will redirect to the main app
     } catch (error) {
-      // Error is handled in the store
       console.log('Login error:', error);
       setError('Login failed. Please try again.');
     } finally {
