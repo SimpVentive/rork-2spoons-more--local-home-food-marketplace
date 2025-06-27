@@ -30,6 +30,11 @@ export default function CreateScreen() {
         break;
     }
   };
+
+  const handleScanQR = () => {
+    console.log("Navigating to scan screen"); // Debug log
+    router.push('/scan');
+  };
   
   return (
     <>
@@ -106,7 +111,7 @@ export default function CreateScreen() {
             
             <TouchableOpacity 
               style={styles.quickAction}
-              onPress={() => router.push('/scan')}
+              onPress={handleScanQR}
             >
               <Camera size={20} color={colors.primary} />
               <Text style={styles.quickActionText}>Scan QR</Text>

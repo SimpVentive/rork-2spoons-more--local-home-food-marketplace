@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Scan } from 'lucide-react-native';
@@ -13,6 +13,7 @@ interface QRCodeScannerProps {
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -22,9 +23,25 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   }, []);
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
-    if (!scanned) {
+    if (!scanned && data) {
+      console.log("Barcode scanned:", data); // Debug log
       setScanned(true);
-      onScan(data);
+      try {
+        onScan(data);
+      } catch (error) {
+        console.error("Error in scan handler:", error);
+        setHasError(true);
+        Alert.alert(
+          "Scan Error",
+          "There was a problem processing the QR code. Please try again.",
+          [
+            {
+              text: "OK",
+              onPress: () => setScanned(false)
+            }
+          ]
+        );
+      }
     }
   };
 
@@ -34,6 +51,11 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
     } else {
       router.back();
     }
+  };
+
+  const handleScanAgain = () => {
+    setScanned(false);
+    setHasError(false);
   };
 
   if (!permission) {
@@ -48,6 +70,9 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
     return (
       <View style={styles.container}>
         <Text style={styles.text}>We need your permission to scan QR codes</Text>
+        <Text style={styles.subText}>
+          The camera is used only to scan QR codes and is not stored or shared.
+        </Text>
         <TouchableOpacity style={styles.button} onPress={requestPermission}>
           <Text style={styles.buttonText}>Grant Permission</Text>
         </TouchableOpacity>
@@ -84,7 +109,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
           {scanned && (
             <TouchableOpacity 
               style={styles.scanAgainButton}
-              onPress={() => setScanned(false)}
+              onPress={handleScanAgain}
             >
               <Scan size={20} color={colors.white} />
               <Text style={styles.scanAgainText}>Scan Again</Text>
@@ -165,9 +190,18 @@ const styles = StyleSheet.create({
   },
   text: {
     color: colors.white,
-    fontSize: 16,
+    fontSize: 18,
     textAlign: 'center',
     marginBottom: 20,
+    paddingHorizontal: 24,
+  },
+  subText: {
+    color: colors.white,
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 32,
+    opacity: 0.8,
+    paddingHorizontal: 32,
   },
   button: {
     backgroundColor: colors.primary,
