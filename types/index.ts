@@ -47,6 +47,22 @@ export interface UserPreference {
   type: 'buyer' | 'seller';
 }
 
+export interface FilterOptions {
+  query?: string;
+  foodType?: 'vegetarian' | 'non-vegetarian' | string;
+  cuisineTypes?: string[];
+  subcuisineTypes?: string[];
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  maxDistance?: number;
+  userLocation?: Location;
+  availableNow?: boolean;
+  minServings?: number;
+  sortBy?: 'price' | 'rating' | 'distance' | 'availableUntil' | string;
+  sortOrder?: 'asc' | 'desc';
+}
+
 export interface FoodListing {
   id: string;
   sellerId: string;
