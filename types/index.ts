@@ -1,3 +1,17 @@
+export interface Location {
+  latitude: number;
+  longitude: number;
+  address?: string;
+}
+
+export interface RouteLocation {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -8,42 +22,25 @@ export interface User {
   experience: string;
   cuisineTypes: string[];
   paymentMethods: string[];
-  location: {
-    latitude: number;
-    longitude: number;
-  };
+  location: Location;
   isChef: boolean;
   allowProfileDisplay: boolean;
-  rating?: number;
-  reviewCount?: number;
-  preferences?: {
-    notifications: boolean;
-    emailAlerts: boolean;
-    language: string;
-    currency: string;
-    packagingType?: string;
-    mealTypes?: string[];
-  };
   isAdmin?: boolean;
   isVerified?: boolean;
-  // New fields for route-based features
+  rating?: number;
+  reviewCount?: number;
   officeAddress?: string;
-  officeLocation?: {
-    latitude: number;
-    longitude: number;
-  };
+  officeLocation?: Location;
   homeToOfficeRoute?: RouteLocation[];
   officeToHomeRoute?: RouteLocation[];
   routesSameAsHomeToOffice?: boolean;
   detourPreference?: number; // in meters
-}
-
-export interface RouteLocation {
-  id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
+  // Chef subscription data
+  subscriptionPlan?: string;
+  subscriptionExpiry?: string;
+  firstPostDate?: string | null;
+  postCount?: number;
+  freePostsRemaining?: number;
 }
 
 export interface UserPreference {
@@ -55,27 +52,23 @@ export interface FoodListing {
   sellerId: string;
   sellerName: string;
   sellerImage: string;
-  sellerRating?: number;
+  sellerRating: number;
   dishName: string;
-  description?: string;
+  description: string;
   price: number;
   image: string;
   isVegetarian: boolean;
-  cuisineType?: string;
+  cuisineType: string;
+  subcuisineType?: string;
   ingredients: string[];
   allergens: string[];
   availableQuantity: number;
   remainingQuantity: number;
   availableFrom: string;
   availableUntil: string;
-  quantity?: string;
-  servings?: number;
-  packaging?: string;
-  location: {
-    latitude: number;
-    longitude: number;
-    address: string;
-  };
+  servings: number;
+  packaging: string;
+  location: Location;
   rating?: number;
   reviewCount?: number;
   orderCount?: number;
@@ -83,54 +76,40 @@ export interface FoodListing {
   isFeatured?: boolean;
   isApproved?: boolean;
   isActive?: boolean;
-  calories?: number;
-  portionSize?: string;
-  preparationTime?: string;
-  dietaryTags?: string[];
+  isLunchBox?: boolean;
+  lunchBoxItems?: LunchBoxItem[];
 }
 
-export type OrderStatus = 
-  | 'pending'
-  | 'accepted'
-  | 'confirmed'
-  | 'preparing'
-  | 'ready'
-  | 'in_delivery'
-  | 'delivered'
-  | 'completed'
-  | 'canceled'
-  | 'refund_requested'
-  | 'refunded';
+export interface LunchBoxItem {
+  id: string;
+  name: string;
+  description: string;
+  quantity: string;
+  image: string;
+}
 
-export type DeliveryMethod = 'pickup' | 'delivery';
-export type PaymentMethod = 'cash' | 'upi' | 'online';
+export interface ListingSnapshot {
+  dishName: string;
+  price: number;
+  image: string;
+  sellerName: string;
+  sellerImage: string;
+  location: Location;
+}
 
 export interface Order {
   id: string;
   buyerId: string;
   sellerId: string;
   listingId: string;
-  listingSnapshot: {
-    dishName: string;
-    price: number;
-    image: string;
-    sellerName: string;
-    sellerImage: string;
-    location: {
-      latitude: number;
-      longitude: number;
-      address: string;
-    };
-  };
+  listingSnapshot: ListingSnapshot;
   quantity: number;
   totalPrice: number;
   deliveryAddress: string;
   deliveryInstructions?: string;
   paymentMethod: string;
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
-  status: OrderStatus;
-  cancellationReason?: string;
-  refundReason?: string;
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'completed' | 'canceled';
   rating?: number;
   reviewComment?: string;
   isRated?: boolean;
@@ -140,8 +119,7 @@ export interface Order {
   readyAt?: string;
   deliveredAt?: string;
   completedAt?: string;
-  canceledAt?: string;
-  deliveryMethod: DeliveryMethod;
+  deliveryMethod: 'delivery' | 'pickup';
 }
 
 export interface Review {
@@ -156,18 +134,6 @@ export interface Review {
   dishName: string;
   rating: number;
   comment: string;
-  images?: string[];
-  createdAt: string;
-}
-
-export interface Notification {
-  id: string;
-  userId: string;
-  title: string;
-  message: string;
-  type: 'order' | 'promotion' | 'system' | 'review';
-  relatedId?: string;
-  isRead: boolean;
   createdAt: string;
 }
 
@@ -176,8 +142,7 @@ export interface Complaint {
   userId: string;
   orderId?: string;
   sellerId?: string;
-  buyerId?: string;
-  type: 'order' | 'seller' | 'payment' | 'app' | 'other';
+  type: 'order' | 'app' | 'payment' | 'other';
   title: string;
   description: string;
   status: 'pending' | 'in_progress' | 'resolved' | 'closed';
@@ -187,61 +152,35 @@ export interface Complaint {
   resolvedAt?: string;
 }
 
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'order' | 'review' | 'promotion' | 'system' | 'payment';
+  relatedId?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface DishNotification {
+  id: string;
+  userId: string;
+  dishName: string;
+  cuisineType?: string;
+  subcuisineType?: string;
+  location?: string;
+  routeType?: 'homeToOffice' | 'officeToHome';
+  email?: string;
+  phone?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface Follow {
   id: string;
   followerId: string;
   followingId: string;
-  createdAt: string;
-}
-
-export interface FilterOptions {
-  query?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  cuisineTypes?: string[];
-  maxDistance?: number;
-  minServings?: number;
-  maxServings?: number;
-  availableNow?: boolean;
-  availableDate?: string;
-  sortBy?: 'price' | 'rating' | 'distance' | 'availableUntil' | 'servings';
-  sortOrder?: 'asc' | 'desc';
-  foodType?: 'vegetarian' | 'non-vegetarian' | 'both';
-  onRoute?: 'homeToOffice' | 'officeToHome';
-  maxDetour?: number;
-}
-
-export interface SearchParams extends FilterOptions {
-  query: string;
-}
-
-export interface RouteSearchParams {
-  routeType: 'homeToOffice' | 'officeToHome';
-  dishName?: string;
-  maxDetour?: number;
-  cuisineTypes?: string[];
-  foodType?: 'vegetarian' | 'non-vegetarian' | 'both';
-}
-
-// Admin-specific types
-export interface AdminStats {
-  totalUsers: number;
-  totalChefs: number;
-  totalListings: number;
-  totalOrders: number;
-  totalRevenue: number;
-  activeListings: number;
-  pendingOrders: number;
-  completedOrders: number;
-  canceledOrders: number;
-}
-
-export interface AdminAction {
-  id: string;
-  type: 'user_ban' | 'listing_remove' | 'order_refund' | 'complaint_resolve';
-  targetId: string;
-  reason: string;
-  adminId: string;
   createdAt: string;
 }
 
@@ -290,56 +229,20 @@ export interface AdminDashboardData {
   };
 }
 
-export interface Campaign {
+export interface RouteSearchParams {
+  routeType: 'homeToOffice' | 'officeToHome';
+  maxDetour: number;
+  foodType: 'vegetarian' | 'non-vegetarian' | 'both';
+  dishName?: string;
+  cuisineTypes?: string[];
+  subcuisineTypes?: string[];
+}
+
+export interface SubscriptionPlan {
   id: string;
-  title: string;
+  name: string;
   description: string;
-  type: 'email' | 'push' | 'in_app';
-  targetAudience: 'all' | 'buyers' | 'sellers' | 'inactive';
-  status: 'draft' | 'scheduled' | 'sent' | 'cancelled';
-  scheduledFor?: string;
-  sentAt?: string;
-  createdAt: string;
-  updatedAt: string;
-  metrics?: {
-    sent: number;
-    delivered: number;
-    opened: number;
-    clicked: number;
-  };
-}
-
-export interface AdminMessage {
-  id: string;
-  senderId: string;
-  recipientId: string;
-  content: string;
-  isRead: boolean;
-  createdAt: string;
-}
-
-export interface AdminConversation {
-  id: string;
-  userId: string;
-  userName: string;
-  userImage: string;
-  lastMessage: string;
-  unreadCount: number;
-  updatedAt: string;
-}
-
-export interface DetailedAddress {
-  houseNumber: string;
-  buildingName?: string;
-  streetName: string;
-  area: string;
-  landmark?: string;
-  city: string;
-  district?: string;
-  state: string;
-  pinCode: string;
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  };
+  price: number;
+  duration: 'month' | 'year';
+  features: string[];
 }

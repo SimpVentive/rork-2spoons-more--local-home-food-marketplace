@@ -25,14 +25,16 @@ import {
   Plus,
   Utensils,
   Package,
+  AlertTriangle,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { useListingsStore } from '@/store/listings-store';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import LocationPicker from '@/components/LocationPicker';
+import SubscriptionModal from '@/components/SubscriptionModal';
 import colors from '@/constants/colors';
-import { CUISINE_TYPES, PACKAGING_TYPES } from '@/mocks/data';
+import { CUISINE_TYPES, PACKAGING_TYPES, SOUTH_INDIAN_SUBCUISINES, SOUTH_INDIAN_CUISINES_FLAT } from '@/mocks/data';
 
 // Lunchbox image from Unsplash (online URL instead of local asset)
 const LUNCHBOX_IMAGE_URL = "https://images.unsplash.com/photo-1576866209830-589e1bfbaa4d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80";
@@ -46,7 +48,7 @@ interface LunchBoxItem {
 }
 
 export default function CreateListingScreen() {
-  const { user } = useAuthStore();
+  const { user, checkPostingEligibility, incrementPostCount } = useAuthStore();
   const { addListing, isLoading } = useListingsStore();
   const router = useRouter();
   
@@ -61,6 +63,7 @@ export default function CreateListingScreen() {
     availableFrom: new Date(),
     availableUntil: new Date(new Date().getTime() + 24 * 60 * 60 * 1000), // Default to 24 hours from now
     cuisineType: user?.cuisineTypes[0] || '',
+    subcuisineType: '',
     isVegetarian: true,
     isLunchBox: false,
     lunchBoxItems: [] as LunchBoxItem[],
@@ -76,8 +79,26 @@ export default function CreateListingScreen() {
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showUntilPicker, setShowUntilPicker] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showSubcuisines, setShowSubcuisines] = useState(false);
+  const [availableSubcuisines, setAvailableSubcuisines] = useState<string[]>([]);
   
   useEffect(() => {
+    // Check if user is eligible to post
+    if (user) {
+      const eligibility = checkPostingEligibility();
+      if (!eligibility.eligible) {
+        Alert.alert(
+          'Subscription Required',
+          eligibility.message,
+          [
+            { text: 'Cancel', onPress: () => router.back() },
+            { text: 'Subscribe', onPress: () => setShowSubscriptionModal(true) }
+          ]
+        );
+      }
+    }
+    
     // Set default pickup location when user changes
     if (user && formData.useDefaultAddress) {
       setFormData(prev => ({
@@ -90,6 +111,20 @@ export default function CreateListingScreen() {
       }));
     }
   }, [user]);
+
+  useEffect(() => {
+    // Update available subcuisines when cuisine type changes
+    if (formData.cuisineType && Object.keys(SOUTH_INDIAN_SUBCUISINES).includes(formData.cuisineType)) {
+      setShowSubcuisines(true);
+      setAvailableSubcuisines(
+        SOUTH_INDIAN_SUBCUISINES[formData.cuisineType as keyof typeof SOUTH_INDIAN_SUBCUISINES] || []
+      );
+    } else {
+      setShowSubcuisines(false);
+      setAvailableSubcuisines([]);
+      setFormData(prev => ({ ...prev, subcuisineType: '' }));
+    }
+  }, [formData.cuisineType]);
   
   const updateFormData = (key: string, value: any) => {
     setFormData(prev => ({ ...prev, [key]: value }));
@@ -197,6 +232,20 @@ export default function CreateListingScreen() {
       Alert.alert('Error', 'You must be logged in to create a listing');
       return;
     }
+
+    // Check if user is eligible to post
+    const eligibility = checkPostingEligibility();
+    if (!eligibility.eligible) {
+      Alert.alert(
+        'Subscription Required',
+        eligibility.message,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Subscribe', onPress: () => setShowSubscriptionModal(true) }
+        ]
+      );
+      return;
+    }
     
     const newListing = {
       sellerId: user.id,
@@ -216,6 +265,7 @@ export default function CreateListingScreen() {
       availableFrom: formData.availableFrom.toISOString(),
       availableUntil: formData.availableUntil.toISOString(),
       cuisineType: formData.cuisineType,
+      subcuisineType: formData.subcuisineType,
       isVegetarian: formData.isVegetarian,
       isLunchBox: formData.isLunchBox,
       lunchBoxItems: formData.isLunchBox ? formData.lunchBoxItems : [],
@@ -225,6 +275,9 @@ export default function CreateListingScreen() {
     const success = await addListing(newListing);
     
     if (success) {
+      // Increment post count
+      await incrementPostCount();
+      
       Alert.alert('Success', 'Your listing has been created', [
         { text: 'OK', onPress: () => router.back() }
       ]);
@@ -318,6 +371,36 @@ export default function CreateListingScreen() {
     
     updateFormData('isLunchBox', isLunchBox);
   };
+
+  const renderPostingLimits = () => {
+    if (!user) return null;
+
+    const eligibility = checkPostingEligibility();
+    
+    return (
+      <View style={styles.postingLimitsContainer}>
+        <View style={styles.postingLimitsHeader}>
+          <AlertTriangle size={16} color={eligibility.eligible ? colors.success : colors.warning} />
+          <Text style={[
+            styles.postingLimitsTitle,
+            { color: eligibility.eligible ? colors.success : colors.warning }
+          ]}>
+            Posting Status
+          </Text>
+        </View>
+        <Text style={styles.postingLimitsText}>{eligibility.message}</Text>
+        
+        {!eligibility.eligible && (
+          <TouchableOpacity 
+            style={styles.subscribeButton}
+            onPress={() => setShowSubscriptionModal(true)}
+          >
+            <Text style={styles.subscribeButtonText}>Subscribe Now</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
   
   return (
     <KeyboardAvoidingView
@@ -329,6 +412,8 @@ export default function CreateListingScreen() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        {renderPostingLimits()}
+        
         <View style={styles.listingTypeContainer}>
           <Text style={styles.sectionTitle}>Listing Type</Text>
           
@@ -586,7 +671,46 @@ export default function CreateListingScreen() {
             )}
             
             <View style={styles.tagsContainer}>
+              {/* Regular cuisine types */}
               {CUISINE_TYPES.map((cuisine) => (
+                <TouchableOpacity
+                  key={cuisine}
+                  style={[
+                    styles.tag,
+                    formData.cuisineType === cuisine && styles.selectedTag,
+                  ]}
+                  onPress={() => updateFormData('cuisineType', cuisine)}
+                >
+                  <Text
+                    style={[
+                      styles.tagText,
+                      formData.cuisineType === cuisine && styles.selectedTagText,
+                    ]}
+                  >
+                    {cuisine}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+              
+              {/* South Indian main categories */}
+              <TouchableOpacity
+                style={[
+                  styles.tag,
+                  formData.cuisineType === 'South Indian' && styles.selectedTag,
+                ]}
+                onPress={() => updateFormData('cuisineType', 'South Indian')}
+              >
+                <Text
+                  style={[
+                    styles.tagText,
+                    formData.cuisineType === 'South Indian' && styles.selectedTagText,
+                  ]}
+                >
+                  South Indian
+                </Text>
+              </TouchableOpacity>
+              
+              {Object.keys(SOUTH_INDIAN_SUBCUISINES).map((cuisine) => (
                 <TouchableOpacity
                   key={cuisine}
                   style={[
@@ -607,6 +731,35 @@ export default function CreateListingScreen() {
               ))}
             </View>
           </View>
+
+          {/* Show subcuisines if a South Indian main category is selected */}
+          {showSubcuisines && availableSubcuisines.length > 0 && (
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Sub-Cuisine Type (Optional)</Text>
+              
+              <View style={styles.tagsContainer}>
+                {availableSubcuisines.map((subcuisine) => (
+                  <TouchableOpacity
+                    key={subcuisine}
+                    style={[
+                      styles.tag,
+                      formData.subcuisineType === subcuisine && styles.selectedTag,
+                    ]}
+                    onPress={() => updateFormData('subcuisineType', subcuisine)}
+                  >
+                    <Text
+                      style={[
+                        styles.tagText,
+                        formData.subcuisineType === subcuisine && styles.selectedTagText,
+                      ]}
+                    >
+                      {subcuisine}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
           
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Packaging</Text>
@@ -741,6 +894,11 @@ export default function CreateListingScreen() {
           onClose={() => setShowLocationPicker(false)}
         />
       )}
+
+      <SubscriptionModal
+        visible={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -753,6 +911,39 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 32,
+  },
+  postingLimitsContainer: {
+    backgroundColor: `${colors.primary}10`,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  postingLimitsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  postingLimitsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  postingLimitsText: {
+    fontSize: 14,
+    color: colors.text,
+    marginBottom: 8,
+  },
+  subscribeButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  subscribeButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '600',
   },
   listingTypeContainer: {
     marginBottom: 16,

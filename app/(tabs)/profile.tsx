@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Platform,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -23,6 +24,7 @@ import {
   Edit,
   PlusCircle,
   Shield,
+  RefreshCw,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { useListingsStore } from '@/store/listings-store';
@@ -33,9 +35,10 @@ import Button from '@/components/Button';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
 import { FoodListing } from '@/types';
+import SubscriptionModal from '@/components/SubscriptionModal';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, switchRole, checkPostingEligibility } = useAuthStore();
   const { getSellerListings, fetchListings } = useListingsStore();
   const { reviews, fetchSellerReviews } = useReviewsStore();
   const { getBuyerOrders, getSellerOrders } = useOrdersStore();
@@ -44,6 +47,7 @@ export default function ProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [userListings, setUserListings] = useState<FoodListing[]>([]);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   
   const router = useRouter();
   
@@ -88,11 +92,44 @@ export default function ProfileScreen() {
   };
 
   const handleCreateListing = () => {
+    if (user?.isChef) {
+      // Check if user is eligible to post
+      const eligibility = checkPostingEligibility();
+      if (!eligibility.eligible) {
+        // Show subscription modal if not eligible
+        Alert.alert(
+          'Subscription Required',
+          eligibility.message,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Subscribe', onPress: () => setShowSubscriptionModal(true) }
+          ]
+        );
+        return;
+      }
+    }
     router.push('/create-listing');
   };
 
   const handleAdminDashboard = () => {
     router.push('/(admin)');
+  };
+
+  const handleSwitchRole = async () => {
+    try {
+      await switchRole();
+      Alert.alert(
+        'Role Switched',
+        `You are now a ${user?.isChef ? 'buyer' : 'seller'}.`,
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to switch role. Please try again.');
+    }
+  };
+
+  const handleSubscribe = () => {
+    setShowSubscriptionModal(true);
   };
   
   const userReviews = user ? reviews.filter(review => review.sellerId === user.id) : [];
@@ -131,6 +168,67 @@ export default function ProfileScreen() {
       };
     }
     return styles.addListingCard;
+  };
+
+  const getSubscriptionStatus = () => {
+    if (!user.isChef) return null;
+
+    const eligibility = checkPostingEligibility();
+    
+    if (user.subscriptionPlan) {
+      return (
+        <View style={styles.subscriptionContainer}>
+          <View style={styles.subscriptionBadge}>
+            <Text style={styles.subscriptionBadgeText}>
+              {user.subscriptionPlan.charAt(0).toUpperCase() + user.subscriptionPlan.slice(1)} Plan
+            </Text>
+          </View>
+          <Text style={styles.subscriptionText}>
+            {eligibility.message}
+          </Text>
+        </View>
+      );
+    } else if (user.freePostsRemaining && user.freePostsRemaining > 0) {
+      return (
+        <View style={styles.subscriptionContainer}>
+          <Text style={styles.subscriptionText}>
+            {eligibility.message}
+          </Text>
+        </View>
+      );
+    } else if (user.firstPostDate) {
+      const firstPostDate = new Date(user.firstPostDate);
+      const trialEndDate = new Date(firstPostDate);
+      trialEndDate.setDate(trialEndDate.getDate() + 30);
+      
+      const now = new Date();
+      
+      if (now < trialEndDate) {
+        return (
+          <View style={styles.subscriptionContainer}>
+            <Text style={styles.subscriptionText}>
+              {eligibility.message}
+            </Text>
+          </View>
+        );
+      } else {
+        return (
+          <View style={styles.subscriptionContainer}>
+            <Text style={styles.subscriptionText}>
+              Your free trial has ended. Subscribe to continue posting.
+            </Text>
+            <TouchableOpacity 
+              style={styles.subscribeButton}
+              onPress={handleSubscribe}
+            >
+              <Text style={styles.subscribeButtonText}>Subscribe Now</Text>
+            </TouchableOpacity>
+          </View>
+        );
+      }
+    }
+
+    return null;
   };
   
   return (
@@ -172,6 +270,13 @@ export default function ProfileScreen() {
                 <Text style={styles.adminBadgeText}>Admin</Text>
               </View>
             )}
+
+            {user.isChef && (
+              <View style={styles.chefBadge}>
+                <ChefHat size={12} color="#FFFFFF" />
+                <Text style={styles.chefBadgeText}>Chef</Text>
+              </View>
+            )}
           </View>
           
           <TouchableOpacity 
@@ -185,6 +290,8 @@ export default function ProfileScreen() {
         <Text style={styles.bio} numberOfLines={3}>
           {user.experience || "No bio provided yet"}
         </Text>
+
+        {getSubscriptionStatus()}
         
         <View style={styles.detailsContainer}>
           <View style={styles.detailItem}>
@@ -216,9 +323,21 @@ export default function ProfileScreen() {
             onPress={handleCreateListing}
           >
             <PlusCircle size={16} color={colors.white} />
-            <Text style={styles.createListingText}>Create Listing</Text>
+            <Text style={styles.createListingText}>
+              {user.isChef ? 'Create Listing' : 'Become a Chef'}
+            </Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity 
+          style={styles.switchRoleButton}
+          onPress={handleSwitchRole}
+        >
+          <RefreshCw size={16} color={colors.white} />
+          <Text style={styles.switchRoleText}>
+            Switch to {user.isChef ? 'Buyer' : 'Chef'} Mode
+          </Text>
+        </TouchableOpacity>
 
         {user.isAdmin && (
           <TouchableOpacity 
@@ -266,63 +385,65 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
       
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Your Food Listings</Text>
-          <TouchableOpacity onPress={handleViewAnalytics}>
-            <Text style={styles.viewAllText}>View Analytics</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {userListings.length === 0 ? (
-          <View style={styles.emptyListingsContainer}>
-            <Text style={styles.emptyListingsText}>
-              You haven't added any food listings yet
-            </Text>
-            <Button
-              title="Add New Listing"
-              onPress={() => router.push('/create-listing')}
-              style={styles.addButton}
-            />
-          </View>
-        ) : (
-          <ScrollView
-            horizontal={Platform.OS !== 'web'}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={Platform.OS === 'web' 
-              ? { ...styles.listingsContainer, flexDirection: 'column' } 
-              : styles.listingsContainer
-            }
-          >
-            {userListings.slice(0, 3).map((listing) => (
-              <TouchableOpacity
-                key={listing.id}
-                style={getListingCardStyle()}
-                onPress={() => router.push(`/listing/${listing.id}`)}
-              >
-                <Image
-                  source={{ uri: listing.image }}
-                  style={styles.listingImage}
-                  contentFit="cover"
-                />
-                <View style={styles.listingInfo}>
-                  <Text style={styles.listingName} numberOfLines={1}>
-                    {listing.dishName}
-                  </Text>
-                  <Text style={styles.listingPrice}>₹{listing.price}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-            
-            <TouchableOpacity
-              style={getAddListingCardStyle()}
-              onPress={() => router.push('/create-listing')}
-            >
-              <Text style={styles.addListingText}>+ Add New</Text>
+      {user.isChef && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Your Food Listings</Text>
+            <TouchableOpacity onPress={handleViewAnalytics}>
+              <Text style={styles.viewAllText}>View Analytics</Text>
             </TouchableOpacity>
-          </ScrollView>
-        )}
-      </View>
+          </View>
+          
+          {userListings.length === 0 ? (
+            <View style={styles.emptyListingsContainer}>
+              <Text style={styles.emptyListingsText}>
+                You haven't added any food listings yet
+              </Text>
+              <Button
+                title="Add New Listing"
+                onPress={handleCreateListing}
+                style={styles.addButton}
+              />
+            </View>
+          ) : (
+            <ScrollView
+              horizontal={Platform.OS !== 'web'}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={Platform.OS === 'web' 
+                ? { ...styles.listingsContainer, flexDirection: 'column' } 
+                : styles.listingsContainer
+              }
+            >
+              {userListings.slice(0, 3).map((listing) => (
+                <TouchableOpacity
+                  key={listing.id}
+                  style={getListingCardStyle()}
+                  onPress={() => router.push(`/listing/${listing.id}`)}
+                >
+                  <Image
+                    source={{ uri: listing.image }}
+                    style={styles.listingImage}
+                    contentFit="cover"
+                  />
+                  <View style={styles.listingInfo}>
+                    <Text style={styles.listingName} numberOfLines={1}>
+                      {listing.dishName}
+                    </Text>
+                    <Text style={styles.listingPrice}>₹{listing.price}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+              
+              <TouchableOpacity
+                style={getAddListingCardStyle()}
+                onPress={handleCreateListing}
+              >
+                <Text style={styles.addListingText}>+ Add New</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          )}
+        </View>
+      )}
       
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -400,6 +521,11 @@ export default function ProfileScreen() {
         style={styles.logoutButton}
         textStyle={styles.logoutButtonText}
       />
+
+      <SubscriptionModal
+        visible={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+      />
     </ScrollView>
   );
 }
@@ -475,6 +601,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginLeft: 4,
   },
+  chefBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.secondary,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
+  chefBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginLeft: 4,
+  },
   settingsButton: {
     padding: 8,
   },
@@ -483,6 +625,42 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 16,
     lineHeight: 20,
+  },
+  subscriptionContainer: {
+    backgroundColor: `${colors.primary}10`,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  subscriptionBadge: {
+    backgroundColor: colors.primary,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  subscriptionBadgeText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  subscriptionText: {
+    fontSize: 14,
+    color: colors.text,
+  },
+  subscribeButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  subscribeButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '600',
   },
   detailsContainer: {
     gap: 8,
@@ -528,6 +706,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   createListingText: {
+    color: colors.white,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  switchRoleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#6366F1',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  switchRoleText: {
     color: colors.white,
     fontWeight: '600',
     marginLeft: 8,

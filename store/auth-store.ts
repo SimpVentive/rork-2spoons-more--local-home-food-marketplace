@@ -16,11 +16,17 @@ interface AuthState {
   register: (userData: Partial<User>) => Promise<boolean>;
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
   updateUserPreference: (preference: 'buyer' | 'seller') => Promise<void>;
+  switchRole: () => Promise<void>;
   addRouteLocation: (type: 'homeToOffice' | 'officeToHome', location: RouteLocation) => Promise<void>;
   removeRouteLocation: (type: 'homeToOffice' | 'officeToHome', locationId: string) => Promise<void>;
   updateDetourPreference: (meters: number) => Promise<void>;
   updateOfficeAddress: (address: string, location: { latitude: number; longitude: number }) => Promise<void>;
   setRoutesSameAsHomeToOffice: (value: boolean) => Promise<void>;
+  // Chef subscription methods
+  updateSubscription: (plan: string, expiryDate: string) => Promise<void>;
+  incrementPostCount: () => Promise<boolean>;
+  checkPostingEligibility: () => { eligible: boolean; message: string };
+  resetFreePostsRemaining: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -147,6 +153,10 @@ export const useAuthStore = create<AuthState>()(
             officeToHomeRoute: [],
             routesSameAsHomeToOffice: true,
             detourPreference: 500, // Default 500 meters
+            // Chef subscription data
+            firstPostDate: null,
+            postCount: 0,
+            freePostsRemaining: 3, // New users get 3 free posts
           };
           
           // In a real app, we would save this to the database
@@ -212,6 +222,32 @@ export const useAuthStore = create<AuthState>()(
           return;
         } catch (error) {
           console.error('User preference update error:', error);
+          throw error;
+        }
+      },
+
+      switchRole: async () => {
+        try {
+          const { user, userPreference } = get();
+          
+          if (!user) {
+            throw new Error('User not found');
+          }
+          
+          // Toggle between buyer and seller
+          const newPreference = user.isChef ? 'buyer' : 'seller';
+          
+          // Update user preference
+          set({ userPreference: { type: newPreference } });
+          
+          // Update user object
+          await get().updateProfile({
+            isChef: newPreference === 'seller'
+          });
+          
+          return;
+        } catch (error) {
+          console.error('Role switch error:', error);
           throw error;
         }
       },
@@ -339,6 +375,165 @@ export const useAuthStore = create<AuthState>()(
           return;
         } catch (error) {
           console.error('Set routes same error:', error);
+          throw error;
+        }
+      },
+
+      // Chef subscription methods
+      updateSubscription: async (plan: string, expiryDate: string) => {
+        try {
+          const { user } = get();
+          
+          if (!user) {
+            throw new Error('User not found');
+          }
+          
+          const updatedUser = { 
+            ...user, 
+            subscriptionPlan: plan,
+            subscriptionExpiry: expiryDate,
+            freePostsRemaining: 0 // Reset free posts when subscribing
+          };
+          
+          set({ user: updatedUser });
+          
+          return;
+        } catch (error) {
+          console.error('Update subscription error:', error);
+          throw error;
+        }
+      },
+
+      incrementPostCount: async () => {
+        try {
+          const { user } = get();
+          
+          if (!user) {
+            throw new Error('User not found');
+          }
+
+          // Check if user is eligible to post
+          const eligibility = get().checkPostingEligibility();
+          if (!eligibility.eligible) {
+            return false;
+          }
+          
+          let updatedUser = { ...user };
+          
+          // If this is the first post, set the first post date
+          if (!user.firstPostDate) {
+            updatedUser.firstPostDate = new Date().toISOString();
+          }
+          
+          // Increment post count
+          updatedUser.postCount = (user.postCount || 0) + 1;
+          
+          // If user is using free posts, decrement the remaining count
+          if (user.freePostsRemaining && user.freePostsRemaining > 0) {
+            updatedUser.freePostsRemaining = user.freePostsRemaining - 1;
+          }
+          
+          set({ user: updatedUser });
+          
+          return true;
+        } catch (error) {
+          console.error('Increment post count error:', error);
+          return false;
+        }
+      },
+
+      checkPostingEligibility: () => {
+        const { user } = get();
+        
+        if (!user) {
+          return { 
+            eligible: false, 
+            message: 'User not found' 
+          };
+        }
+        
+        // Check if user has free posts remaining
+        if (user.freePostsRemaining && user.freePostsRemaining > 0) {
+          return { 
+            eligible: true, 
+            message: `You have ${user.freePostsRemaining} free posts remaining` 
+          };
+        }
+        
+        // Check if user has an active subscription
+        if (user.subscriptionPlan && user.subscriptionExpiry) {
+          const expiryDate = new Date(user.subscriptionExpiry);
+          const now = new Date();
+          
+          if (expiryDate > now) {
+            // Check post limits based on subscription plan
+            if (user.subscriptionPlan === 'basic' && (user.postCount || 0) >= 10) {
+              return { 
+                eligible: false, 
+                message: 'You have reached the maximum number of posts for your Basic plan (10 per month)' 
+              };
+            } else if (user.subscriptionPlan === 'silver' && (user.postCount || 0) >= 30) {
+              return { 
+                eligible: false, 
+                message: 'You have reached the maximum number of posts for your Silver plan (30 per month)' 
+              };
+            } else if (user.subscriptionPlan === 'gold') {
+              // Gold plan has unlimited posts
+              return { 
+                eligible: true, 
+                message: 'You have unlimited posts with your Gold plan' 
+              };
+            }
+            
+            return { 
+              eligible: true, 
+              message: 'You have an active subscription' 
+            };
+          } else {
+            return { 
+              eligible: false, 
+              message: 'Your subscription has expired. Please renew to continue posting.' 
+            };
+          }
+        }
+        
+        // Check if 30-day free trial period is still active
+        if (user.firstPostDate) {
+          const firstPostDate = new Date(user.firstPostDate);
+          const trialEndDate = new Date(firstPostDate);
+          trialEndDate.setDate(trialEndDate.getDate() + 30);
+          
+          const now = new Date();
+          
+          if (now < trialEndDate) {
+            return { 
+              eligible: true, 
+              message: `Your free trial is active until ${trialEndDate.toLocaleDateString()}` 
+            };
+          }
+        }
+        
+        // If we get here, user needs to subscribe
+        return { 
+          eligible: false, 
+          message: 'You need to subscribe to a plan to continue posting' 
+        };
+      },
+
+      resetFreePostsRemaining: async () => {
+        try {
+          const { user } = get();
+          
+          if (!user) {
+            throw new Error('User not found');
+          }
+          
+          const updatedUser = { ...user, freePostsRemaining: 3 };
+          set({ user: updatedUser });
+          
+          return;
+        } catch (error) {
+          console.error('Reset free posts error:', error);
           throw error;
         }
       },

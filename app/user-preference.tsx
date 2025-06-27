@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   Image,
   SafeAreaView,
-  Platform
+  Platform,
+  ScrollView
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ShoppingBag, ChefHat } from 'lucide-react-native';
@@ -34,63 +35,65 @@ export default function UserPreferenceScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>How will you use HomeCook?</Text>
-        <Text style={styles.subtitle}>You can change this later in your profile settings</Text>
-        
-        <View style={styles.optionsContainer}>
-          <TouchableOpacity
-            style={[
-              styles.optionCard,
-              selectedOption === 'buyer' && styles.selectedCard
-            ]}
-            onPress={() => setSelectedOption('buyer')}
-          >
-            <View style={[
-              styles.iconContainer,
-              selectedOption === 'buyer' && styles.selectedIconContainer
-            ]}>
-              <ShoppingBag 
-                size={32} 
-                color={selectedOption === 'buyer' ? colors.white : colors.primary} 
-              />
-            </View>
-            <Text style={styles.optionTitle}>I Buy Home Cooked Food</Text>
-            <Text style={styles.optionDescription}>
-              Browse and order delicious homemade food from local chefs
-            </Text>
-          </TouchableOpacity>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <Text style={styles.title}>How will you use HomeCook?</Text>
+          <Text style={styles.subtitle}>You can change this later in your profile settings</Text>
           
-          <TouchableOpacity
-            style={[
-              styles.optionCard,
-              selectedOption === 'seller' && styles.selectedCard
-            ]}
-            onPress={() => setSelectedOption('seller')}
-          >
-            <View style={[
-              styles.iconContainer,
-              selectedOption === 'seller' && styles.selectedIconContainer
-            ]}>
-              <ChefHat 
-                size={32} 
-                color={selectedOption === 'seller' ? colors.white : colors.primary} 
-              />
-            </View>
-            <Text style={styles.optionTitle}>I Sell Home Cooked Food</Text>
-            <Text style={styles.optionDescription}>
-              Share your culinary creations and earn by selling homemade food
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.optionsContainer}>
+            <TouchableOpacity
+              style={[
+                styles.optionCard,
+                selectedOption === 'buyer' && styles.selectedCard
+              ]}
+              onPress={() => setSelectedOption('buyer')}
+            >
+              <View style={[
+                styles.iconContainer,
+                selectedOption === 'buyer' && styles.selectedIconContainer
+              ]}>
+                <ShoppingBag 
+                  size={32} 
+                  color={selectedOption === 'buyer' ? colors.white : colors.primary} 
+                />
+              </View>
+              <Text style={styles.optionTitle}>I Buy Home Cooked Food</Text>
+              <Text style={styles.optionDescription}>
+                Browse and order delicious homemade food from local chefs
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[
+                styles.optionCard,
+                selectedOption === 'seller' && styles.selectedCard
+              ]}
+              onPress={() => setSelectedOption('seller')}
+            >
+              <View style={[
+                styles.iconContainer,
+                selectedOption === 'seller' && styles.selectedIconContainer
+              ]}>
+                <ChefHat 
+                  size={32} 
+                  color={selectedOption === 'seller' ? colors.white : colors.primary} 
+                />
+              </View>
+              <Text style={styles.optionTitle}>I Sell Home Cooked Food</Text>
+              <Text style={styles.optionDescription}>
+                Share your culinary creations and earn by selling homemade food
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          <Button
+            title="Continue"
+            onPress={handleContinue}
+            disabled={!selectedOption}
+            style={styles.continueButton}
+          />
         </View>
-        
-        <Button
-          title="Continue"
-          onPress={handleContinue}
-          disabled={!selectedOption}
-          style={styles.continueButton}
-        />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -99,6 +102,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,

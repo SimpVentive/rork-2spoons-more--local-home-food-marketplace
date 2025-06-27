@@ -21,6 +21,7 @@ interface NotificationsState {
   addDishNotification: (notification: Omit<DishNotification, 'id' | 'createdAt'>) => Promise<DishNotification>;
   getDishNotificationsByUser: (userId: string) => DishNotification[];
   getActiveDishNotifications: (userId: string) => DishNotification[];
+  getRouteNotifications: (userId: string, routeType: 'homeToOffice' | 'officeToHome') => DishNotification[];
   toggleDishNotificationStatus: (notificationId: string, isActive: boolean) => Promise<void>;
   deleteDishNotification: (notificationId: string) => Promise<void>;
 }
@@ -171,6 +172,15 @@ export const useNotificationsStore = create<NotificationsState>()(
       getActiveDishNotifications: (userId) => {
         return get().dishNotifications.filter(
           notification => notification.userId === userId && notification.isActive
+        );
+      },
+
+      getRouteNotifications: (userId, routeType) => {
+        return get().dishNotifications.filter(
+          notification => 
+            notification.userId === userId && 
+            notification.isActive && 
+            notification.routeType === routeType
         );
       },
       

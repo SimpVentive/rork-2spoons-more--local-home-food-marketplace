@@ -1,9 +1,8 @@
-import { User, FoodListing, Order, Review, Complaint, Notification, Follow, AdminDashboardData, TopEarner, TopDish, TopChef } from '@/types';
+import { User, FoodListing, Order, Review, Complaint, Notification, Follow, AdminDashboardData, TopEarner, TopDish, TopChef, SubscriptionPlan } from '@/types';
 
 // Define constants for cuisine types and payment methods
 export const CUISINE_TYPES = [
   'North Indian',
-  'South Indian',
   'Chinese',
   'Italian',
   'Mexican',
@@ -14,6 +13,45 @@ export const CUISINE_TYPES = [
   'Bengali',
   'Punjabi',
   'Gujarati',
+];
+
+// South Indian subcuisines
+export const SOUTH_INDIAN_SUBCUISINES = {
+  'Andhra (Telugu) Food': [
+    'Hyderabadi Cuisine',
+    'Rayalaseema Cuisine',
+    'Telangana Cuisine'
+  ],
+  'Kanadiga Cuisine': [
+    'Konkani Cuisine',
+    'Mangalorean Cuisine',
+    'Kodava Cuisine (Coorg)',
+    'Udupi'
+  ],
+  'Tamil Cuisine': [
+    'Pondicherry Cuisine',
+    'Sri Lankan Tamil Cuisine',
+    'Chettinad',
+    'Tamil Vegetarian'
+  ],
+  'Kerala Cuisine': [
+    'Malabar Cuisine',
+    'Central Kerala Cuisine',
+    'Travancore Cuisine'
+  ]
+};
+
+// Flattened list of all South Indian subcuisines for simple selection
+export const SOUTH_INDIAN_CUISINES_FLAT = [
+  'South Indian',
+  ...Object.keys(SOUTH_INDIAN_SUBCUISINES),
+  ...Object.values(SOUTH_INDIAN_SUBCUISINES).flat()
+];
+
+// Combined cuisine types including South Indian subcuisines
+export const ALL_CUISINE_TYPES = [
+  ...CUISINE_TYPES,
+  ...SOUTH_INDIAN_CUISINES_FLAT
 ];
 
 export const PAYMENT_METHODS = [
@@ -30,6 +68,49 @@ export const PACKAGING_TYPES = [
   'Banana leaf wrap',
   'Paper bag',
   'Biodegradable container',
+];
+
+// Chef subscription plans
+export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
+  {
+    id: 'basic',
+    name: 'Basic',
+    description: 'Occasional Chef, probably selling once a week or once a fortnight',
+    price: 199,
+    duration: 'year',
+    features: [
+      'Post up to 10 dishes per month',
+      'Basic analytics',
+      'Standard visibility in search results'
+    ]
+  },
+  {
+    id: 'silver',
+    name: 'Silver',
+    description: 'You are a chef, who cooks and would like to sell twice a week or so',
+    price: 499,
+    duration: 'year',
+    features: [
+      'Post up to 30 dishes per month',
+      'Enhanced analytics',
+      'Priority in search results',
+      'Promotional notifications to nearby users'
+    ]
+  },
+  {
+    id: 'gold',
+    name: 'Gold',
+    description: 'You are chef, who regularly cooks and likes to sell to customers',
+    price: 999,
+    duration: 'year',
+    features: [
+      'Unlimited dish posts',
+      'Advanced analytics and insights',
+      'Top placement in search results',
+      'Featured chef status',
+      'Dedicated support'
+    ]
+  }
 ];
 
 // Mock Food Listings
@@ -225,6 +306,12 @@ export const mockUsers: User[] = [
     rating: 4.8,
     reviewCount: 120,
     isVerified: true,
+    // Chef subscription data
+    subscriptionPlan: 'basic',
+    subscriptionExpiry: '2026-06-27T00:00:00Z',
+    firstPostDate: '2025-05-01T00:00:00Z',
+    postCount: 5,
+    freePostsRemaining: 0,
   },
   {
     id: 'user2',
@@ -263,6 +350,12 @@ export const mockUsers: User[] = [
     rating: 4.5,
     reviewCount: 85,
     isVerified: true,
+    // Chef subscription data
+    subscriptionPlan: 'silver',
+    subscriptionExpiry: '2026-06-27T00:00:00Z',
+    firstPostDate: '2025-04-15T00:00:00Z',
+    postCount: 12,
+    freePostsRemaining: 0,
   },
   {
     id: 'admin1',
@@ -291,7 +384,7 @@ export const mockUsers: User[] = [
     address: '101 Spice Lane, Chennai',
     profileImage: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
     experience: '7 years',
-    cuisineTypes: ['South Indian', 'Chinese'],
+    cuisineTypes: ['South Indian', 'Tamil Cuisine', 'Chettinad'],
     paymentMethods: ['UPI', 'Cash'],
     location: {
       latitude: 13.0827,
@@ -302,6 +395,12 @@ export const mockUsers: User[] = [
     rating: 4.9,
     reviewCount: 150,
     isVerified: true,
+    // Chef subscription data
+    subscriptionPlan: 'gold',
+    subscriptionExpiry: '2026-06-27T00:00:00Z',
+    firstPostDate: '2025-03-10T00:00:00Z',
+    postCount: 45,
+    freePostsRemaining: 0,
   },
   {
     id: 'user5',
@@ -320,6 +419,10 @@ export const mockUsers: User[] = [
     isChef: false,
     allowProfileDisplay: true,
     isVerified: false,
+    // New user with free posts remaining
+    firstPostDate: null,
+    postCount: 0,
+    freePostsRemaining: 3,
   },
 ];
 
@@ -615,7 +718,7 @@ export const mockTopChefs: TopChef[] = [
     revenue: 9800,
     location: 'Chennai',
     phone: '+91 9876543214',
-    cuisineTypes: ['South Indian', 'Chinese'],
+    cuisineTypes: ['South Indian', 'Tamil Cuisine', 'Chettinad'],
     isVerified: true,
   },
   {

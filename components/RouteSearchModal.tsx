@@ -23,7 +23,7 @@ import Button from '@/components/Button';
 import Input from '@/components/Input';
 import colors from '@/constants/colors';
 import { RouteSearchParams } from '@/types';
-import { CUISINE_TYPES } from '@/mocks/data';
+import { SOUTH_INDIAN_SUBCUISINES, SOUTH_INDIAN_CUISINES_FLAT } from '@/mocks/data';
 
 interface RouteSearchModalProps {
   visible: boolean;
@@ -43,6 +43,8 @@ export const RouteSearchModal: React.FC<RouteSearchModalProps> = ({
   const [maxDetour, setMaxDetour] = useState(user?.detourPreference || 500);
   const [foodType, setFoodType] = useState<'vegetarian' | 'non-vegetarian' | 'both'>('both');
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
+  const [selectedSubcuisines, setSelectedSubcuisines] = useState<string[]>([]);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   
   useEffect(() => {
     if (visible) {
@@ -52,14 +54,38 @@ export const RouteSearchModal: React.FC<RouteSearchModalProps> = ({
       setMaxDetour(user?.detourPreference || 500);
       setFoodType('both');
       setSelectedCuisines([]);
+      setSelectedSubcuisines([]);
+      setExpandedCategory(null);
     }
   }, [visible, user]);
   
   const toggleCuisine = (cuisine: string) => {
     if (selectedCuisines.includes(cuisine)) {
       setSelectedCuisines(selectedCuisines.filter(c => c !== cuisine));
+      
+      // If this is a main category, also remove all its subcuisines
+      if (cuisine in SOUTH_INDIAN_SUBCUISINES) {
+        const subcuisines = SOUTH_INDIAN_SUBCUISINES[cuisine as keyof typeof SOUTH_INDIAN_SUBCUISINES];
+        setSelectedSubcuisines(selectedSubcuisines.filter(sc => !subcuisines.includes(sc)));
+      }
     } else {
       setSelectedCuisines([...selectedCuisines, cuisine]);
+    }
+  };
+
+  const toggleSubcuisine = (subcuisine: string) => {
+    if (selectedSubcuisines.includes(subcuisine)) {
+      setSelectedSubcuisines(selectedSubcuisines.filter(sc => sc !== subcuisine));
+    } else {
+      setSelectedSubcuisines([...selectedSubcuisines, subcuisine]);
+    }
+  };
+
+  const toggleExpandCategory = (category: string) => {
+    if (expandedCategory === category) {
+      setExpandedCategory(null);
+    } else {
+      setExpandedCategory(category);
     }
   };
   
@@ -76,6 +102,10 @@ export const RouteSearchModal: React.FC<RouteSearchModalProps> = ({
     
     if (selectedCuisines.length > 0) {
       params.cuisineTypes = selectedCuisines;
+    }
+
+    if (selectedSubcuisines.length > 0) {
+      params.subcuisineTypes = selectedSubcuisines;
     }
     
     onApply(params);
@@ -229,24 +259,70 @@ export const RouteSearchModal: React.FC<RouteSearchModalProps> = ({
               </TouchableOpacity>
             </View>
             
-            <Text style={styles.sectionTitle}>Cuisine Types</Text>
+            <Text style={styles.sectionTitle}>South Indian Cuisine Types</Text>
             <View style={styles.cuisineContainer}>
-              {CUISINE_TYPES.map((cuisine) => (
-                <TouchableOpacity
-                  key={cuisine}
-                  style={[
-                    styles.cuisineOption,
-                    selectedCuisines.includes(cuisine) && styles.activeCuisineOption,
-                  ]}
-                  onPress={() => toggleCuisine(cuisine)}
-                >
-                  <Text style={[
-                    styles.cuisineText,
-                    selectedCuisines.includes(cuisine) && styles.activeCuisineText,
-                  ]}>
-                    {cuisine}
-                  </Text>
-                </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.cuisineOption,
+                  selectedCuisines.includes('South Indian') && styles.activeCuisineOption,
+                ]}
+                onPress={() => toggleCuisine('South Indian')}
+              >
+                <Text style={[
+                  styles.cuisineText,
+                  selectedCuisines.includes('South Indian') && styles.activeCuisineText,
+                ]}>
+                  South Indian (All)
+                </Text>
+              </TouchableOpacity>
+
+              {Object.keys(SOUTH_INDIAN_SUBCUISINES).map((category) => (
+                <View key={category} style={styles.categoryContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.categoryHeader,
+                      selectedCuisines.includes(category) && styles.activeCategoryHeader,
+                    ]}
+                    onPress={() => toggleCuisine(category)}
+                  >
+                    <Text style={[
+                      styles.categoryHeaderText,
+                      selectedCuisines.includes(category) && styles.activeCategoryHeaderText,
+                    ]}>
+                      {category}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.expandButton}
+                      onPress={() => toggleExpandCategory(category)}
+                    >
+                      <Text style={styles.expandButtonText}>
+                        {expandedCategory === category ? '−' : '+'}
+                      </Text>
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+
+                  {expandedCategory === category && (
+                    <View style={styles.subcuisineContainer}>
+                      {SOUTH_INDIAN_SUBCUISINES[category as keyof typeof SOUTH_INDIAN_SUBCUISINES].map((subcuisine) => (
+                        <TouchableOpacity
+                          key={subcuisine}
+                          style={[
+                            styles.subcuisineOption,
+                            selectedSubcuisines.includes(subcuisine) && styles.activeSubcuisineOption,
+                          ]}
+                          onPress={() => toggleSubcuisine(subcuisine)}
+                        >
+                          <Text style={[
+                            styles.subcuisineText,
+                            selectedSubcuisines.includes(subcuisine) && styles.activeSubcuisineText,
+                          ]}>
+                            {subcuisine}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
               ))}
             </View>
             
@@ -439,8 +515,6 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   cuisineContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     marginBottom: 16,
   },
   cuisineOption: {
@@ -450,6 +524,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     marginRight: 8,
     marginBottom: 8,
+    alignSelf: 'flex-start',
   },
   activeCuisineOption: {
     backgroundColor: colors.primary,
@@ -459,6 +534,66 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   activeCuisineText: {
+    color: colors.white,
+  },
+  categoryContainer: {
+    marginBottom: 8,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: colors.card,
+    borderRadius: 8,
+  },
+  activeCategoryHeader: {
+    backgroundColor: colors.primary,
+  },
+  categoryHeaderText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+  },
+  activeCategoryHeaderText: {
+    color: colors.white,
+  },
+  expandButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expandButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  subcuisineContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingLeft: 16,
+    marginTop: 8,
+  },
+  subcuisineOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: `${colors.card}80`,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  activeSubcuisineOption: {
+    backgroundColor: `${colors.primary}80`,
+  },
+  subcuisineText: {
+    fontSize: 13,
+    color: colors.text,
+  },
+  activeSubcuisineText: {
     color: colors.white,
   },
   detourDescription: {
