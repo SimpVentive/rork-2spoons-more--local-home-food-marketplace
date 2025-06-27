@@ -247,6 +247,8 @@ export default function CreateListingScreen() {
       return;
     }
     
+    const quantity = parseInt(formData.quantity);
+    
     const newListing = {
       sellerId: user.id,
       sellerName: user.name,
@@ -257,8 +259,12 @@ export default function CreateListingScreen() {
       image: formData.isLunchBox 
         ? (formData.lunchBoxItems[0]?.image || '') 
         : formData.image,
-      quantity: parseInt(formData.quantity),
-      remainingQuantity: parseInt(formData.quantity), // Initialize with full quantity
+      // Add the missing required properties
+      ingredients: [], // Empty array as default
+      allergens: [], // Empty array as default
+      availableQuantity: quantity,
+      quantity: quantity,
+      remainingQuantity: quantity, // Initialize with full quantity
       servings: parseInt(formData.servings),
       price: parseFloat(formData.price),
       packaging: formData.packaging,
