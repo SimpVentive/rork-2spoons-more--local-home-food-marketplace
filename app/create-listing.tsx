@@ -253,13 +253,12 @@ export default function CreateListingScreen() {
       sellerId: user.id,
       sellerName: user.name,
       sellerImage: user.profileImage,
-      sellerRating: user.rating,
+      sellerRating: user.rating ?? 5, // Provide default rating of 5 if undefined
       dishName: formData.isLunchBox ? 'Lunch Box' : formData.dishName,
       description: formData.description,
       image: formData.isLunchBox 
         ? (formData.lunchBoxItems[0]?.image || '') 
         : formData.image,
-      // Add the missing required properties
       ingredients: [], // Empty array as default
       allergens: [], // Empty array as default
       availableQuantity: quantity,
