@@ -8,6 +8,7 @@ import {
   Switch,
   Alert,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { 
@@ -30,7 +31,7 @@ import LocationPicker from '@/components/LocationPicker';
 import { RouteLocation } from '@/types';
 
 export default function RouteSettingsScreen() {
-  const { user, updateOfficeAddress, addRouteLocation, removeRouteLocation, updateDetourPreference, setRoutesSameAsHomeToOffice: updateRoutesSameAsHomeToOffice } = useAuthStore();
+  const { user, updateOfficeAddress, addRouteLocation, removeRouteLocation, updateDetourPreference, setRoutesSameAsHomeToOffice } = useAuthStore();
   const router = useRouter();
   
   const [officeAddress, setOfficeAddress] = useState(user?.officeAddress || '');
@@ -39,6 +40,7 @@ export default function RouteSettingsScreen() {
   const [officeToHomeRoute, setOfficeToHomeRoute] = useState<RouteLocation[]>(user?.officeToHomeRoute || []);
   const [isSameRoute, setIsSameRoute] = useState(user?.routesSameAsHomeToOffice !== false);
   const [detourPreference, setDetourPreference] = useState(user?.detourPreference || 500);
+  const [isLoading, setIsLoading] = useState(false);
   
   const [locationPickerVisible, setLocationPickerVisible] = useState(false);
   const [locationPickerType, setLocationPickerType] = useState<'office' | 'homeToOffice' | 'officeToHome'>('office');
@@ -77,8 +79,12 @@ export default function RouteSettingsScreen() {
     };
     
     if (locationPickerType === 'homeToOffice') {
+      const updatedRoute = [...homeToOfficeRoute, newLocation];
+      setHomeToOfficeRoute(updatedRoute);
       addRouteLocation('homeToOffice', newLocation);
     } else if (locationPickerType === 'officeToHome') {
+      const updatedRoute = [...officeToHomeRoute, newLocation];
+      setOfficeToHomeRoute(updatedRoute);
       addRouteLocation('officeToHome', newLocation);
     }
     
@@ -96,7 +102,16 @@ export default function RouteSettingsScreen() {
         },
         { 
           text: "Remove", 
-          onPress: () => removeRouteLocation(type, locationId),
+          onPress: () => {
+            if (type === 'homeToOffice') {
+              const updatedRoute = homeToOfficeRoute.filter(loc => loc.id !== locationId);
+              setHomeToOfficeRoute(updatedRoute);
+            } else {
+              const updatedRoute = officeToHomeRoute.filter(loc => loc.id !== locationId);
+              setOfficeToHomeRoute(updatedRoute);
+            }
+            removeRouteLocation(type, locationId);
+          },
           style: "destructive"
         }
       ]
@@ -110,28 +125,45 @@ export default function RouteSettingsScreen() {
     }
     
     try {
+      setIsLoading(true);
       await updateOfficeAddress(officeAddress, officeLocation);
       Alert.alert("Success", "Office address updated successfully");
     } catch (error) {
       Alert.alert("Error", "Failed to update office address");
+      console.error("Error updating office address:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
   
   const handleToggleRoutesSync = async (value: boolean) => {
     try {
-      await updateRoutesSameAsHomeToOffice(value);
+      setIsLoading(true);
+      await setRoutesSameAsHomeToOffice(value);
       setIsSameRoute(value);
+      
+      // If turning on sync, update the officeToHome route immediately in the UI
+      if (value) {
+        setOfficeToHomeRoute([...homeToOfficeRoute].reverse());
+      }
     } catch (error) {
       Alert.alert("Error", "Failed to update route settings");
+      console.error("Error toggling routes sync:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
   
   const handleSaveDetourPreference = async () => {
     try {
+      setIsLoading(true);
       await updateDetourPreference(detourPreference);
       Alert.alert("Success", "Detour preference updated successfully");
     } catch (error) {
       Alert.alert("Error", "Failed to update detour preference");
+      console.error("Error updating detour preference:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -142,6 +174,12 @@ export default function RouteSettingsScreen() {
   
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      )}
+      
       <View style={styles.header}>
         <Text style={styles.title}>Route Settings</Text>
         <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
@@ -181,7 +219,7 @@ export default function RouteSettingsScreen() {
           title="Save Office Address"
           onPress={handleSaveOfficeAddress}
           style={styles.saveButton}
-          disabled={!officeAddress}
+          disabled={!officeAddress || isLoading}
         />
       </View>
       
@@ -349,6 +387,7 @@ export default function RouteSettingsScreen() {
           title="Save Detour Preference"
           onPress={handleSaveDetourPreference}
           style={styles.saveButton}
+          disabled={isLoading}
         />
       </View>
       
@@ -382,6 +421,17 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingBottom: 32,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
   },
   header: {
     flexDirection: 'row',

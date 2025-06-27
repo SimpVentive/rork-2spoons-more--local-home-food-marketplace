@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { FoodListing, FilterOptions, SearchParams, RouteSearchParams } from '@/types';
 import { mockListings } from '@/mocks/data';
-import { useAuthStore } from '@/store/auth-store';
+import { FoodListing, FilterOptions, RouteSearchParams } from '@/types';
+import { useAuthStore } from './auth-store';
 
 interface ListingsState {
   listings: FoodListing[];
@@ -9,20 +9,13 @@ interface ListingsState {
   isLoading: boolean;
   error: string | null;
   fetchListings: () => Promise<void>;
-  getSellerListings: (sellerId: string) => FoodListing[];
-  getTopSellingItems: (limit?: number) => Promise<FoodListing[]>;
-  searchListings: (params: FilterOptions | SearchParams) => void;
+  searchListings: (options: FilterOptions) => void;
   searchListingsOnRoute: (params: RouteSearchParams) => void;
   addListing: (listing: Omit<FoodListing, 'id' | 'createdAt'>) => Promise<FoodListing>;
   updateListing: (id: string, updates: Partial<FoodListing>) => Promise<FoodListing>;
-  deleteListing: (id: string) => Promise<void>;
-  toggleListingApproval: (id: string) => Promise<void>;
-  toggleListingActive: (id: string) => Promise<void>;
-  toggleListingFeatured: (id: string) => Promise<void>;
-  bulkUpdateListings: (ids: string[], updates: Partial<FoodListing>) => Promise<void>;
-  bulkDeleteListings: (ids: string[]) => Promise<void>;
-  exportListings: (format: 'csv' | 'json') => Promise<string>;
-  pruneExpiredListings: () => Promise<void>;
+  deleteListing: (id: string) => Promise<boolean>;
+  getListing: (id: string) => FoodListing | undefined;
+  getTopSellingItems: (limit?: number) => Promise<FoodListing[]>;
 }
 
 export const useListingsStore = create<ListingsState>((set, get) => ({
@@ -30,100 +23,99 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
   filteredListings: [],
   isLoading: false,
   error: null,
-
+  
   fetchListings: async () => {
-    set({ isLoading: true, error: null });
     try {
+      set({ isLoading: true, error: null });
+      
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Prune expired listings that are more than 3 hours old
-      await get().pruneExpiredListings();
-      
-      // Get the updated listings after pruning
-      const currentListings = get().listings.length > 0 
-        ? get().listings 
-        : mockListings;
-      
+      // In a real app, we would fetch from an API
+      // For demo purposes, we'll use mock data
       set({ 
-        listings: currentListings, 
-        filteredListings: currentListings,
+        listings: mockListings,
+        filteredListings: mockListings,
         isLoading: false 
       });
     } catch (error) {
-      set({ error: 'Failed to fetch listings', isLoading: false });
+      console.error('Error fetching listings:', error);
+      set({ 
+        error: 'Failed to fetch listings. Please try again.',
+        isLoading: false 
+      });
     }
   },
-
-  getSellerListings: (sellerId: string) => {
+  
+  searchListings: (options: FilterOptions) => {
     const { listings } = get();
-    return listings.filter(listing => listing.sellerId === sellerId);
-  },
-
-  getTopSellingItems: async (limit = 5) => {
-    try {
-      const { listings } = get();
-      // In a real app, we would fetch from an API with sorting by orderCount
-      // For now, we'll sort the mock data
-      const sortedListings = [...listings]
-        .sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0))
-        .slice(0, limit);
-      
-      return sortedListings;
-    } catch (error) {
-      console.error('Error getting top selling items:', error);
-      return [];
-    }
-  },
-
-  searchListings: (params) => {
-    const { listings } = get();
-    
-    // Handle object-based params (for advanced filtering)
     let filtered = [...listings];
     
-    // Apply price filters
-    if (params.minPrice !== undefined) {
-      filtered = filtered.filter(listing => listing.price >= params.minPrice!);
-    }
-    
-    if (params.maxPrice !== undefined) {
-      filtered = filtered.filter(listing => listing.price <= params.maxPrice!);
-    }
-    
-    // Apply cuisine type filters
-    if (params.cuisineTypes && params.cuisineTypes.length > 0) {
+    // Apply search query filter
+    if (options.query) {
+      const query = options.query.toLowerCase();
       filtered = filtered.filter(listing => 
-        listing.cuisineType && params.cuisineTypes!.includes(listing.cuisineType)
+        listing.dishName.toLowerCase().includes(query) ||
+        listing.description.toLowerCase().includes(query) ||
+        listing.cuisineType.toLowerCase().includes(query) ||
+        (listing.subcuisineType && listing.subcuisineType.toLowerCase().includes(query)) ||
+        listing.sellerName.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply food type filter
+    if (options.foodType) {
+      if (options.foodType === 'vegetarian') {
+        filtered = filtered.filter(listing => listing.isVegetarian);
+      } else if (options.foodType === 'non-vegetarian') {
+        filtered = filtered.filter(listing => !listing.isVegetarian);
+      }
+    }
+    
+    // Apply cuisine type filter
+    if (options.cuisineTypes && options.cuisineTypes.length > 0) {
+      filtered = filtered.filter(listing => 
+        options.cuisineTypes!.includes(listing.cuisineType)
+      );
+    }
+    
+    // Apply subcuisine type filter
+    if (options.subcuisineTypes && options.subcuisineTypes.length > 0) {
+      filtered = filtered.filter(listing => 
+        listing.subcuisineType && options.subcuisineTypes!.includes(listing.subcuisineType)
+      );
+    }
+    
+    // Apply price range filter
+    if (options.minPrice !== undefined) {
+      filtered = filtered.filter(listing => listing.price >= options.minPrice!);
+    }
+    if (options.maxPrice !== undefined) {
+      filtered = filtered.filter(listing => listing.price <= options.maxPrice!);
+    }
+    
+    // Apply rating filter
+    if (options.minRating !== undefined) {
+      filtered = filtered.filter(listing => 
+        (listing.rating || 0) >= options.minRating!
       );
     }
     
     // Apply distance filter
-    if (params.maxDistance !== undefined) {
-      // In a real app, we would calculate the actual distance
-      // For now, we'll use a mock implementation
+    if (options.maxDistance !== undefined && options.userLocation) {
       filtered = filtered.filter(listing => {
-        // Mock distance calculation (random for demo)
-        const distance = Math.random() * 20;
-        return distance <= params.maxDistance!;
+        const distance = calculateDistance(
+          options.userLocation!.latitude,
+          options.userLocation!.longitude,
+          listing.location.latitude,
+          listing.location.longitude
+        );
+        return distance <= options.maxDistance!;
       });
     }
     
-    // Apply servings filter
-    if (params.minServings !== undefined) {
-      filtered = filtered.filter(listing => 
-        (listing.servings || 1) >= params.minServings!
-      );
-    }
-    
-    if (params.maxServings !== undefined) {
-      filtered = filtered.filter(listing => 
-        (listing.servings || 10) <= params.maxServings!
-      );
-    }
-    
     // Apply availability filter
-    if (params.availableNow) {
+    if (options.availableNow) {
       const now = new Date();
       filtered = filtered.filter(listing => {
         const availableFrom = new Date(listing.availableFrom);
@@ -132,324 +124,283 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       });
     }
     
-    // Apply food type filter
-    if (params.foodType && params.foodType !== 'both') {
-      filtered = filtered.filter(listing => 
-        params.foodType === 'vegetarian' ? listing.isVegetarian : !listing.isVegetarian
-      );
+    // Apply servings filter
+    if (options.minServings !== undefined) {
+      filtered = filtered.filter(listing => listing.servings >= options.minServings!);
     }
     
     // Apply sorting
-    if (params.sortBy) {
-      const sortOrder = params.sortOrder === 'desc' ? -1 : 1;
-      
+    if (options.sortBy) {
       filtered.sort((a, b) => {
-        switch (params.sortBy) {
+        switch (options.sortBy) {
           case 'price':
-            return sortOrder * (a.price - b.price);
+            return options.sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
           case 'rating':
-            return sortOrder * ((b.rating || 0) - (a.rating || 0));
+            return options.sortOrder === 'asc' 
+              ? (a.rating || 0) - (b.rating || 0) 
+              : (b.rating || 0) - (a.rating || 0);
           case 'distance':
-            // Mock distance sorting (random for demo)
-            return sortOrder * (Math.random() - 0.5);
+            if (options.userLocation) {
+              const distanceA = calculateDistance(
+                options.userLocation.latitude,
+                options.userLocation.longitude,
+                a.location.latitude,
+                a.location.longitude
+              );
+              const distanceB = calculateDistance(
+                options.userLocation.latitude,
+                options.userLocation.longitude,
+                b.location.latitude,
+                b.location.longitude
+              );
+              return options.sortOrder === 'asc' ? distanceA - distanceB : distanceB - distanceA;
+            }
+            return 0;
           case 'availableUntil':
-            return sortOrder * (new Date(a.availableUntil).getTime() - new Date(b.availableUntil).getTime());
-          case 'servings':
-            return sortOrder * ((a.servings || 1) - (b.servings || 1));
+            const dateA = new Date(a.availableUntil).getTime();
+            const dateB = new Date(b.availableUntil).getTime();
+            return options.sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
           default:
             return 0;
         }
       });
     }
     
-    // Apply text search if params.query exists
-    if ('query' in params && params.query && typeof params.query === 'string' && params.query.trim()) {
-      const lowercaseQuery = params.query.toLowerCase();
-      filtered = filtered.filter(listing => 
-        listing.dishName.toLowerCase().includes(lowercaseQuery) ||
-        listing.sellerName.toLowerCase().includes(lowercaseQuery) ||
-        (listing.cuisineType && listing.cuisineType.toLowerCase().includes(lowercaseQuery)) ||
-        (listing.description && listing.description.toLowerCase().includes(lowercaseQuery))
-      );
-    }
-    
     set({ filteredListings: filtered });
   },
-
+  
   searchListingsOnRoute: (params: RouteSearchParams) => {
     const { listings } = get();
-    const authStore = useAuthStore.getState();
-    const { user } = authStore;
+    const user = useAuthStore.getState().user;
     
     if (!user) {
-      set({ filteredListings: [], error: 'User not logged in' });
+      set({ filteredListings: [], error: 'User not found' });
       return;
     }
     
-    // Get the route locations based on the selected route type
-    const routeLocations = params.routeType === 'homeToOffice' 
-      ? user.homeToOfficeRoute || []
-      : user.officeToHomeRoute || [];
+    // Get the appropriate route based on the route type
+    const route = params.routeType === 'homeToOffice' 
+      ? user.homeToOfficeRoute 
+      : (user.routesSameAsHomeToOffice && params.routeType === 'officeToHome')
+        ? [...(user.homeToOfficeRoute || [])].reverse()
+        : user.officeToHomeRoute;
     
-    if (routeLocations.length === 0) {
-      set({ filteredListings: [], error: 'No route locations defined' });
+    if (!route || route.length === 0) {
+      set({ filteredListings: [], error: 'Route not set up' });
       return;
     }
     
-    // Get the maximum detour distance
-    const maxDetour = params.maxDetour || user.detourPreference || 500;
+    // Create a path of points along the route
+    const routePoints = [
+      { latitude: user.location.latitude, longitude: user.location.longitude }, // Home
+      ...route.map(loc => ({ latitude: loc.latitude, longitude: loc.longitude })),
+      { latitude: user.officeLocation?.latitude || 0, longitude: user.officeLocation?.longitude || 0 }, // Office
+    ];
     
-    // Filter listings based on route proximity
-    // In a real app, we would use actual geospatial calculations
-    // For this demo, we'll use a simplified approach with random distances
-    let filtered = [...listings].filter(listing => {
-      // Simulate checking if the listing is within the detour distance of any route point
-      // In a real app, this would be a proper distance calculation
-      const minDistanceToRoute = Math.random() * 1000; // Random distance in meters
-      return minDistanceToRoute <= maxDetour;
+    // Filter listings based on proximity to the route
+    let filtered = listings.filter(listing => {
+      // Check if listing is within the maximum detour distance from any point on the route
+      return routePoints.some(point => {
+        const distance = calculateDistance(
+          point.latitude,
+          point.longitude,
+          listing.location.latitude,
+          listing.location.longitude
+        ) * 1000; // Convert to meters
+        
+        return distance <= params.maxDetour;
+      });
     });
+    
+    // Apply food type filter
+    if (params.foodType !== 'both') {
+      if (params.foodType === 'vegetarian') {
+        filtered = filtered.filter(listing => listing.isVegetarian);
+      } else if (params.foodType === 'non-vegetarian') {
+        filtered = filtered.filter(listing => !listing.isVegetarian);
+      }
+    }
     
     // Apply dish name filter if provided
     if (params.dishName) {
-      const lowercaseDishName = params.dishName.toLowerCase();
+      const query = params.dishName.toLowerCase();
       filtered = filtered.filter(listing => 
-        listing.dishName.toLowerCase().includes(lowercaseDishName) ||
-        (listing.description && listing.description.toLowerCase().includes(lowercaseDishName))
+        listing.dishName.toLowerCase().includes(query) ||
+        listing.description.toLowerCase().includes(query)
       );
     }
     
-    // Apply cuisine type filters if provided
+    // Apply cuisine types filter if provided
     if (params.cuisineTypes && params.cuisineTypes.length > 0) {
       filtered = filtered.filter(listing => 
-        listing.cuisineType && params.cuisineTypes!.includes(listing.cuisineType)
+        params.cuisineTypes!.includes(listing.cuisineType)
       );
     }
     
-    // Apply food type filter if provided
-    if (params.foodType && params.foodType !== 'both') {
+    // Apply subcuisine types filter if provided
+    if (params.subcuisineTypes && params.subcuisineTypes.length > 0) {
       filtered = filtered.filter(listing => 
-        params.foodType === 'vegetarian' ? listing.isVegetarian : !listing.isVegetarian
+        listing.subcuisineType && params.subcuisineTypes!.includes(listing.subcuisineType)
       );
     }
     
-    // Sort by proximity to route (in a real app)
-    // For demo, we'll just randomize the order
-    filtered.sort(() => Math.random() - 0.5);
+    // Sort by distance from the route (closest first)
+    filtered.sort((a, b) => {
+      const minDistanceA = Math.min(...routePoints.map(point => 
+        calculateDistance(
+          point.latitude,
+          point.longitude,
+          a.location.latitude,
+          a.location.longitude
+        ) * 1000 // Convert to meters
+      ));
+      
+      const minDistanceB = Math.min(...routePoints.map(point => 
+        calculateDistance(
+          point.latitude,
+          point.longitude,
+          b.location.latitude,
+          b.location.longitude
+        ) * 1000 // Convert to meters
+      ));
+      
+      return minDistanceA - minDistanceB;
+    });
     
     set({ filteredListings: filtered });
   },
-
-  addListing: async (listing) => {
-    set({ isLoading: true, error: null });
+  
+  addListing: async (listing: Omit<FoodListing, 'id' | 'createdAt'>) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      set({ isLoading: true, error: null });
       
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Generate a new ID and creation date
       const newListing: FoodListing = {
         ...listing,
-        id: `listing${Date.now()}`,
+        id: `listing-${Date.now()}`,
         createdAt: new Date().toISOString(),
-        isApproved: false,
-        isActive: true,
       };
       
-      set(state => {
-        const updatedListings = [...state.listings, newListing];
-        return {
-          listings: updatedListings,
-          filteredListings: updatedListings,
-          isLoading: false,
-        };
-      });
+      // Update the store
+      set(state => ({
+        listings: [newListing, ...state.listings],
+        filteredListings: [newListing, ...state.filteredListings],
+        isLoading: false,
+      }));
       
       return newListing;
     } catch (error) {
-      set({ error: 'Failed to add listing', isLoading: false });
+      console.error('Error adding listing:', error);
+      set({ 
+        error: 'Failed to add listing. Please try again.',
+        isLoading: false 
+      });
       throw error;
     }
   },
-
-  updateListing: async (id, updates) => {
-    set({ isLoading: true, error: null });
+  
+  updateListing: async (id: string, updates: Partial<FoodListing>) => {
     try {
+      set({ isLoading: true, error: null });
+      
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      let updatedListing: FoodListing | undefined;
+      // Find the listing to update
+      const listing = get().listings.find(l => l.id === id);
       
-      set(state => {
-        const updatedListings = state.listings.map(listing => {
-          if (listing.id === id) {
-            updatedListing = { ...listing, ...updates };
-            return updatedListing;
-          }
-          return listing;
-        });
-        
-        return { 
-          listings: updatedListings, 
-          filteredListings: updatedListings,
-          isLoading: false 
-        };
-      });
-      
-      if (!updatedListing) {
+      if (!listing) {
         throw new Error('Listing not found');
       }
       
+      // Update the listing
+      const updatedListing: FoodListing = {
+        ...listing,
+        ...updates,
+      };
+      
+      // Update the store
+      set(state => ({
+        listings: state.listings.map(l => l.id === id ? updatedListing : l),
+        filteredListings: state.filteredListings.map(l => l.id === id ? updatedListing : l),
+        isLoading: false,
+      }));
+      
       return updatedListing;
     } catch (error) {
-      set({ error: 'Failed to update listing', isLoading: false });
+      console.error('Error updating listing:', error);
+      set({ 
+        error: 'Failed to update listing. Please try again.',
+        isLoading: false 
+      });
       throw error;
     }
   },
-
-  deleteListing: async (id) => {
-    set({ isLoading: true, error: null });
+  
+  deleteListing: async (id: string) => {
+    try {
+      set({ isLoading: true, error: null });
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update the store
+      set(state => ({
+        listings: state.listings.filter(l => l.id !== id),
+        filteredListings: state.filteredListings.filter(l => l.id !== id),
+        isLoading: false,
+      }));
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+      set({ 
+        error: 'Failed to delete listing. Please try again.',
+        isLoading: false 
+      });
+      return false;
+    }
+  },
+  
+  getListing: (id: string) => {
+    return get().listings.find(l => l.id === id);
+  },
+  
+  getTopSellingItems: async (limit = 10) => {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      set(state => {
-        const updatedListings = state.listings.filter(listing => listing.id !== id);
-        return {
-          listings: updatedListings,
-          filteredListings: updatedListings,
-          isLoading: false,
-        };
-      });
+      // Sort listings by order count (descending)
+      const topItems = [...get().listings]
+        .sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0))
+        .slice(0, limit);
+      
+      return topItems;
     } catch (error) {
-      set({ error: 'Failed to delete listing', isLoading: false });
-      throw error;
-    }
-  },
-
-  toggleListingApproval: async (id) => {
-    const listing = get().listings.find(l => l.id === id);
-    if (!listing) {
-      set({ error: 'Listing not found' });
-      return;
-    }
-    
-    await get().updateListing(id, { isApproved: !listing.isApproved });
-  },
-
-  toggleListingActive: async (id) => {
-    const listing = get().listings.find(l => l.id === id);
-    if (!listing) {
-      set({ error: 'Listing not found' });
-      return;
-    }
-    
-    await get().updateListing(id, { isActive: !listing.isActive });
-  },
-
-  toggleListingFeatured: async (id) => {
-    const listing = get().listings.find(l => l.id === id);
-    if (!listing) {
-      set({ error: 'Listing not found' });
-      return;
-    }
-    
-    await get().updateListing(id, { isFeatured: !listing.isFeatured });
-  },
-
-  bulkUpdateListings: async (ids, updates) => {
-    set({ isLoading: true, error: null });
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      set(state => {
-        const updatedListings = state.listings.map(listing => {
-          if (ids.includes(listing.id)) {
-            return { ...listing, ...updates };
-          }
-          return listing;
-        });
-        
-        return { 
-          listings: updatedListings, 
-          filteredListings: updatedListings,
-          isLoading: false 
-        };
-      });
-    } catch (error) {
-      set({ error: 'Failed to update listings', isLoading: false });
-      throw error;
-    }
-  },
-
-  bulkDeleteListings: async (ids) => {
-    set({ isLoading: true, error: null });
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      set(state => {
-        const updatedListings = state.listings.filter(listing => !ids.includes(listing.id));
-        return {
-          listings: updatedListings,
-          filteredListings: updatedListings,
-          isLoading: false,
-        };
-      });
-    } catch (error) {
-      set({ error: 'Failed to delete listings', isLoading: false });
-      throw error;
-    }
-  },
-
-  exportListings: async (format) => {
-    set({ isLoading: true, error: null });
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const listings = get().listings;
-      
-      if (format === 'json') {
-        const jsonData = JSON.stringify(listings, null, 2);
-        set({ isLoading: false });
-        return jsonData;
-      } else if (format === 'csv') {
-        // Simple CSV conversion
-        const headers = 'id,dishName,sellerName,price,isVegetarian,isApproved,isActive,isFeatured\n';
-        const rows = listings.map(listing => 
-          `${listing.id},${listing.dishName},${listing.sellerName},${listing.price},${listing.isVegetarian},${listing.isApproved},${listing.isActive},${listing.isFeatured || false}`
-        ).join('\n');
-        
-        const csvData = headers + rows;
-        set({ isLoading: false });
-        return csvData;
-      }
-      
-      throw new Error('Unsupported format');
-    } catch (error) {
-      set({ error: 'Failed to export listings', isLoading: false });
-      throw error;
-    }
-  },
-
-  pruneExpiredListings: async () => {
-    try {
-      const now = new Date();
-      const threeHoursAgo = new Date(now.getTime() - (3 * 60 * 60 * 1000)); // 3 hours ago
-      
-      set(state => {
-        // Filter out listings that expired more than 3 hours ago
-        const updatedListings = state.listings.filter(listing => {
-          const expiryTime = new Date(listing.availableUntil);
-          return expiryTime > threeHoursAgo;
-        });
-        
-        return {
-          listings: updatedListings,
-          filteredListings: updatedListings,
-        };
-      });
-    } catch (error) {
-      console.error('Error pruning expired listings:', error);
+      console.error('Error getting top selling items:', error);
+      return [];
     }
   },
 }));
+
+// Helper function to calculate distance between two coordinates in kilometers
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  const distance = R * c; // Distance in km
+  return distance;
+}
+
+function deg2rad(deg: number): number {
+  return deg * (Math.PI/180);
+}

@@ -17,6 +17,7 @@ import {
   ChefHat, 
   TrendingUp, 
   Star,
+  Route,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { useListingsStore } from '@/store/listings-store';
@@ -106,6 +107,10 @@ export default function HomeScreen() {
   const handleExplorePress = () => {
     router.push('/(tabs)/search');
   };
+
+  const handleRouteSettingsPress = () => {
+    router.push('/route-settings');
+  };
   
   return (
     <ScrollView 
@@ -163,6 +168,25 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
       </ImageBackground>
+
+      {/* Route Settings Banner */}
+      {(!user?.officeAddress || !user?.homeToOfficeRoute?.length) && (
+        <TouchableOpacity 
+          style={styles.routeBanner}
+          onPress={handleRouteSettingsPress}
+        >
+          <View style={styles.routeBannerIconContainer}>
+            <Route size={24} color={colors.white} />
+          </View>
+          <View style={styles.routeBannerContent}>
+            <Text style={styles.routeBannerTitle}>Set Up Your Route</Text>
+            <Text style={styles.routeBannerText}>
+              Find food along your daily commute route
+            </Text>
+          </View>
+          <MapPin size={20} color={colors.white} />
+        </TouchableOpacity>
+      )}
       
       {/* Top Selling Items Section */}
       <View style={styles.sectionContainer}>
@@ -171,7 +195,7 @@ export default function HomeScreen() {
             <TrendingUp size={20} color={colors.primary} />
             <Text style={styles.sectionTitle}>Top Selling Items</Text>
           </View>
-          <TouchableOpacity onPress={() => router.push('/search')}>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -213,7 +237,7 @@ export default function HomeScreen() {
             <ChefHat size={20} color={colors.primary} />
             <Text style={styles.sectionTitle}>Top Chefs</Text>
           </View>
-          <TouchableOpacity onPress={() => router.push('/following')}>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/following')}>
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -357,6 +381,41 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 16,
     fontWeight: '600',
+  },
+  routeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.secondary,
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  routeBannerIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  routeBannerContent: {
+    flex: 1,
+  },
+  routeBannerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.white,
+    marginBottom: 4,
+  },
+  routeBannerText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   sectionContainer: {
     marginTop: 16,

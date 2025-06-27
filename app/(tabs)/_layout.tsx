@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs } from 'expo-router';
-import { useRouter } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { 
   Home, 
   Search, 
@@ -11,11 +10,13 @@ import {
   User, 
   PieChart, 
   PlusCircle,
-  MoreHorizontal
+  MoreHorizontal,
+  Settings,
+  Route,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
-import { Platform, StyleSheet, View, TouchableOpacity, Text, Modal } from 'react-native';
+import { Platform, StyleSheet, View, TouchableOpacity, Text, Modal, Pressable } from 'react-native';
 
 export default function TabLayout() {
   const { isAuthenticated, userPreference } = useAuthStore();
@@ -154,9 +155,8 @@ export default function TabLayout() {
         animationType="fade"
         onRequestClose={() => setMoreMenuVisible(false)}
       >
-        <TouchableOpacity 
+        <Pressable 
           style={styles.modalOverlay}
-          activeOpacity={1}
           onPress={() => setMoreMenuVisible(false)}
         >
           <View style={styles.moreMenuContainer}>
@@ -196,11 +196,19 @@ export default function TabLayout() {
               style={styles.moreMenuItem}
               onPress={() => navigateTo('/route-settings')}
             >
-              <Search size={24} color={colors.text} />
+              <Route size={24} color={colors.text} />
               <Text style={styles.moreMenuItemText}>Route Settings</Text>
             </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.moreMenuItem}
+              onPress={() => navigateTo('/edit-profile')}
+            >
+              <Settings size={24} color={colors.text} />
+              <Text style={styles.moreMenuItemText}>Account Settings</Text>
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+        </Pressable>
       </Modal>
     </View>
   );
