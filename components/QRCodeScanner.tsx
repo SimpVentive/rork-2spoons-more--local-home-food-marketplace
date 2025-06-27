@@ -18,9 +18,13 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   const cameraRef = useRef(null);
 
   useEffect(() => {
-    if (!permission?.granted) {
-      requestPermission();
-    }
+    const checkPermission = async () => {
+      if (!permission?.granted) {
+        await requestPermission();
+      }
+    };
+    
+    checkPermission();
   }, [permission, requestPermission]);
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
