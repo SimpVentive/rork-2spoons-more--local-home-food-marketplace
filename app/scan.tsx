@@ -11,56 +11,61 @@ export default function ScanScreen() {
   const [scanning, setScanning] = useState(true);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
   const router = useRouter();
 
-  // Reset error when component mounts
+  // Reset state when component mounts
   useEffect(() => {
     setError(null);
+    setResult(null);
+    setScanning(true);
+    setProcessing(false);
   }, []);
 
-  const handleScan = (data: string) => {
+  const handleScan = async (data: string) => {
+    if (processing) return;
+    
     console.log("QR Code scanned:", data);
+    setProcessing(true);
     setScanning(false);
     setResult(data);
     
-    // Process the scanned data
     try {
-      // Use the helper function to parse the QR code
+      // Parse the scanned data
       const parsedData = parseQRCode(data);
       console.log("Parsed QR data:", parsedData);
+      
+      // Add a small delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       switch (parsedData.type) {
         case 'order':
           if (parsedData.id) {
             console.log("Navigating to order:", parsedData.id);
-            router.push(`/order/${parsedData.id}`);
+            router.replace(`/order/${parsedData.id}`);
+            return;
           } else {
             throw new Error('Invalid order ID');
           }
-          break;
           
         case 'listing':
           if (parsedData.id) {
             console.log("Navigating to listing:", parsedData.id);
-            router.push(`/listing/${parsedData.id}`);
+            router.replace(`/listing/${parsedData.id}`);
+            return;
           } else {
             throw new Error('Invalid listing ID');
           }
-          break;
           
         case 'url':
-          // Handle URL
           Alert.alert(
-            'External URL',
-            `Detected URL: ${parsedData.url}`,
+            'External URL Detected',
+            `URL: ${parsedData.url}\n\nThis app only supports scanning order and listing QR codes.`,
             [
               { text: 'Cancel', style: 'cancel' },
               { 
-                text: 'Try Again', 
-                onPress: () => {
-                  setScanning(true);
-                  setResult(null);
-                }
+                text: 'Scan Again', 
+                onPress: handleScanAgain
               }
             ]
           );
@@ -68,26 +73,23 @@ export default function ScanScreen() {
           
         case 'unknown':
           // Try to detect if it's a raw ID (without prefix)
-          if (parsedData.id) {
+          if (parsedData.id && /^[a-zA-Z0-9-_]+$/.test(parsedData.id)) {
             Alert.alert(
               'ID Detected',
               'What type of item is this?',
               [
                 { 
                   text: 'Order', 
-                  onPress: () => router.push(`/order/${parsedData.id}`)
+                  onPress: () => router.replace(`/order/${parsedData.id}`)
                 },
                 { 
                   text: 'Listing', 
-                  onPress: () => router.push(`/listing/${parsedData.id}`)
+                  onPress: () => router.replace(`/listing/${parsedData.id}`)
                 },
                 {
                   text: 'Cancel',
                   style: 'cancel',
-                  onPress: () => {
-                    setScanning(true);
-                    setResult(null);
-                  }
+                  onPress: handleScanAgain
                 }
               ]
             );
@@ -96,16 +98,12 @@ export default function ScanScreen() {
             setError('Unrecognized QR code format');
             Alert.alert(
               'Unrecognized QR Code',
-              'The scanned QR code is not in a format recognized by this app.',
+              'The scanned QR code is not in a format recognized by this app. Please scan a valid order or listing QR code.',
               [
                 { text: 'OK' },
                 { 
                   text: 'Scan Again', 
-                  onPress: () => {
-                    setScanning(true);
-                    setResult(null);
-                    setError(null);
-                  }
+                  onPress: handleScanAgain
                 }
               ]
             );
@@ -116,20 +114,18 @@ export default function ScanScreen() {
       console.error('QR code processing error:', error);
       setError('Failed to process QR code');
       Alert.alert(
-        'Error',
-        'Failed to process the QR code. Please try again.',
+        'Scan Error',
+        'There was a problem processing the QR code. Please try scanning again.',
         [
           { text: 'OK' },
           { 
             text: 'Try Again', 
-            onPress: () => {
-              setScanning(true);
-              setResult(null);
-              setError(null);
-            }
+            onPress: handleScanAgain
           }
         ]
       );
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -137,6 +133,11 @@ export default function ScanScreen() {
     setScanning(true);
     setResult(null);
     setError(null);
+    setProcessing(false);
+  };
+
+  const handleGoBack = () => {
+    router.back();
   };
 
   return (
@@ -151,7 +152,7 @@ export default function ScanScreen() {
             </Text>
             <Button
               title="Go Back"
-              onPress={() => router.back()}
+              onPress={handleGoBack}
               style={styles.webBackButton}
             />
           </SafeAreaView>
@@ -159,38 +160,45 @@ export default function ScanScreen() {
           scanning ? (
             <QRCodeScanner 
               onScan={handleScan} 
-              onClose={() => router.back()}
+              onClose={handleGoBack}
             />
           ) : (
             <SafeAreaView style={styles.resultContainer}>
               <ScrollView contentContainerStyle={styles.resultContent}>
                 <Text style={styles.resultTitle}>
-                  {error ? 'Scan Error' : 'Scan Result'}
+                  {processing ? 'Processing...' : error ? 'Scan Error' : 'Scan Complete'}
                 </Text>
                 
-                {error ? (
+                {processing ? (
+                  <View style={styles.processingContainer}>
+                    <Text style={styles.processingText}>Processing QR code...</Text>
+                  </View>
+                ) : error ? (
                   <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
                   </View>
                 ) : (
                   <View style={styles.resultTextContainer}>
+                    <Text style={styles.resultLabel}>Scanned Data:</Text>
                     <Text style={styles.resultText}>{result}</Text>
                   </View>
                 )}
                 
-                <View style={styles.buttonContainer}>
-                  <Button
-                    title="Scan Again"
-                    onPress={handleScanAgain}
-                    style={styles.scanAgainButton}
-                  />
-                  <Button
-                    title="Go Back"
-                    onPress={() => router.back()}
-                    variant="outline"
-                    style={styles.goBackButton}
-                  />
-                </View>
+                {!processing && (
+                  <View style={styles.buttonContainer}>
+                    <Button
+                      title="Scan Again"
+                      onPress={handleScanAgain}
+                      style={styles.scanAgainButton}
+                    />
+                    <Button
+                      title="Go Back"
+                      onPress={handleGoBack}
+                      variant="outline"
+                      style={styles.goBackButton}
+                    />
+                  </View>
+                )}
               </ScrollView>
             </SafeAreaView>
           )
@@ -223,6 +231,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 400,
     marginBottom: 32,
+    lineHeight: 24,
   },
   webBackButton: {
     width: 200,
@@ -243,6 +252,19 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: 'center',
   },
+  processingContainer: {
+    width: '100%',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 32,
+    alignItems: 'center',
+  },
+  processingText: {
+    fontSize: 16,
+    color: colors.textLight,
+    textAlign: 'center',
+  },
   resultTextContainer: {
     width: '100%',
     backgroundColor: colors.card,
@@ -250,10 +272,16 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 32,
   },
+  resultLabel: {
+    fontSize: 14,
+    color: colors.textLight,
+    marginBottom: 8,
+    fontWeight: '500',
+  },
   resultText: {
     fontSize: 16,
     color: colors.text,
-    textAlign: 'center',
+    lineHeight: 24,
   },
   errorContainer: {
     width: '100%',
@@ -261,11 +289,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 32,
+    borderWidth: 1,
+    borderColor: `${colors.error}40`,
   },
   errorText: {
     fontSize: 16,
     color: colors.error,
     textAlign: 'center',
+    fontWeight: '500',
   },
   buttonContainer: {
     width: '100%',

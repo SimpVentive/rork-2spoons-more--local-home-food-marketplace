@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert } from 'react-native';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Scan } from 'lucide-react-native';
 import colors from '@/constants/colors';
@@ -13,67 +13,70 @@ interface QRCodeScannerProps {
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const cameraRef = useRef(null);
 
   useEffect(() => {
-    const checkAndRequestPermission = async () => {
+    const initializeCamera = async () => {
       try {
+        setIsLoading(true);
+        
+        // Small delay to ensure component is mounted
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         if (!permission) {
-          console.log("Permission object is null, waiting...");
+          console.log("Permission object not ready, waiting...");
           return;
         }
 
-        if (!permission.granted && !isRequestingPermission) {
-          console.log("Camera permission not granted, requesting...");
-          setIsRequestingPermission(true);
-          
+        if (!permission.granted) {
+          console.log("Requesting camera permission...");
           const result = await requestPermission();
-          console.log("Permission request result:", result);
-          
-          setIsRequestingPermission(false);
+          console.log("Permission result:", result);
           
           if (!result.granted) {
-            console.log("Camera permission denied");
-            setHasError(true);
+            Alert.alert(
+              "Camera Permission Required",
+              "Camera access is required to scan QR codes. Please enable camera permission in your device settings.",
+              [{ text: "OK" }]
+            );
           }
         }
       } catch (error) {
-        console.error("Error requesting camera permission:", error);
-        setIsRequestingPermission(false);
-        setHasError(true);
+        console.error("Error initializing camera:", error);
+        Alert.alert(
+          "Camera Error",
+          "Failed to initialize camera. Please try again.",
+          [{ text: "OK" }]
+        );
+      } finally {
+        setIsLoading(false);
       }
     };
-    
-    checkAndRequestPermission();
-  }, [permission, requestPermission, isRequestingPermission]);
+
+    initializeCamera();
+  }, [permission, requestPermission]);
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
-    if (!scanned && data) {
-      console.log("Barcode scanned:", data);
-      setScanned(true);
+    if (scanned || !data) return;
+    
+    console.log("QR Code scanned:", data);
+    setScanned(true);
+    
+    // Add haptic feedback on mobile
+    if (Platform.OS !== 'web') {
       try {
-        // Add a slight delay to ensure UI updates before processing
-        setTimeout(() => {
-          onScan(data);
-        }, 300);
+        const { Haptics } = require('expo-haptics');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
-        console.error("Error in scan handler:", error);
-        setHasError(true);
-        Alert.alert(
-          "Scan Error",
-          "There was a problem processing the QR code. Please try again.",
-          [
-            {
-              text: "OK",
-              onPress: () => setScanned(false)
-            }
-          ]
-        );
+        console.log("Haptics not available");
       }
     }
+    
+    // Process the scan with a small delay to ensure UI updates
+    setTimeout(() => {
+      onScan(data);
+    }, 100);
   };
 
   const handleClose = () => {
@@ -86,39 +89,38 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
 
   const handleScanAgain = () => {
     setScanned(false);
-    setHasError(false);
   };
 
   const handleRetryPermission = async () => {
-    setHasError(false);
-    setIsRequestingPermission(true);
-    
     try {
       const result = await requestPermission();
-      console.log("Retry permission result:", result);
-      setIsRequestingPermission(false);
-      
       if (!result.granted) {
-        setHasError(true);
         Alert.alert(
-          "Camera Permission Required",
-          "Camera access is required to scan QR codes. Please enable camera permission in your device settings.",
-          [
-            { text: "OK" }
-          ]
+          "Permission Denied",
+          "Camera permission is required to scan QR codes. Please enable it in your device settings.",
+          [{ text: "OK" }]
         );
       }
     } catch (error) {
-      console.error("Error retrying permission:", error);
-      setIsRequestingPermission(false);
-      setHasError(true);
+      console.error("Error requesting permission:", error);
+      Alert.alert(
+        "Error",
+        "Failed to request camera permission. Please try again.",
+        [{ text: "OK" }]
+      );
     }
   };
 
-  // Show loading state while permission is being checked
-  if (!permission) {
+  // Loading state
+  if (isLoading || !permission) {
     return (
       <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleClose}>
+            <ArrowLeft size={24} color={colors.white} />
+          </TouchableOpacity>
+          <Text style={styles.headerText}>QR Scanner</Text>
+        </View>
         <View style={styles.centerContent}>
           <Text style={styles.text}>Initializing camera...</Text>
         </View>
@@ -126,19 +128,8 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
     );
   }
 
-  // Show permission request state
-  if (isRequestingPermission) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.centerContent}>
-          <Text style={styles.text}>Requesting camera permission...</Text>
-        </View>
-      </View>
-    );
-  }
-
-  // Show permission denied state
-  if (!permission.granted || hasError) {
+  // Permission denied state
+  if (!permission.granted) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -161,14 +152,14 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
     );
   }
 
+  // Main camera view
   return (
     <View style={styles.container}>
       <CameraView
-        ref={cameraRef}
         style={styles.camera}
         facing="back"
         barcodeScannerSettings={{
-          barcodeTypes: ['qr'],
+          barcodeTypes: ['qr', 'pdf417'],
         }}
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
       >
@@ -190,19 +181,21 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
             </View>
           </View>
           
-          <Text style={styles.instructions}>
-            Position the QR code within the frame to scan
-          </Text>
-          
-          {scanned && (
-            <TouchableOpacity 
-              style={styles.scanAgainButton}
-              onPress={handleScanAgain}
-            >
-              <Scan size={20} color={colors.white} />
-              <Text style={styles.scanAgainText}>Scan Again</Text>
-            </TouchableOpacity>
-          )}
+          <View style={styles.instructionsContainer}>
+            <Text style={styles.instructions}>
+              Position the QR code within the frame to scan
+            </Text>
+            
+            {scanned && (
+              <TouchableOpacity 
+                style={styles.scanAgainButton}
+                onPress={handleScanAgain}
+              >
+                <Scan size={20} color={colors.white} />
+                <Text style={styles.scanAgainText}>Scan Again</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </CameraView>
     </View>
@@ -219,14 +212,15 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'space-between',
     padding: 16,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: Platform.OS === 'ios' ? 40 : 16,
+    marginTop: Platform.OS === 'ios' ? 40 : 20,
+    zIndex: 1,
   },
   backButton: {
     width: 40,
@@ -234,7 +228,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   headerText: {
     color: colors.white,
@@ -249,27 +243,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   scanArea: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   scanFrame: {
-    width: 250,
-    height: 250,
+    width: 280,
+    height: 280,
     borderWidth: 2,
     borderColor: colors.primary,
     backgroundColor: 'transparent',
-    borderRadius: 16,
+    borderRadius: 20,
   },
   scanCorners: {
     position: 'absolute',
-    width: 250,
-    height: 250,
+    width: 280,
+    height: 280,
   },
   corner: {
     position: 'absolute',
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
     borderColor: colors.white,
   },
   topLeft: {
@@ -277,34 +272,39 @@ const styles = StyleSheet.create({
     left: -2,
     borderTopWidth: 4,
     borderLeftWidth: 4,
-    borderTopLeftRadius: 16,
+    borderTopLeftRadius: 20,
   },
   topRight: {
     top: -2,
     right: -2,
     borderTopWidth: 4,
     borderRightWidth: 4,
-    borderTopRightRadius: 16,
+    borderTopRightRadius: 20,
   },
   bottomLeft: {
     bottom: -2,
     left: -2,
     borderBottomWidth: 4,
     borderLeftWidth: 4,
-    borderBottomLeftRadius: 16,
+    borderBottomLeftRadius: 20,
   },
   bottomRight: {
     bottom: -2,
     right: -2,
     borderBottomWidth: 4,
     borderRightWidth: 4,
-    borderBottomRightRadius: 16,
+    borderBottomRightRadius: 20,
+  },
+  instructionsContainer: {
+    alignItems: 'center',
+    paddingBottom: 40,
   },
   instructions: {
     color: colors.white,
     textAlign: 'center',
     fontSize: 16,
-    marginBottom: 40,
+    marginBottom: 24,
+    paddingHorizontal: 20,
   },
   scanAgainButton: {
     flexDirection: 'row',
@@ -313,21 +313,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 8,
-    marginBottom: 40,
-    alignSelf: 'center',
+    borderRadius: 12,
   },
   scanAgainText: {
     color: colors.white,
     fontWeight: '600',
     marginLeft: 8,
+    fontSize: 16,
   },
   text: {
     color: colors.white,
     fontSize: 18,
     textAlign: 'center',
     marginBottom: 20,
-    paddingHorizontal: 24,
+    fontWeight: '500',
   },
   subText: {
     color: colors.white,
@@ -335,13 +334,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 32,
     opacity: 0.8,
-    paddingHorizontal: 32,
+    lineHeight: 20,
   },
   button: {
     backgroundColor: colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
   },
   buttonText: {
     color: colors.white,
