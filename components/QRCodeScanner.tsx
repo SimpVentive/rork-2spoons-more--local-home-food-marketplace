@@ -14,22 +14,45 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isRequestingPermission, setIsRequestingPermission] = useState(false);
   const router = useRouter();
   const cameraRef = useRef(null);
 
   useEffect(() => {
-    const checkPermission = async () => {
-      if (!permission?.granted) {
-        await requestPermission();
+    const checkAndRequestPermission = async () => {
+      try {
+        if (!permission) {
+          console.log("Permission object is null, waiting...");
+          return;
+        }
+
+        if (!permission.granted && !isRequestingPermission) {
+          console.log("Camera permission not granted, requesting...");
+          setIsRequestingPermission(true);
+          
+          const result = await requestPermission();
+          console.log("Permission request result:", result);
+          
+          setIsRequestingPermission(false);
+          
+          if (!result.granted) {
+            console.log("Camera permission denied");
+            setHasError(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error requesting camera permission:", error);
+        setIsRequestingPermission(false);
+        setHasError(true);
       }
     };
     
-    checkPermission();
-  }, [permission, requestPermission]);
+    checkAndRequestPermission();
+  }, [permission, requestPermission, isRequestingPermission]);
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     if (!scanned && data) {
-      console.log("Barcode scanned:", data); // Debug log
+      console.log("Barcode scanned:", data);
       setScanned(true);
       try {
         // Add a slight delay to ensure UI updates before processing
@@ -66,24 +89,74 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
     setHasError(false);
   };
 
+  const handleRetryPermission = async () => {
+    setHasError(false);
+    setIsRequestingPermission(true);
+    
+    try {
+      const result = await requestPermission();
+      console.log("Retry permission result:", result);
+      setIsRequestingPermission(false);
+      
+      if (!result.granted) {
+        setHasError(true);
+        Alert.alert(
+          "Camera Permission Required",
+          "Camera access is required to scan QR codes. Please enable camera permission in your device settings.",
+          [
+            { text: "OK" }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error("Error retrying permission:", error);
+      setIsRequestingPermission(false);
+      setHasError(true);
+    }
+  };
+
+  // Show loading state while permission is being checked
   if (!permission) {
     return (
       <View style={styles.container}>
-        <Text style={styles.text}>Requesting camera permission...</Text>
+        <View style={styles.centerContent}>
+          <Text style={styles.text}>Initializing camera...</Text>
+        </View>
       </View>
     );
   }
 
-  if (!permission.granted) {
+  // Show permission request state
+  if (isRequestingPermission) {
     return (
       <View style={styles.container}>
-        <Text style={styles.text}>We need your permission to scan QR codes</Text>
-        <Text style={styles.subText}>
-          The camera is used only to scan QR codes and is not stored or shared.
-        </Text>
-        <TouchableOpacity style={styles.button} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
-        </TouchableOpacity>
+        <View style={styles.centerContent}>
+          <Text style={styles.text}>Requesting camera permission...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Show permission denied state
+  if (!permission.granted || hasError) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleClose}>
+            <ArrowLeft size={24} color={colors.white} />
+          </TouchableOpacity>
+          <Text style={styles.headerText}>Camera Permission</Text>
+        </View>
+        
+        <View style={styles.centerContent}>
+          <Text style={styles.text}>Camera access is required to scan QR codes</Text>
+          <Text style={styles.subText}>
+            The camera is used only to scan QR codes and is not stored or shared.
+          </Text>
+          <TouchableOpacity style={styles.button} onPress={handleRetryPermission}>
+            <Text style={styles.buttonText}>Grant Camera Permission</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -109,6 +182,12 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
           
           <View style={styles.scanArea}>
             <View style={styles.scanFrame} />
+            <View style={styles.scanCorners}>
+              <View style={[styles.corner, styles.topLeft]} />
+              <View style={[styles.corner, styles.topRight]} />
+              <View style={[styles.corner, styles.bottomLeft]} />
+              <View style={[styles.corner, styles.bottomRight]} />
+            </View>
           </View>
           
           <Text style={styles.instructions}>
@@ -163,9 +242,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 16,
   },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
   scanArea: {
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
   scanFrame: {
     width: 250,
@@ -174,6 +260,45 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     backgroundColor: 'transparent',
     borderRadius: 16,
+  },
+  scanCorners: {
+    position: 'absolute',
+    width: 250,
+    height: 250,
+  },
+  corner: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderColor: colors.white,
+  },
+  topLeft: {
+    top: -2,
+    left: -2,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderTopLeftRadius: 16,
+  },
+  topRight: {
+    top: -2,
+    right: -2,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+    borderTopRightRadius: 16,
+  },
+  bottomLeft: {
+    bottom: -2,
+    left: -2,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderBottomLeftRadius: 16,
+  },
+  bottomRight: {
+    bottom: -2,
+    right: -2,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderBottomRightRadius: 16,
   },
   instructions: {
     color: colors.white,

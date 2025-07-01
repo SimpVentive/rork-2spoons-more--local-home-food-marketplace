@@ -1,416 +1,330 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  Switch,
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   Alert,
+  Switch,
   Platform,
-  ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { 
   MapPin, 
-  Home, 
-  Briefcase, 
   Plus, 
-  X, 
-  ArrowRight,
-  ArrowLeft,
-  Trash2,
-  Save,
+  Trash2, 
+  Home, 
+  Building, 
+  Settings,
+  Route,
+  Navigation,
 } from 'lucide-react-native';
-import Slider from '@react-native-community/slider';
 import { useAuthStore } from '@/store/auth-store';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
+import { RouteSearchModal } from '@/components/RouteSearchModal';
 import colors from '@/constants/colors';
-import LocationPicker from '@/components/LocationPicker';
 import { RouteLocation } from '@/types';
 
 export default function RouteSettingsScreen() {
-  const { user, updateOfficeAddress, addRouteLocation, removeRouteLocation, updateDetourPreference, setRoutesSameAsHomeToOffice } = useAuthStore();
+  const { 
+    user, 
+    addRouteLocation, 
+    removeRouteLocation, 
+    updateDetourPreference,
+    updateOfficeAddress,
+    setRoutesSameAsHomeToOffice
+  } = useAuthStore();
+  
   const router = useRouter();
-  
-  const [officeAddress, setOfficeAddress] = useState(user?.officeAddress || '');
-  const [officeLocation, setOfficeLocation] = useState(user?.officeLocation || { latitude: 0, longitude: 0 });
-  const [homeToOfficeRoute, setHomeToOfficeRoute] = useState<RouteLocation[]>(user?.homeToOfficeRoute || []);
-  const [officeToHomeRoute, setOfficeToHomeRoute] = useState<RouteLocation[]>(user?.officeToHomeRoute || []);
-  const [isSameRoute, setIsSameRoute] = useState(user?.routesSameAsHomeToOffice !== false);
-  const [detourPreference, setDetourPreference] = useState(user?.detourPreference || 500);
   const [isLoading, setIsLoading] = useState(false);
-  
-  const [locationPickerVisible, setLocationPickerVisible] = useState(false);
-  const [locationPickerType, setLocationPickerType] = useState<'office' | 'homeToOffice' | 'officeToHome'>('office');
-  
+  const [officeAddress, setOfficeAddressLocal] = useState(user?.officeAddress || '');
+  const [detourMeters, setDetourMeters] = useState(user?.detourPreference?.toString() || '500');
+  const [routesSame, setRoutesSame] = useState(user?.routesSameAsHomeToOffice ?? true);
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [currentRouteType, setCurrentRouteType] = useState<'homeToOffice' | 'officeToHome'>('homeToOffice');
+
   useEffect(() => {
-    if (!user) {
-      router.replace('/(auth)');
+    if (user) {
+      setOfficeAddressLocal(user.officeAddress || '');
+      setDetourMeters(user.detourPreference?.toString() || '500');
+      setRoutesSame(user.routesSameAsHomeToOffice ?? true);
+    }
+  }, [user]);
+
+  const handleSaveOfficeAddress = async () => {
+    if (!officeAddress.trim()) {
+      Alert.alert('Error', 'Please enter your office address');
       return;
     }
-    
-    // Update local state when user data changes
-    setOfficeAddress(user.officeAddress || '');
-    setOfficeLocation(user.officeLocation || { latitude: 0, longitude: 0 });
-    setHomeToOfficeRoute(user.homeToOfficeRoute || []);
-    setOfficeToHomeRoute(user.officeToHomeRoute || []);
-    setIsSameRoute(user.routesSameAsHomeToOffice !== false);
-    setDetourPreference(user.detourPreference || 500);
-  }, [user]);
-  
-  const handleOfficeLocationSelect = (selectedLocation: { latitude: number; longitude: number; address: string }) => {
-    setOfficeAddress(selectedLocation.address);
-    setOfficeLocation({
-      latitude: selectedLocation.latitude,
-      longitude: selectedLocation.longitude,
-    });
-    setLocationPickerVisible(false);
-  };
-  
-  const handleRouteLocationSelect = (selectedLocation: { latitude: number; longitude: number; address: string }) => {
-    const newLocation: RouteLocation = {
-      id: `loc-${Date.now()}`,
-      name: selectedLocation.address.split(',')[0],
-      address: selectedLocation.address,
-      latitude: selectedLocation.latitude,
-      longitude: selectedLocation.longitude,
-    };
-    
-    if (locationPickerType === 'homeToOffice') {
-      const updatedRoute = [...homeToOfficeRoute, newLocation];
-      setHomeToOfficeRoute(updatedRoute);
-      addRouteLocation('homeToOffice', newLocation);
-    } else if (locationPickerType === 'officeToHome') {
-      const updatedRoute = [...officeToHomeRoute, newLocation];
-      setOfficeToHomeRoute(updatedRoute);
-      addRouteLocation('officeToHome', newLocation);
+
+    setIsLoading(true);
+    try {
+      // In a real app, you would geocode the address to get coordinates
+      // For demo purposes, we'll use default coordinates
+      await updateOfficeAddress(officeAddress, {
+        latitude: 12.9716,
+        longitude: 77.5946
+      });
+      
+      Alert.alert('Success', 'Office address updated successfully');
+    } catch (error) {
+      console.error('Error updating office address:', error);
+      Alert.alert('Error', 'Failed to update office address');
+    } finally {
+      setIsLoading(false);
     }
-    
-    setLocationPickerVisible(false);
   };
-  
-  const handleRemoveRouteLocation = (type: 'homeToOffice' | 'officeToHome', locationId: string) => {
+
+  const handleSaveDetourPreference = async () => {
+    const meters = parseInt(detourMeters);
+    if (isNaN(meters) || meters < 100 || meters > 5000) {
+      Alert.alert('Error', 'Please enter a valid detour distance between 100-5000 meters');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await updateDetourPreference(meters);
+      Alert.alert('Success', 'Detour preference updated successfully');
+    } catch (error) {
+      console.error('Error updating detour preference:', error);
+      Alert.alert('Error', 'Failed to update detour preference');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleToggleRoutesSame = async (value: boolean) => {
+    setRoutesSame(value);
+    try {
+      await setRoutesSameAsHomeToOffice(value);
+    } catch (error) {
+      console.error('Error updating routes setting:', error);
+      Alert.alert('Error', 'Failed to update route settings');
+      setRoutesSame(!value); // Revert on error
+    }
+  };
+
+  const handleAddLocation = (type: 'homeToOffice' | 'officeToHome') => {
+    setCurrentRouteType(type);
+    setSearchModalVisible(true);
+  };
+
+  const handleLocationSelected = async (location: RouteLocation) => {
+    setSearchModalVisible(false);
+    setIsLoading(true);
+    
+    try {
+      await addRouteLocation(currentRouteType, location);
+      Alert.alert('Success', 'Location added to your route');
+    } catch (error) {
+      console.error('Error adding location:', error);
+      Alert.alert('Error', 'Failed to add location to route');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemoveLocation = async (type: 'homeToOffice' | 'officeToHome', locationId: string) => {
     Alert.alert(
-      "Remove Location",
-      "Are you sure you want to remove this location from your route?",
+      'Remove Location',
+      'Are you sure you want to remove this location from your route?',
       [
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: "Cancel",
-          style: "cancel"
-        },
-        { 
-          text: "Remove", 
-          onPress: () => {
-            if (type === 'homeToOffice') {
-              const updatedRoute = homeToOfficeRoute.filter(loc => loc.id !== locationId);
-              setHomeToOfficeRoute(updatedRoute);
-            } else {
-              const updatedRoute = officeToHomeRoute.filter(loc => loc.id !== locationId);
-              setOfficeToHomeRoute(updatedRoute);
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            setIsLoading(true);
+            try {
+              await removeRouteLocation(type, locationId);
+              Alert.alert('Success', 'Location removed from your route');
+            } catch (error) {
+              console.error('Error removing location:', error);
+              Alert.alert('Error', 'Failed to remove location');
+            } finally {
+              setIsLoading(false);
             }
-            removeRouteLocation(type, locationId);
-          },
-          style: "destructive"
+          }
         }
       ]
     );
   };
-  
-  const handleSaveOfficeAddress = async () => {
-    if (!officeAddress.trim()) {
-      Alert.alert("Error", "Please enter your office address");
-      return;
-    }
-    
-    try {
-      setIsLoading(true);
-      await updateOfficeAddress(officeAddress, officeLocation);
-      Alert.alert("Success", "Office address updated successfully");
-    } catch (error) {
-      Alert.alert("Error", "Failed to update office address");
-      console.error("Error updating office address:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const handleToggleRoutesSync = async (value: boolean) => {
-    try {
-      setIsLoading(true);
-      await setRoutesSameAsHomeToOffice(value);
-      setIsSameRoute(value);
-      
-      // If turning on sync, update the officeToHome route immediately in the UI
-      if (value) {
-        setOfficeToHomeRoute([...homeToOfficeRoute].reverse());
-      }
-    } catch (error) {
-      Alert.alert("Error", "Failed to update route settings");
-      console.error("Error toggling routes sync:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const handleSaveDetourPreference = async () => {
-    try {
-      setIsLoading(true);
-      await updateDetourPreference(detourPreference);
-      Alert.alert("Success", "Detour preference updated successfully");
-    } catch (error) {
-      Alert.alert("Error", "Failed to update detour preference");
-      console.error("Error updating detour preference:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const openLocationPicker = (type: 'office' | 'homeToOffice' | 'officeToHome') => {
-    setLocationPickerType(type);
-    setLocationPickerVisible(true);
-  };
-  
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      {isLoading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.primary} />
+
+  const renderRouteSection = (
+    title: string,
+    icon: React.ReactNode,
+    type: 'homeToOffice' | 'officeToHome',
+    locations: RouteLocation[]
+  ) => (
+    <View style={styles.routeSection}>
+      <View style={styles.routeSectionHeader}>
+        <View style={styles.routeTitleContainer}>
+          {icon}
+          <Text style={styles.routeSectionTitle}>{title}</Text>
         </View>
-      )}
-      
-      <View style={styles.header}>
-        <Text style={styles.title}>Route Settings</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
-          <X size={24} color={colors.text} />
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Office Address</Text>
-        <Text style={styles.sectionDescription}>
-          Set your office location to find food along your commute route
-        </Text>
-        
-        <View style={styles.addressContainer}>
-          <View style={styles.addressIconContainer}>
-            <Briefcase size={24} color={colors.primary} />
-          </View>
-          <View style={styles.addressTextContainer}>
-            <Text style={styles.addressLabel}>Office</Text>
-            <Text style={styles.addressText}>
-              {officeAddress || "No office address set"}
-            </Text>
-          </View>
-        </View>
-        
-        <TouchableOpacity 
-          style={styles.mapButton}
-          onPress={() => openLocationPicker('office')}
-        >
-          <MapPin size={20} color={colors.primary} />
-          <Text style={styles.mapButtonText}>
-            {officeAddress ? 'Change Office Location' : 'Set Office Location'}
-          </Text>
-        </TouchableOpacity>
-        
-        <Button
-          title="Save Office Address"
-          onPress={handleSaveOfficeAddress}
-          style={styles.saveButton}
-          disabled={!officeAddress || isLoading}
-        />
-      </View>
-      
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Home to Office Route</Text>
-        <Text style={styles.sectionDescription}>
-          Add locations along your route from home to office
-        </Text>
-        
-        <View style={styles.routeContainer}>
-          <View style={styles.routeStartEnd}>
-            <View style={styles.routePoint}>
-              <Home size={20} color={colors.white} />
-            </View>
-            <Text style={styles.routePointText}>Home</Text>
-          </View>
-          
-          <View style={styles.routePath}>
-            {homeToOfficeRoute.map((location, index) => (
-              <View key={location.id} style={styles.routeLocationContainer}>
-                <View style={styles.routeLocationLine} />
-                <View style={styles.routeLocation}>
-                  <View style={styles.routeLocationPoint} />
-                  <View style={styles.routeLocationTextContainer}>
-                    <Text style={styles.routeLocationName}>{location.name}</Text>
-                    <Text style={styles.routeLocationAddress} numberOfLines={1}>
-                      {location.address}
-                    </Text>
-                  </View>
-                  <TouchableOpacity 
-                    style={styles.removeLocationButton}
-                    onPress={() => handleRemoveRouteLocation('homeToOffice', location.id)}
-                  >
-                    <Trash2 size={16} color={colors.error} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
-            
-            <View style={styles.routeLocationLine} />
-          </View>
-          
-          <View style={styles.routeStartEnd}>
-            <View style={[styles.routePoint, styles.routeEndPoint]}>
-              <Briefcase size={20} color={colors.white} />
-            </View>
-            <Text style={styles.routePointText}>Office</Text>
-          </View>
-        </View>
-        
-        <TouchableOpacity 
-          style={styles.addLocationButton}
-          onPress={() => openLocationPicker('homeToOffice')}
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => handleAddLocation(type)}
         >
           <Plus size={20} color={colors.primary} />
-          <Text style={styles.addLocationText}>Add Location on Route</Text>
         </TouchableOpacity>
       </View>
+
+      {locations.length === 0 ? (
+        <View style={styles.emptyRoute}>
+          <Text style={styles.emptyRouteText}>No locations added yet</Text>
+          <Text style={styles.emptyRouteSubtext}>
+            Add locations along your route to discover food nearby
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.locationsList}>
+          {locations.map((location, index) => (
+            <View key={location.id} style={styles.locationItem}>
+              <View style={styles.locationInfo}>
+                <MapPin size={16} color={colors.primary} />
+                <View style={styles.locationDetails}>
+                  <Text style={styles.locationName}>{location.name}</Text>
+                  <Text style={styles.locationAddress}>{location.address}</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.removeButton}
+                onPress={() => handleRemoveLocation(type, location.id)}
+              >
+                <Trash2 size={16} color={colors.error} />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+
+  return (
+    <>
+      <Stack.Screen 
+        options={{ 
+          title: 'Route Settings',
+          headerStyle: { backgroundColor: colors.white },
+          headerTitleStyle: { color: colors.text },
+        }} 
+      />
       
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Office to Home Route</Text>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Office Address Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Building size={20} color={colors.primary} />
+            <Text style={styles.sectionTitle}>Office Address</Text>
+          </View>
+          
+          <Input
+            label="Office Address"
+            value={officeAddress}
+            onChangeText={setOfficeAddressLocal}
+            placeholder="Enter your office address"
+            multiline
+            style={styles.addressInput}
+          />
+          
+          <Button
+            title="Save Office Address"
+            onPress={handleSaveOfficeAddress}
+            isLoading={isLoading}
+            style={styles.saveButton}
+          />
+        </View>
+
+        {/* Route Sync Setting */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Route size={20} color={colors.primary} />
+            <Text style={styles.sectionTitle}>Route Settings</Text>
+          </View>
+          
           <View style={styles.switchContainer}>
-            <Text style={styles.switchLabel}>Same as Home to Office</Text>
+            <View style={styles.switchInfo}>
+              <Text style={styles.switchLabel}>Same route both ways</Text>
+              <Text style={styles.switchDescription}>
+                Use the same route for both home to office and office to home
+              </Text>
+            </View>
             <Switch
-              value={isSameRoute}
-              onValueChange={handleToggleRoutesSync}
-              trackColor={{ false: colors.border, true: `${colors.primary}80` }}
-              thumbColor={isSameRoute ? colors.primary : '#f4f3f4'}
+              value={routesSame}
+              onValueChange={handleToggleRoutesSame}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={colors.white}
             />
           </View>
         </View>
-        
-        <Text style={styles.sectionDescription}>
-          Add locations along your route from office to home
-        </Text>
-        
-        {isSameRoute ? (
-          <View style={styles.sameRouteMessage}>
-            <ArrowLeft size={20} color={colors.textLight} />
-            <Text style={styles.sameRouteText}>
-              Using the same route as Home to Office (in reverse)
-            </Text>
-          </View>
-        ) : (
-          <>
-            <View style={styles.routeContainer}>
-              <View style={styles.routeStartEnd}>
-                <View style={[styles.routePoint, styles.routeEndPoint]}>
-                  <Briefcase size={20} color={colors.white} />
-                </View>
-                <Text style={styles.routePointText}>Office</Text>
-              </View>
-              
-              <View style={styles.routePath}>
-                {officeToHomeRoute.map((location, index) => (
-                  <View key={location.id} style={styles.routeLocationContainer}>
-                    <View style={styles.routeLocationLine} />
-                    <View style={styles.routeLocation}>
-                      <View style={styles.routeLocationPoint} />
-                      <View style={styles.routeLocationTextContainer}>
-                        <Text style={styles.routeLocationName}>{location.name}</Text>
-                        <Text style={styles.routeLocationAddress} numberOfLines={1}>
-                          {location.address}
-                        </Text>
-                      </View>
-                      <TouchableOpacity 
-                        style={styles.removeLocationButton}
-                        onPress={() => handleRemoveRouteLocation('officeToHome', location.id)}
-                      >
-                        <Trash2 size={16} color={colors.error} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))}
-                
-                <View style={styles.routeLocationLine} />
-              </View>
-              
-              <View style={styles.routeStartEnd}>
-                <View style={styles.routePoint}>
-                  <Home size={20} color={colors.white} />
-                </View>
-                <Text style={styles.routePointText}>Home</Text>
-              </View>
-            </View>
-            
-            <TouchableOpacity 
-              style={styles.addLocationButton}
-              onPress={() => openLocationPicker('officeToHome')}
-            >
-              <Plus size={20} color={colors.primary} />
-              <Text style={styles.addLocationText}>Add Location on Route</Text>
-            </TouchableOpacity>
-          </>
+
+        {/* Home to Office Route */}
+        {renderRouteSection(
+          'Home to Office Route',
+          <Home size={20} color={colors.primary} />,
+          'homeToOffice',
+          user?.homeToOfficeRoute || []
         )}
-      </View>
-      
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Detour Preference</Text>
-        <Text style={styles.sectionDescription}>
-          How far are you willing to detour from your route to pick up food?
-        </Text>
-        
-        <View style={styles.sliderContainer}>
-          <Slider
-            style={styles.slider}
-            minimumValue={100}
-            maximumValue={5000}
-            step={100}
-            value={detourPreference}
-            onValueChange={setDetourPreference}
-            minimumTrackTintColor={colors.primary}
-            maximumTrackTintColor={colors.border}
-            thumbTintColor={colors.primary}
-          />
-          <View style={styles.sliderLabels}>
-            <Text style={styles.sliderMinLabel}>100m</Text>
-            <Text style={styles.sliderValueLabel}>{detourPreference}m</Text>
-            <Text style={styles.sliderMaxLabel}>5km</Text>
+
+        {/* Office to Home Route (only show if routes are different) */}
+        {!routesSame && renderRouteSection(
+          'Office to Home Route',
+          <Navigation size={20} color={colors.primary} />,
+          'officeToHome',
+          user?.officeToHomeRoute || []
+        )}
+
+        {/* Detour Preference Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Settings size={20} color={colors.primary} />
+            <Text style={styles.sectionTitle}>Detour Preference</Text>
           </View>
+          
+          <Text style={styles.detourDescription}>
+            Maximum distance you are willing to detour from your route to pick up food
+          </Text>
+          
+          <Input
+            label="Maximum Detour (meters)"
+            value={detourMeters}
+            onChangeText={setDetourMeters}
+            placeholder="500"
+            keyboardType="numeric"
+            style={styles.detourInput}
+          />
+          
+          <Button
+            title="Save Detour Preference"
+            onPress={handleSaveDetourPreference}
+            isLoading={isLoading}
+            style={styles.saveButton}
+          />
         </View>
-        
-        <Button
-          title="Save Detour Preference"
-          onPress={handleSaveDetourPreference}
-          style={styles.saveButton}
-          disabled={isLoading}
-        />
-      </View>
-      
-      {locationPickerVisible && (
-        <LocationPicker
-          initialLocation={
-            locationPickerType === 'office' && officeLocation.latitude !== 0
-              ? { 
-                  latitude: officeLocation.latitude, 
-                  longitude: officeLocation.longitude,
-                  address: officeAddress
-                }
-              : undefined
-          }
-          onSelectLocation={
-            locationPickerType === 'office'
-              ? handleOfficeLocationSelect
-              : handleRouteLocationSelect
-          }
-          onClose={() => setLocationPickerVisible(false)}
-        />
-      )}
-    </ScrollView>
+
+        {/* Help Section */}
+        <View style={styles.helpSection}>
+          <Text style={styles.helpTitle}>How it works</Text>
+          <Text style={styles.helpText}>
+            • Set your office address and daily route{'\n'}
+            • Add key locations along your commute{'\n'}
+            • Discover food listings near your route{'\n'}
+            • Set your maximum detour distance{'\n'}
+            • Get notified about food along your path
+          </Text>
+        </View>
+      </ScrollView>
+
+      <RouteSearchModal
+        visible={searchModalVisible}
+        onClose={() => setSearchModalVisible(false)}
+        onLocationSelected={handleLocationSelected}
+      />
+    </>
   );
 }
 
@@ -419,245 +333,153 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  contentContainer: {
-    paddingBottom: 32,
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  closeButton: {
-    padding: 4,
-  },
   section: {
     backgroundColor: colors.white,
+    marginBottom: 16,
     padding: 16,
-    marginTop: 16,
-    borderRadius: 8,
-    marginHorizontal: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 8,
-  },
-  sectionDescription: {
-    fontSize: 14,
-    color: colors.textLight,
-    marginBottom: 16,
-  },
-  addressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    padding: 12,
-    backgroundColor: colors.card,
-    borderRadius: 8,
-  },
-  addressIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: `${colors.primary}20`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  addressTextContainer: {
-    flex: 1,
-  },
-  addressLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  addressText: {
-    fontSize: 14,
-    color: colors.textLight,
-  },
-  mapButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: `${colors.primary}10`,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  mapButtonText: {
     marginLeft: 8,
-    fontSize: 14,
-    color: colors.primary,
-    fontWeight: '500',
+  },
+  addressInput: {
+    marginBottom: 16,
   },
   saveButton: {
     marginTop: 8,
   },
-  routeContainer: {
-    marginBottom: 16,
-  },
-  routeStartEnd: {
+  switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 8,
+    justifyContent: 'space-between',
   },
-  routePoint: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  routeEndPoint: {
-    backgroundColor: colors.secondary,
-  },
-  routePointText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors.text,
-  },
-  routePath: {
-    marginLeft: 18,
-    paddingLeft: 18,
-    borderLeftWidth: 2,
-    borderLeftColor: colors.border,
-    marginVertical: 8,
-  },
-  routeLocationContainer: {
-    position: 'relative',
-  },
-  routeLocationLine: {
-    position: 'absolute',
-    left: -20,
-    top: '50%',
-    width: 20,
-    height: 2,
-    backgroundColor: colors.border,
-  },
-  routeLocation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    padding: 12,
-    marginVertical: 8,
-  },
-  routeLocationPoint: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.primary,
-    marginRight: 12,
-  },
-  routeLocationTextContainer: {
+  switchInfo: {
     flex: 1,
+    marginRight: 16,
   },
-  routeLocationName: {
-    fontSize: 14,
+  switchLabel: {
+    fontSize: 16,
     fontWeight: '500',
     color: colors.text,
     marginBottom: 4,
   },
-  routeLocationAddress: {
-    fontSize: 12,
+  switchDescription: {
+    fontSize: 14,
     color: colors.textLight,
   },
-  removeLocationButton: {
-    padding: 8,
-  },
-  addLocationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: `${colors.primary}10`,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  addLocationText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: colors.primary,
-    fontWeight: '500',
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  switchLabel: {
-    fontSize: 14,
-    color: colors.text,
-    marginRight: 8,
-  },
-  sameRouteMessage: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
+  routeSection: {
+    backgroundColor: colors.white,
+    marginBottom: 16,
     padding: 16,
-    borderRadius: 8,
-    marginVertical: 16,
   },
-  sameRouteText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: colors.textLight,
-  },
-  sliderContainer: {
+  routeSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
-  slider: {
-    width: '100%',
-    height: 40,
-  },
-  sliderLabels: {
+  routeTitleContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  sliderMinLabel: {
-    fontSize: 12,
-    color: colors.textLight,
-  },
-  sliderMaxLabel: {
-    fontSize: 12,
-    color: colors.textLight,
-  },
-  sliderValueLabel: {
-    fontSize: 14,
+  routeSectionTitle: {
+    fontSize: 18,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.text,
+    marginLeft: 8,
+  },
+  addButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyRoute: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  emptyRouteText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.textLight,
+    marginBottom: 8,
+  },
+  emptyRouteSubtext: {
+    fontSize: 14,
+    color: colors.textLight,
+    textAlign: 'center',
+    maxWidth: 250,
+  },
+  locationsList: {
+    gap: 12,
+  },
+  locationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    backgroundColor: colors.card,
+    borderRadius: 8,
+  },
+  locationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  locationDetails: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  locationName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  locationAddress: {
+    fontSize: 14,
+    color: colors.textLight,
+  },
+  removeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: `${colors.error}20`,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  detourDescription: {
+    fontSize: 14,
+    color: colors.textLight,
+    marginBottom: 16,
+  },
+  detourInput: {
+    marginBottom: 16,
+  },
+  helpSection: {
+    backgroundColor: colors.card,
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
+  },
+  helpTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  helpText: {
+    fontSize: 14,
+    color: colors.textLight,
+    lineHeight: 20,
   },
 });

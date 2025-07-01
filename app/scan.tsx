@@ -19,7 +19,7 @@ export default function ScanScreen() {
   }, []);
 
   const handleScan = (data: string) => {
-    console.log("QR Code scanned:", data); // Debug log
+    console.log("QR Code scanned:", data);
     setScanning(false);
     setResult(data);
     
@@ -27,7 +27,7 @@ export default function ScanScreen() {
     try {
       // Use the helper function to parse the QR code
       const parsedData = parseQRCode(data);
-      console.log("Parsed QR data:", parsedData); // Debug log
+      console.log("Parsed QR data:", parsedData);
       
       switch (parsedData.type) {
         case 'order':
@@ -144,12 +144,17 @@ export default function ScanScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
         {Platform.OS === 'web' ? (
-          <View style={styles.webFallback}>
+          <SafeAreaView style={styles.webFallback}>
             <Text style={styles.webFallbackTitle}>QR Code Scanning</Text>
             <Text style={styles.webFallbackText}>
               QR code scanning is currently only available on mobile devices.
             </Text>
-          </View>
+            <Button
+              title="Go Back"
+              onPress={() => router.back()}
+              style={styles.webBackButton}
+            />
+          </SafeAreaView>
         ) : (
           scanning ? (
             <QRCodeScanner 
@@ -217,6 +222,10 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     textAlign: 'center',
     maxWidth: 400,
+    marginBottom: 32,
+  },
+  webBackButton: {
+    width: 200,
   },
   resultContainer: {
     flex: 1,

@@ -1,17 +1,3 @@
-export interface Location {
-  latitude: number;
-  longitude: number;
-  address?: string;
-}
-
-export interface RouteLocation {
-  id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-}
-
 export interface User {
   id: string;
   name: string;
@@ -22,46 +8,44 @@ export interface User {
   experience: string;
   cuisineTypes: string[];
   paymentMethods: string[];
-  location: Location;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
   isChef: boolean;
   allowProfileDisplay: boolean;
+  isVerified: boolean;
   isAdmin?: boolean;
-  isVerified?: boolean;
   rating?: number;
   reviewCount?: number;
+  // New route-related fields
   officeAddress?: string;
-  officeLocation?: Location;
+  officeLocation?: {
+    latitude: number;
+    longitude: number;
+  };
   homeToOfficeRoute?: RouteLocation[];
   officeToHomeRoute?: RouteLocation[];
   routesSameAsHomeToOffice?: boolean;
   detourPreference?: number; // in meters
-  // Chef subscription data
+  // Chef subscription fields
   subscriptionPlan?: string;
   subscriptionExpiry?: string;
   firstPostDate?: string | null;
   postCount?: number;
   freePostsRemaining?: number;
-  commissionPercentage?: number; // Added for commission percentage
+}
+
+export interface RouteLocation {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface UserPreference {
   type: 'buyer' | 'seller';
-}
-
-export interface FilterOptions {
-  query?: string;
-  foodType?: 'vegetarian' | 'non-vegetarian' | string;
-  cuisineTypes?: string[];
-  subcuisineTypes?: string[];
-  minPrice?: number;
-  maxPrice?: number;
-  minRating?: number;
-  maxDistance?: number;
-  userLocation?: Location;
-  availableNow?: boolean;
-  minServings?: number;
-  sortBy?: 'price' | 'rating' | 'distance' | 'availableUntil' | string;
-  sortOrder?: 'asc' | 'desc';
 }
 
 export interface FoodListing {
@@ -72,101 +56,76 @@ export interface FoodListing {
   sellerRating: number;
   dishName: string;
   description: string;
-  price: number;
   image: string;
-  isVegetarian: boolean;
-  cuisineType: string;
-  subcuisineType?: string;
   ingredients: string[];
   allergens: string[];
-  availableQuantity: number;
+  quantity: number;
   remainingQuantity: number;
-  availableFrom: string;
-  availableUntil: string;
-  servings: number;
-  packaging: string;
-  location: Location;
+  availableQuantity: number;
+  price: number;
+  isVegetarian: boolean;
+  cuisineType: string;
+  spiceLevel: 'mild' | 'medium' | 'hot';
+  preparationTime: number;
+  pickupTime: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  address: string;
+  isActive: boolean;
+  createdAt: string;
   rating?: number;
   reviewCount?: number;
-  orderCount?: number;
-  createdAt: string;
-  isFeatured?: boolean;
-  isApproved?: boolean;
-  isActive?: boolean;
-  isLunchBox?: boolean;
-  lunchBoxItems?: LunchBoxItem[];
+  tags?: string[];
+  commission?: number;
 }
 
-export interface LunchBoxItem {
-  id: string;
-  name: string;
-  description: string;
-  quantity: string;
-  image: string;
-}
-
-export interface ListingSnapshot {
-  dishName: string;
-  price: number;
-  image: string;
-  sellerName: string;
-  sellerImage: string;
-  location: Location;
+export interface FilterOptions {
+  cuisineTypes: string[];
+  isVegetarian?: boolean;
+  spiceLevel?: string[];
+  maxPrice?: number;
+  maxDistance?: number;
+  sortBy?: 'price' | 'rating' | 'distance' | 'newest';
 }
 
 export interface Order {
   id: string;
+  listingId: string;
   buyerId: string;
   sellerId: string;
-  listingId: string;
-  listingSnapshot: ListingSnapshot;
+  dishName: string;
   quantity: number;
   totalPrice: number;
-  deliveryAddress: string;
-  deliveryInstructions?: string;
-  paymentMethod: string;
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'completed' | 'canceled';
-  rating?: number;
-  reviewComment?: string;
-  isRated?: boolean;
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+  pickupTime: string;
   createdAt: string;
   updatedAt: string;
-  acceptedAt?: string;
-  readyAt?: string;
-  deliveredAt?: string;
-  completedAt?: string;
-  deliveryMethod: 'delivery' | 'pickup';
+  buyerName: string;
+  buyerPhone: string;
+  sellerName: string;
+  sellerPhone: string;
+  sellerAddress: string;
+  paymentMethod: string;
+  notes?: string;
+  rating?: number;
+  review?: string;
+  commission?: number;
+  commissionAmount?: number;
 }
 
 export interface Review {
   id: string;
   orderId: string;
-  buyerId: string;
-  buyerName: string;
-  buyerImage: string;
-  sellerId: string;
-  sellerName: string;
   listingId: string;
-  dishName: string;
+  buyerId: string;
+  sellerId: string;
   rating: number;
   comment: string;
   createdAt: string;
-}
-
-export interface Complaint {
-  id: string;
-  userId: string;
-  orderId?: string;
-  sellerId?: string;
-  type: 'order' | 'app' | 'payment' | 'other';
-  title: string;
-  description: string;
-  status: 'pending' | 'in_progress' | 'resolved' | 'closed';
-  resolution?: string;
-  createdAt: string;
-  updatedAt: string;
-  resolvedAt?: string;
+  buyerName: string;
+  dishName: string;
 }
 
 export interface Notification {
@@ -174,24 +133,10 @@ export interface Notification {
   userId: string;
   title: string;
   message: string;
-  type: 'order' | 'review' | 'promotion' | 'system' | 'payment';
-  relatedId?: string;
+  type: 'order' | 'review' | 'system' | 'promotion';
   isRead: boolean;
   createdAt: string;
-}
-
-export interface DishNotification {
-  id: string;
-  userId: string;
-  dishName: string;
-  cuisineType?: string;
-  subcuisineType?: string;
-  location?: string;
-  routeType?: 'homeToOffice' | 'officeToHome';
-  email?: string;
-  phone?: string;
-  isActive: boolean;
-  createdAt: string;
+  data?: any;
 }
 
 export interface Follow {
@@ -201,65 +146,35 @@ export interface Follow {
   createdAt: string;
 }
 
-export interface TopEarner {
+export interface Complaint {
   id: string;
-  name: string;
-  earnings: number;
-  location: string;
-  phone: string;
-  orderCount: number;
-}
-
-export interface TopDish {
-  id: string;
-  name: string;
-  orderCount: number;
-  revenue: number;
-  sellerName: string;
-  sellerPhone: string;
-  sellerLocation: string;
-}
-
-export interface TopChef {
-  id: string;
-  name: string;
-  rating: number;
-  orderCount: number;
-  revenue: number;
-  location: string;
-  phone: string;
-  cuisineTypes: string[];
-  isVerified: boolean;
-}
-
-export interface AdminDashboardData {
-  totalBuyers: number;
-  newUsersToday: number;
-  activeUsers: number;
-  topEarners: TopEarner[];
-  topDishes: TopDish[];
-  topChefs: TopChef[];
-  monthlyTrends: {
-    users: number[];
-    revenue: number[];
-    orders: number[];
-  };
-}
-
-export interface RouteSearchParams {
-  routeType: 'homeToOffice' | 'officeToHome';
-  maxDetour: number;
-  foodType: 'vegetarian' | 'non-vegetarian' | 'both';
-  dishName?: string;
-  cuisineTypes?: string[];
-  subcuisineTypes?: string[];
-}
-
-export interface SubscriptionPlan {
-  id: string;
-  name: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  orderId?: string;
+  listingId?: string;
+  type: 'order' | 'listing' | 'user' | 'payment' | 'other';
+  subject: string;
   description: string;
-  price: number;
-  duration: 'month' | 'year';
-  features: string[];
+  status: 'pending' | 'investigating' | 'resolved' | 'closed';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  createdAt: string;
+  updatedAt: string;
+  adminNotes?: string;
+  resolution?: string;
+}
+
+export interface Campaign {
+  id: string;
+  title: string;
+  description: string;
+  type: 'promotion' | 'announcement' | 'feature';
+  targetAudience: 'all' | 'buyers' | 'sellers' | 'new_users';
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  createdAt: string;
+  imageUrl?: string;
+  actionUrl?: string;
+  actionText?: string;
 }
