@@ -18,9 +18,11 @@ export default function CreateScreen() {
     
     switch (option) {
       case 'food':
+        console.log("Navigating to create-listing");
         router.push('/create-listing');
         break;
       case 'scan':
+        console.log("Navigating to scan screen from create");
         router.push('/scan');
         break;
       case 'order':
@@ -32,8 +34,13 @@ export default function CreateScreen() {
   };
 
   const handleScanQR = () => {
-    console.log("Navigating to scan screen"); // Debug log
-    router.push('/scan');
+    console.log("Navigating to scan screen from quick action");
+    try {
+      router.push('/scan');
+    } catch (error) {
+      console.error("Navigation error:", error);
+      Alert.alert('Error', 'Failed to open QR scanner. Please try again.');
+    }
   };
   
   return (
@@ -45,7 +52,10 @@ export default function CreateScreen() {
         },
         headerRight: () => (
           <TouchableOpacity 
-            onPress={() => router.push('/create-listing')}
+            onPress={() => {
+              console.log("Header button pressed - navigating to create-listing");
+              router.push('/create-listing');
+            }}
             style={styles.headerButton}
           >
             <PlusCircle size={24} color={colors.primary} />
@@ -103,7 +113,10 @@ export default function CreateScreen() {
           <View style={styles.quickActions}>
             <TouchableOpacity 
               style={styles.quickAction}
-              onPress={() => router.push('/create-listing')}
+              onPress={() => {
+                console.log("Quick action - New Listing pressed");
+                router.push('/create-listing');
+              }}
             >
               <Plus size={20} color={colors.primary} />
               <Text style={styles.quickActionText}>New Listing</Text>
@@ -119,7 +132,10 @@ export default function CreateScreen() {
             
             <TouchableOpacity 
               style={styles.quickAction}
-              onPress={() => router.push('/analytics')}
+              onPress={() => {
+                console.log("Quick action - Analytics pressed");
+                router.push('/analytics');
+              }}
             >
               <Tag size={20} color={colors.primary} />
               <Text style={styles.quickActionText}>Analytics</Text>
@@ -193,7 +209,10 @@ export default function CreateScreen() {
         
         <Button
           title="Create New Food Listing"
-          onPress={() => router.push('/create-listing')}
+          onPress={() => {
+            console.log("Main button - Create New Food Listing pressed");
+            router.push('/create-listing');
+          }}
           style={styles.createButton}
         />
       </ScrollView>

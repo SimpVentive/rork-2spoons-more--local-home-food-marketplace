@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, Platform, SafeAreaView, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, Alert, Platform, SafeAreaView, ScrollView, BackHandler } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Stack } from 'expo-router';
 import QRCodeScanner from '@/components/QRCodeScanner';
 import Button from '@/components/Button';
@@ -14,16 +14,38 @@ export default function ScanScreen() {
   const [processing, setProcessing] = useState(false);
   const router = useRouter();
 
-  // Reset state when component mounts
-  useEffect(() => {
-    setError(null);
-    setResult(null);
-    setScanning(true);
-    setProcessing(false);
-  }, []);
+  // Reset state when component mounts or comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log("Scan screen focused, resetting state");
+      setError(null);
+      setResult(null);
+      setScanning(true);
+      setProcessing(false);
+
+      // Handle Android back button
+      const onBackPress = () => {
+        if (scanning) {
+          router.back();
+          return true;
+        }
+        return false;
+      };
+
+      if (Platform.OS === 'android') {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+        return () => backHandler.remove();
+      }
+
+      return () => {};
+    }, [scanning, router])
+  );
 
   const handleScan = async (data: string) => {
-    if (processing) return;
+    if (processing) {
+      console.log("Already processing, ignoring scan");
+      return;
+    }
     
     console.log("QR Code scanned:", data);
     setProcessing(true);
@@ -60,7 +82,9 @@ export default function ScanScreen() {
         case 'url':
           Alert.alert(
             'External URL Detected',
-            `URL: ${parsedData.url}\n\nThis app only supports scanning order and listing QR codes.`,
+            `URL: ${parsedData.url}
+
+This app only supports scanning order and listing QR codes.`,
             [
               { text: 'Cancel', style: 'cancel' },
               { 
@@ -130,6 +154,7 @@ export default function ScanScreen() {
   };
 
   const handleScanAgain = () => {
+    console.log("Resetting scanner for new scan");
     setScanning(true);
     setResult(null);
     setError(null);
@@ -137,6 +162,7 @@ export default function ScanScreen() {
   };
 
   const handleGoBack = () => {
+    console.log("Going back from scan screen");
     router.back();
   };
 

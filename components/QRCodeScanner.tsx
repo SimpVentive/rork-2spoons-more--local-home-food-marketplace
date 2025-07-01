@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, AppState } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Scan } from 'lucide-react-native';
@@ -14,19 +14,30 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [cameraReady, setCameraReady] = useState(false);
   const router = useRouter();
+  const appState = useRef(AppState.currentState);
 
   useEffect(() => {
     const initializeCamera = async () => {
       try {
+        console.log("Initializing camera...");
         setIsLoading(true);
+        
+        // Add a small delay for Android
+        if (Platform.OS === 'android') {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
         
         // Check if permission is available
         if (permission === null) {
           console.log("Permission object not ready, waiting...");
-          setTimeout(() => setIsLoading(false), 1000);
+          // Wait a bit longer for permission object to be ready
+          await new Promise(resolve => setTimeout(resolve, 1000));
           return;
         }
+
+        console.log("Permission status:", permission);
 
         if (!permission.granted) {
           console.log("Requesting camera permission...");
@@ -37,16 +48,31 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
             Alert.alert(
               "Camera Permission Required",
               "Camera access is required to scan QR codes. Please enable camera permission in your device settings.",
-              [{ text: "OK" }]
+              [
+                { text: "Cancel", onPress: handleClose },
+                { text: "Try Again", onPress: initializeCamera }
+              ]
             );
+            return;
           }
         }
+
+        // Additional delay for Android after permission is granted
+        if (Platform.OS === 'android') {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+
+        setCameraReady(true);
+        console.log("Camera initialized successfully");
       } catch (error) {
         console.error("Error initializing camera:", error);
         Alert.alert(
           "Camera Error",
           "Failed to initialize camera. Please try again.",
-          [{ text: "OK" }]
+          [
+            { text: "Cancel", onPress: handleClose },
+            { text: "Retry", onPress: initializeCamera }
+          ]
         );
       } finally {
         setIsLoading(false);
@@ -54,12 +80,33 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
     };
 
     initializeCamera();
+
+    // Handle app state changes
+    const handleAppStateChange = (nextAppState: string) => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        // App has come to the foreground, reinitialize camera
+        console.log("App came to foreground, reinitializing camera");
+        setCameraReady(false);
+        setScanned(false);
+        initializeCamera();
+      }
+      appState.current = nextAppState;
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription?.remove();
+    };
   }, [permission, requestPermission]);
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
-    if (scanned || !data) return;
+    if (scanned || !data || !cameraReady) {
+      console.log("Scan ignored:", { scanned, hasData: !!data, cameraReady });
+      return;
+    }
     
-    console.log("QR Code scanned:", data);
+    console.log("QR Code scanned successfully:", data);
     setScanned(true);
     
     // Add haptic feedback on mobile
@@ -68,7 +115,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
         const { Haptics } = require('expo-haptics');
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
-        console.log("Haptics not available");
+        console.log("Haptics not available:", error);
       }
     }
     
@@ -79,6 +126,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   };
 
   const handleClose = () => {
+    console.log("Closing QR scanner");
     if (onClose) {
       onClose();
     } else {
@@ -87,31 +135,56 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   };
 
   const handleScanAgain = () => {
+    console.log("Scanning again");
     setScanned(false);
   };
 
   const handleRetryPermission = async () => {
     try {
+      console.log("Retrying permission request");
       const result = await requestPermission();
+      console.log("Retry permission result:", result);
+      
       if (!result.granted) {
         Alert.alert(
           "Permission Denied",
           "Camera permission is required to scan QR codes. Please enable it in your device settings.",
-          [{ text: "OK" }]
+          [
+            { text: "Cancel", onPress: handleClose },
+            { text: "Settings", onPress: () => {
+              // On Android, we can't directly open settings, but we can show instructions
+              if (Platform.OS === 'android') {
+                Alert.alert(
+                  "Enable Camera Permission",
+                  "Please go to Settings > Apps > [Your App Name] > Permissions > Camera and enable it.",
+                  [{ text: "OK", onPress: handleClose }]
+                );
+              }
+            }}
+          ]
         );
+      } else {
+        // Permission granted, reinitialize
+        setCameraReady(false);
+        setIsLoading(true);
+        // Small delay before reinitializing
+        setTimeout(() => {
+          setCameraReady(true);
+          setIsLoading(false);
+        }, 500);
       }
     } catch (error) {
       console.error("Error requesting permission:", error);
       Alert.alert(
         "Error",
         "Failed to request camera permission. Please try again.",
-        [{ text: "OK" }]
+        [{ text: "OK", onPress: handleClose }]
       );
     }
   };
 
   // Loading state
-  if (isLoading || permission === null) {
+  if (isLoading || permission === null || !cameraReady) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -121,7 +194,14 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
           <Text style={styles.headerText}>QR Scanner</Text>
         </View>
         <View style={styles.centerContent}>
-          <Text style={styles.text}>Initializing camera...</Text>
+          <Text style={styles.text}>
+            {permission === null ? "Checking camera permissions..." : "Initializing camera..."}
+          </Text>
+          {Platform.OS === 'android' && (
+            <Text style={styles.subText}>
+              This may take a moment on Android devices
+            </Text>
+          )}
         </View>
       </View>
     );
@@ -151,7 +231,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
     );
   }
 
-  // Main camera view - only render if we have permission
+  // Main camera view - only render if we have permission and camera is ready
   return (
     <View style={styles.container}>
       <CameraView
@@ -161,6 +241,10 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
           barcodeTypes: ['qr'],
         }}
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        onCameraReady={() => {
+          console.log("Camera ready callback triggered");
+          setCameraReady(true);
+        }}
       >
         <View style={styles.overlay}>
           <View style={styles.header}>
@@ -178,11 +262,21 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
               <View style={[styles.corner, styles.bottomLeft]} />
               <View style={[styles.corner, styles.bottomRight]} />
             </View>
+            
+            {/* Scanning indicator */}
+            {!scanned && (
+              <View style={styles.scanningIndicator}>
+                <Text style={styles.scanningText}>Looking for QR code...</Text>
+              </View>
+            )}
           </View>
           
           <View style={styles.instructionsContainer}>
             <Text style={styles.instructions}>
-              Position the QR code within the frame to scan
+              {scanned 
+                ? "QR code detected! Processing..." 
+                : "Position the QR code within the frame to scan"
+              }
             </Text>
             
             {scanned && (
@@ -193,6 +287,15 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
                 <Scan size={20} color={colors.white} />
                 <Text style={styles.scanAgainText}>Scan Again</Text>
               </TouchableOpacity>
+            )}
+            
+            {/* Debug info for development */}
+            {__DEV__ && (
+              <View style={styles.debugInfo}>
+                <Text style={styles.debugText}>
+                  Platform: {Platform.OS} | Ready: {cameraReady ? 'Yes' : 'No'} | Scanned: {scanned ? 'Yes' : 'No'}
+                </Text>
+              </View>
             )}
           </View>
         </View>
@@ -294,6 +397,16 @@ const styles = StyleSheet.create({
     borderRightWidth: 4,
     borderBottomRightRadius: 20,
   },
+  scanningIndicator: {
+    position: 'absolute',
+    bottom: -50,
+    alignItems: 'center',
+  },
+  scanningText: {
+    color: colors.white,
+    fontSize: 14,
+    opacity: 0.8,
+  },
   instructionsContainer: {
     alignItems: 'center',
     paddingBottom: 40,
@@ -345,6 +458,17 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: '600',
     fontSize: 16,
+  },
+  debugInfo: {
+    marginTop: 16,
+    padding: 8,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    borderRadius: 8,
+  },
+  debugText: {
+    color: colors.white,
+    fontSize: 12,
+    textAlign: 'center',
   },
 });
 
