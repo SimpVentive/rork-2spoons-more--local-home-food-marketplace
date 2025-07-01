@@ -296,7 +296,6 @@ export default function EditProfileScreen() {
           title="Save Changes"
           onPress={handleSave}
           style={styles.saveButton}
-          icon={<Save size={20} color={colors.white} />}
         />
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>

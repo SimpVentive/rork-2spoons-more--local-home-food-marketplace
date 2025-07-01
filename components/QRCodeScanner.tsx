@@ -21,11 +21,10 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
       try {
         setIsLoading(true);
         
-        // Small delay to ensure component is mounted
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        if (!permission) {
+        // Check if permission is available
+        if (permission === null) {
           console.log("Permission object not ready, waiting...");
+          setTimeout(() => setIsLoading(false), 1000);
           return;
         }
 
@@ -112,7 +111,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   };
 
   // Loading state
-  if (isLoading || !permission) {
+  if (isLoading || permission === null) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -152,14 +151,14 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
     );
   }
 
-  // Main camera view
+  // Main camera view - only render if we have permission
   return (
     <View style={styles.container}>
       <CameraView
         style={styles.camera}
         facing="back"
         barcodeScannerSettings={{
-          barcodeTypes: ['qr', 'pdf417'],
+          barcodeTypes: ['qr'],
         }}
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
       >

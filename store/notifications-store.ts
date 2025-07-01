@@ -2,28 +2,22 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Notification, DishNotification } from '@/types';
+import { mockNotifications } from '@/mocks/data';
 
 interface NotificationsState {
   notifications: Notification[];
   dishNotifications: DishNotification[];
   isLoading: boolean;
   error: string | null;
-  
-  // Actions
-  addNotification: (notification: Omit<Notification, 'id' | 'createdAt' | 'isRead'>) => Promise<Notification>;
-  getNotificationsByUser: (userId: string) => Notification[];
-  getUnreadNotificationCount: (userId: string) => number;
+  fetchNotifications: (userId: string) => Promise<void>;
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: (userId: string) => Promise<void>;
+  addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
-  
-  // Dish Notifications
-  addDishNotification: (notification: Omit<DishNotification, 'id' | 'createdAt'>) => Promise<DishNotification>;
-  getDishNotificationsByUser: (userId: string) => DishNotification[];
-  getActiveDishNotifications: (userId: string) => DishNotification[];
-  getRouteNotifications: (userId: string, routeType: 'homeToOffice' | 'officeToHome') => DishNotification[];
-  toggleDishNotificationStatus: (notificationId: string, isActive: boolean) => Promise<void>;
-  deleteDishNotification: (notificationId: string) => Promise<void>;
+  getUnreadCount: (userId: string) => number;
+  addDishNotification: (notification: Omit<DishNotification, 'id' | 'createdAt'>) => Promise<void>;
+  getDishNotifications: (userId: string) => DishNotification[];
+  removeDishNotification: (notificationId: string) => Promise<void>;
 }
 
 export const useNotificationsStore = create<NotificationsState>()(
@@ -33,193 +27,144 @@ export const useNotificationsStore = create<NotificationsState>()(
       dishNotifications: [],
       isLoading: false,
       error: null,
-      
-      addNotification: async (notificationData) => {
-        set({ isLoading: true, error: null });
-        
+
+      fetchNotifications: async (userId: string) => {
         try {
-          // Generate a unique ID
-          const id = Math.random().toString(36).substring(2, 15);
+          set({ isLoading: true, error: null });
           
-          const newNotification: Notification = {
-            id,
-            ...notificationData,
-            isRead: false,
-            createdAt: new Date().toISOString(),
-          };
+          // Simulate API call
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
-          set((state) => ({
-            notifications: [newNotification, ...state.notifications],
-            isLoading: false,
-          }));
+          // Filter notifications for the user
+          const userNotifications = mockNotifications.filter(n => n.userId === userId);
           
-          return newNotification;
-        } catch (error) {
           set({ 
-            isLoading: false, 
-            error: error instanceof Error ? error.message : 'An error occurred' 
+            notifications: userNotifications,
+            isLoading: false 
           });
-          throw error;
-        }
-      },
-      
-      getNotificationsByUser: (userId) => {
-        return get().notifications
-          .filter(notification => notification.userId === userId)
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      },
-      
-      getUnreadNotificationCount: (userId) => {
-        return get().notifications.filter(
-          notification => notification.userId === userId && !notification.isRead
-        ).length;
-      },
-      
-      markAsRead: async (notificationId) => {
-        set({ isLoading: true, error: null });
-        
-        try {
-          set((state) => ({
-            notifications: state.notifications.map(notification => 
-              notification.id === notificationId 
-                ? { ...notification, isRead: true } 
-                : notification
-            ),
-            isLoading: false,
-          }));
         } catch (error) {
+          console.error('Error fetching notifications:', error);
           set({ 
-            isLoading: false, 
-            error: error instanceof Error ? error.message : 'An error occurred' 
+            error: 'Failed to fetch notifications. Please try again.',
+            isLoading: false 
           });
-          throw error;
         }
-      },
-      
-      markAllAsRead: async (userId) => {
-        set({ isLoading: true, error: null });
-        
-        try {
-          set((state) => ({
-            notifications: state.notifications.map(notification => 
-              notification.userId === userId 
-                ? { ...notification, isRead: true } 
-                : notification
-            ),
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({ 
-            isLoading: false, 
-            error: error instanceof Error ? error.message : 'An error occurred' 
-          });
-          throw error;
-        }
-      },
-      
-      deleteNotification: async (notificationId) => {
-        set({ isLoading: true, error: null });
-        
-        try {
-          set((state) => ({
-            notifications: state.notifications.filter(
-              notification => notification.id !== notificationId
-            ),
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({ 
-            isLoading: false, 
-            error: error instanceof Error ? error.message : 'An error occurred' 
-          });
-          throw error;
-        }
-      },
-      
-      // Dish Notifications
-      addDishNotification: async (notificationData) => {
-        set({ isLoading: true, error: null });
-        
-        try {
-          // Generate a unique ID
-          const id = Math.random().toString(36).substring(2, 15);
-          
-          const newNotification: DishNotification = {
-            id,
-            ...notificationData,
-            createdAt: new Date().toISOString(),
-          };
-          
-          set((state) => ({
-            dishNotifications: [...state.dishNotifications, newNotification],
-            isLoading: false,
-          }));
-          
-          return newNotification;
-        } catch (error) {
-          set({ 
-            isLoading: false, 
-            error: error instanceof Error ? error.message : 'An error occurred' 
-          });
-          throw error;
-        }
-      },
-      
-      getDishNotificationsByUser: (userId) => {
-        return get().dishNotifications.filter(notification => notification.userId === userId);
-      },
-      
-      getActiveDishNotifications: (userId) => {
-        return get().dishNotifications.filter(
-          notification => notification.userId === userId && notification.isActive
-        );
       },
 
-      getRouteNotifications: (userId, routeType) => {
-        return get().dishNotifications.filter(
-          notification => 
-            notification.userId === userId && 
-            notification.isActive && 
-            notification.routeType === routeType
-        );
-      },
-      
-      toggleDishNotificationStatus: async (notificationId, isActive) => {
-        set({ isLoading: true, error: null });
-        
+      markAsRead: async (notificationId: string) => {
         try {
-          set((state) => ({
-            dishNotifications: state.dishNotifications.map(notification => 
-              notification.id === notificationId 
-                ? { ...notification, isActive } 
+          // Simulate API call
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          set(state => ({
+            notifications: state.notifications.map(notification =>
+              notification.id === notificationId
+                ? { ...notification, isRead: true }
                 : notification
-            ),
-            isLoading: false,
+            )
           }));
         } catch (error) {
-          set({ 
-            isLoading: false, 
-            error: error instanceof Error ? error.message : 'An error occurred' 
-          });
+          console.error('Error marking notification as read:', error);
+          set({ error: 'Failed to mark notification as read.' });
+        }
+      },
+
+      markAllAsRead: async (userId: string) => {
+        try {
+          // Simulate API call
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          set(state => ({
+            notifications: state.notifications.map(notification =>
+              notification.userId === userId
+                ? { ...notification, isRead: true }
+                : notification
+            )
+          }));
+        } catch (error) {
+          console.error('Error marking all notifications as read:', error);
+          set({ error: 'Failed to mark all notifications as read.' });
+        }
+      },
+
+      addNotification: async (notification: Omit<Notification, 'id' | 'createdAt'>) => {
+        try {
+          // Simulate API call
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          const newNotification: Notification = {
+            ...notification,
+            id: `notification-${Date.now()}`,
+            createdAt: new Date().toISOString(),
+          };
+          
+          set(state => ({
+            notifications: [newNotification, ...state.notifications]
+          }));
+        } catch (error) {
+          console.error('Error adding notification:', error);
+          set({ error: 'Failed to add notification.' });
+        }
+      },
+
+      deleteNotification: async (notificationId: string) => {
+        try {
+          // Simulate API call
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          set(state => ({
+            notifications: state.notifications.filter(n => n.id !== notificationId)
+          }));
+        } catch (error) {
+          console.error('Error deleting notification:', error);
+          set({ error: 'Failed to delete notification.' });
+        }
+      },
+
+      getUnreadCount: (userId: string) => {
+        const { notifications } = get();
+        return notifications.filter(n => n.userId === userId && !n.isRead).length;
+      },
+
+      addDishNotification: async (notification: Omit<DishNotification, 'id' | 'createdAt'>) => {
+        try {
+          // Simulate API call
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          const newDishNotification: DishNotification = {
+            ...notification,
+            id: `dish-notification-${Date.now()}`,
+            createdAt: new Date().toISOString(),
+          };
+          
+          set(state => ({
+            dishNotifications: [newDishNotification, ...state.dishNotifications]
+          }));
+        } catch (error) {
+          console.error('Error adding dish notification:', error);
+          set({ error: 'Failed to add dish notification.' });
           throw error;
         }
       },
-      
-      deleteDishNotification: async (notificationId) => {
-        set({ isLoading: true, error: null });
-        
+
+      getDishNotifications: (userId: string) => {
+        const { dishNotifications } = get();
+        return dishNotifications.filter(n => n.userId === userId && n.isActive);
+      },
+
+      removeDishNotification: async (notificationId: string) => {
         try {
-          set((state) => ({
-            dishNotifications: state.dishNotifications.filter(
-              notification => notification.id !== notificationId
-            ),
-            isLoading: false,
+          // Simulate API call
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          set(state => ({
+            dishNotifications: state.dishNotifications.map(n =>
+              n.id === notificationId ? { ...n, isActive: false } : n
+            )
           }));
         } catch (error) {
-          set({ 
-            isLoading: false, 
-            error: error instanceof Error ? error.message : 'An error occurred' 
-          });
+          console.error('Error removing dish notification:', error);
+          set({ error: 'Failed to remove dish notification.' });
           throw error;
         }
       },
@@ -227,6 +172,9 @@ export const useNotificationsStore = create<NotificationsState>()(
     {
       name: 'notifications-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        dishNotifications: state.dishNotifications,
+      }),
     }
   )
 );

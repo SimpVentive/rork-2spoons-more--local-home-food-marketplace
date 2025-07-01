@@ -18,6 +18,7 @@ export interface User {
   isAdmin?: boolean;
   rating?: number;
   reviewCount?: number;
+  commissionPercentage?: number;
   // New route-related fields
   officeAddress?: string;
   officeLocation?: {
@@ -65,6 +66,7 @@ export interface FoodListing {
   price: number;
   isVegetarian: boolean;
   cuisineType: string;
+  subcuisineType?: string;
   spiceLevel: 'mild' | 'medium' | 'hot';
   preparationTime: number;
   pickupTime: string;
@@ -79,15 +81,53 @@ export interface FoodListing {
   reviewCount?: number;
   tags?: string[];
   commission?: number;
+  availableFrom: string;
+  availableUntil: string;
+  servings: number;
+  packaging: string;
+  orderCount?: number;
+  isFeatured?: boolean;
+  isApproved?: boolean;
+  isLunchBox?: boolean;
+  lunchBoxItems?: LunchBoxItem[];
+}
+
+export interface LunchBoxItem {
+  id: string;
+  name: string;
+  description: string;
+  quantity: string;
+  image: string;
 }
 
 export interface FilterOptions {
-  cuisineTypes: string[];
+  query?: string;
+  cuisineTypes?: string[];
+  subcuisineTypes?: string[];
   isVegetarian?: boolean;
+  foodType?: 'vegetarian' | 'non-vegetarian' | 'both';
   spiceLevel?: string[];
+  minPrice?: number;
   maxPrice?: number;
+  minRating?: number;
   maxDistance?: number;
-  sortBy?: 'price' | 'rating' | 'distance' | 'newest';
+  sortBy?: 'price' | 'rating' | 'distance' | 'availableUntil';
+  sortOrder?: 'asc' | 'desc';
+  userLocation?: {
+    latitude: number;
+    longitude: number;
+  };
+  availableNow?: boolean;
+  minServings?: number;
+}
+
+export interface RouteSearchParams {
+  routeType: 'homeToOffice' | 'officeToHome';
+  maxDetour: number; // in meters
+  dishName?: string;
+  cuisineTypes?: string[];
+  subcuisineTypes?: string[];
+  foodType: 'vegetarian' | 'non-vegetarian' | 'both';
 }
 
 export interface Order {
@@ -113,6 +153,27 @@ export interface Order {
   review?: string;
   commission?: number;
   commissionAmount?: number;
+  listingSnapshot?: {
+    dishName: string;
+    price: number;
+    image: string;
+    sellerName: string;
+    sellerImage: string;
+    location: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  deliveryAddress?: string;
+  deliveryInstructions?: string;
+  paymentStatus?: string;
+  reviewComment?: string;
+  isRated?: boolean;
+  acceptedAt?: string;
+  readyAt?: string;
+  deliveredAt?: string;
+  completedAt?: string;
+  deliveryMethod?: string;
 }
 
 export interface Review {
@@ -125,6 +186,8 @@ export interface Review {
   comment: string;
   createdAt: string;
   buyerName: string;
+  buyerImage?: string;
+  sellerName: string;
   dishName: string;
 }
 
@@ -137,6 +200,7 @@ export interface Notification {
   isRead: boolean;
   createdAt: string;
   data?: any;
+  relatedId?: string;
 }
 
 export interface Follow {
@@ -153,13 +217,15 @@ export interface Complaint {
   userEmail: string;
   orderId?: string;
   listingId?: string;
+  sellerId?: string;
   type: 'order' | 'listing' | 'user' | 'payment' | 'other';
-  subject: string;
+  title: string;
   description: string;
   status: 'pending' | 'investigating' | 'resolved' | 'closed';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
   createdAt: string;
   updatedAt: string;
+  resolvedAt?: string;
   adminNotes?: string;
   resolution?: string;
 }
@@ -177,4 +243,72 @@ export interface Campaign {
   imageUrl?: string;
   actionUrl?: string;
   actionText?: string;
+}
+
+export interface TopEarner {
+  id: string;
+  name: string;
+  earnings: number;
+  location: string;
+  phone: string;
+  orderCount: number;
+}
+
+export interface TopDish {
+  id: string;
+  name: string;
+  orderCount: number;
+  revenue: number;
+  sellerName: string;
+  sellerPhone: string;
+  sellerLocation: string;
+}
+
+export interface TopChef {
+  id: string;
+  name: string;
+  rating: number;
+  orderCount: number;
+  revenue: number;
+  location: string;
+  phone: string;
+  cuisineTypes: string[];
+  isVerified: boolean;
+}
+
+export interface AdminDashboardData {
+  totalBuyers: number;
+  newUsersToday: number;
+  activeUsers: number;
+  topEarners: TopEarner[];
+  topDishes: TopDish[];
+  topChefs: TopChef[];
+  monthlyTrends: {
+    users: number[];
+    revenue: number[];
+    orders: number[];
+  };
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  duration: string;
+  features: string[];
+}
+
+export interface DishNotification {
+  id: string;
+  userId: string;
+  dishName?: string;
+  cuisineType?: string;
+  subcuisineType?: string;
+  location?: string;
+  routeType?: 'homeToOffice' | 'officeToHome';
+  email?: string;
+  phone?: string;
+  isActive: boolean;
+  createdAt: string;
 }
