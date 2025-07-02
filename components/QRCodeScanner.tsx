@@ -17,7 +17,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   const [cameraReady, setCameraReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const appState = useRef(AppState.currentState as AppStateStatus);
+  const appState = useRef<AppStateStatus>(AppState.currentState);
   const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
