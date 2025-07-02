@@ -20,6 +20,7 @@ import { Platform, StyleSheet, View, TouchableOpacity, Text, Modal, Pressable } 
 
 export default function TabLayout() {
   const router = useRouter();
+  const { user, userPreference } = useAuthStore();
   const [moreMenuVisible, setMoreMenuVisible] = useState(false);
   
   // Check authentication in useEffect to avoid navigation during render
@@ -42,6 +43,9 @@ export default function TabLayout() {
     router.push(route);
   };
 
+  // Determine if user is a seller/chef
+  const isSeller = user?.isChef || userPreference?.type === 'seller';
+
   return (
     <View style={styles.container}>
       <Tabs
@@ -62,6 +66,7 @@ export default function TabLayout() {
           tabBarHideOnKeyboard: true,
         }}
       >
+        {/* Home - Always visible */}
         <Tabs.Screen
           name="index"
           options={{
@@ -70,6 +75,8 @@ export default function TabLayout() {
             tabBarLabel: 'Home',
           }}
         />
+        
+        {/* Explore (Search) - Always visible */}
         <Tabs.Screen
           name="search"
           options={{
@@ -78,14 +85,19 @@ export default function TabLayout() {
             tabBarLabel: 'Explore',
           }}
         />
+        
+        {/* Following - Only visible for sellers */}
         <Tabs.Screen
           name="following"
           options={{
             title: 'Following',
             tabBarIcon: ({ color }) => <Users size={24} color={color} />,
             tabBarLabel: 'Following',
+            tabBarButton: isSeller ? undefined : () => null,
           }}
         />
+        
+        {/* Notifications/Alerts - Always visible */}
         <Tabs.Screen
           name="notifications"
           options={{
@@ -94,6 +106,8 @@ export default function TabLayout() {
             tabBarLabel: 'Alerts',
           }}
         />
+        
+        {/* Profile - Always visible */}
         <Tabs.Screen
           name="profile"
           options={{
@@ -102,6 +116,8 @@ export default function TabLayout() {
             tabBarLabel: 'Profile',
           }}
         />
+        
+        {/* More - Always visible and always last */}
         <Tabs.Screen
           name="more"
           options={{
@@ -161,6 +177,7 @@ export default function TabLayout() {
           onPress={() => setMoreMenuVisible(false)}
         >
           <View style={styles.moreMenuContainer}>
+            {/* Orders - Always visible */}
             <TouchableOpacity 
               style={styles.moreMenuItem}
               onPress={() => navigateTo('/(tabs)/orders')}
@@ -169,22 +186,40 @@ export default function TabLayout() {
               <Text style={styles.moreMenuItemText}>Orders</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity 
-              style={styles.moreMenuItem}
-              onPress={() => navigateTo('/(tabs)/create')}
-            >
-              <PlusCircle size={24} color={colors.text} />
-              <Text style={styles.moreMenuItemText}>Create Listing</Text>
-            </TouchableOpacity>
+            {/* Following - Only for buyers (since sellers have it in main tab) */}
+            {!isSeller && (
+              <TouchableOpacity 
+                style={styles.moreMenuItem}
+                onPress={() => navigateTo('/(tabs)/following')}
+              >
+                <Users size={24} color={colors.text} />
+                <Text style={styles.moreMenuItemText}>Following</Text>
+              </TouchableOpacity>
+            )}
             
-            <TouchableOpacity 
-              style={styles.moreMenuItem}
-              onPress={() => navigateTo('/(tabs)/analytics')}
-            >
-              <PieChart size={24} color={colors.text} />
-              <Text style={styles.moreMenuItemText}>Analytics</Text>
-            </TouchableOpacity>
+            {/* Create Listing - Only for sellers */}
+            {isSeller && (
+              <TouchableOpacity 
+                style={styles.moreMenuItem}
+                onPress={() => navigateTo('/(tabs)/create')}
+              >
+                <PlusCircle size={24} color={colors.text} />
+                <Text style={styles.moreMenuItemText}>Create Listing</Text>
+              </TouchableOpacity>
+            )}
             
+            {/* Analytics - Only for sellers */}
+            {isSeller && (
+              <TouchableOpacity 
+                style={styles.moreMenuItem}
+                onPress={() => navigateTo('/(tabs)/analytics')}
+              >
+                <PieChart size={24} color={colors.text} />
+                <Text style={styles.moreMenuItemText}>Analytics</Text>
+              </TouchableOpacity>
+            )}
+            
+            {/* Wallet - Always visible */}
             <TouchableOpacity 
               style={styles.moreMenuItem}
               onPress={() => navigateTo('/(tabs)/finances')}
@@ -193,6 +228,7 @@ export default function TabLayout() {
               <Text style={styles.moreMenuItemText}>Wallet</Text>
             </TouchableOpacity>
             
+            {/* Route Settings - Always visible */}
             <TouchableOpacity 
               style={styles.moreMenuItem}
               onPress={() => navigateTo('/route-settings')}
@@ -201,6 +237,7 @@ export default function TabLayout() {
               <Text style={styles.moreMenuItemText}>Route Settings</Text>
             </TouchableOpacity>
             
+            {/* Account Settings - Always visible */}
             <TouchableOpacity 
               style={styles.moreMenuItem}
               onPress={() => navigateTo('/edit-profile')}
@@ -236,6 +273,7 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 1000,
     backgroundColor: colors.white,
+    paddingHorizontal: 8, // Add horizontal padding for better spacing
   },
   tabBarLabel: {
     fontSize: 10,
@@ -245,6 +283,9 @@ const styles = StyleSheet.create({
   tabBarItem: {
     height: 50,
     paddingVertical: 5,
+    flex: 1, // Ensure equal distribution
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalOverlay: {
     flex: 1,

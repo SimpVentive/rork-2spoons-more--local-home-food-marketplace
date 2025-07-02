@@ -24,6 +24,7 @@ import {
   Star,
   Share2,
   PlusCircle,
+  Users,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
@@ -53,7 +54,7 @@ export default function MoreScreen() {
     );
   };
   
-  const isSeller = userPreference?.type === 'seller';
+  const isSeller = user?.isChef || userPreference?.type === 'seller';
   
   return (
     <ScrollView style={styles.container}>
@@ -102,6 +103,18 @@ export default function MoreScreen() {
           <Text style={styles.menuItemText}>My Orders</Text>
         </TouchableOpacity>
         
+        {/* Following - Show for buyers since sellers have it in main tab */}
+        {!isSeller && (
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/(tabs)/following')}
+          >
+            <Users size={22} color={colors.primary} />
+            <Text style={styles.menuItemText}>Following</Text>
+          </TouchableOpacity>
+        )}
+        
+        {/* Seller-specific options */}
         {isSeller && (
           <>
             <TouchableOpacity 
