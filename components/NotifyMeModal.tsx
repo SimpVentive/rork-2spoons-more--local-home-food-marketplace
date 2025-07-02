@@ -252,7 +252,7 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
                       
                       {routeType && !hasRouteData() && (
                         <Text style={styles.routeWarning}>
-                          You haven't set up your {routeType === 'homeToOffice' ? 'home to office' : 'office to home'} route yet. Please set it up in your profile settings.
+                          You have not set up your {routeType === 'homeToOffice' ? 'home to office' : 'office to home'} route yet. Please set it up in your profile settings.
                         </Text>
                       )}
                     </>

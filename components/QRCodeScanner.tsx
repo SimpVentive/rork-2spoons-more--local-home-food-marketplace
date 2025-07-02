@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, AppState } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, AppState, AppStateStatus } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Scan } from 'lucide-react-native';
@@ -15,79 +15,19 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   const [scanned, setScanned] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [cameraReady, setCameraReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const appState = useRef(AppState.currentState);
+  const appState = useRef<AppStateStatus>(AppState.currentState);
+  const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const initializeCamera = async () => {
-      try {
-        console.log("Initializing camera...");
-        setIsLoading(true);
-        
-        // Add a small delay for Android
-        if (Platform.OS === 'android') {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-        
-        // Check if permission is available
-        if (permission === null) {
-          console.log("Permission object not ready, waiting...");
-          // Wait a bit longer for permission object to be ready
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          return;
-        }
-
-        console.log("Permission status:", permission);
-
-        if (!permission.granted) {
-          console.log("Requesting camera permission...");
-          const result = await requestPermission();
-          console.log("Permission result:", result);
-          
-          if (!result.granted) {
-            Alert.alert(
-              "Camera Permission Required",
-              "Camera access is required to scan QR codes. Please enable camera permission in your device settings.",
-              [
-                { text: "Cancel", onPress: handleClose },
-                { text: "Try Again", onPress: initializeCamera }
-              ]
-            );
-            return;
-          }
-        }
-
-        // Additional delay for Android after permission is granted
-        if (Platform.OS === 'android') {
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-
-        setCameraReady(true);
-        console.log("Camera initialized successfully");
-      } catch (error) {
-        console.error("Error initializing camera:", error);
-        Alert.alert(
-          "Camera Error",
-          "Failed to initialize camera. Please try again.",
-          [
-            { text: "Cancel", onPress: handleClose },
-            { text: "Retry", onPress: initializeCamera }
-          ]
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     initializeCamera();
 
-    // Handle app state changes
-    const handleAppStateChange = (nextAppState: string) => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-        // App has come to the foreground, reinitialize camera
         console.log("App came to foreground, reinitializing camera");
-        setCameraReady(false);
         setScanned(false);
+        setError(null);
         initializeCamera();
       }
       appState.current = nextAppState;
@@ -97,16 +37,60 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
 
     return () => {
       subscription?.remove();
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current);
+      }
     };
-  }, [permission, requestPermission]);
+  }, []);
+
+  const initializeCamera = async () => {
+    try {
+      console.log("Initializing camera...");
+      setIsLoading(true);
+      setError(null);
+      setCameraReady(false);
+
+      // Check permission status
+      if (!permission) {
+        console.log("Permission object not ready");
+        setError("Camera permission not available");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!permission.granted) {
+        console.log("Requesting camera permission...");
+        const result = await requestPermission();
+        console.log("Permission result:", result);
+        
+        if (!result.granted) {
+          setError("Camera permission denied");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Small delay for Android to ensure camera is ready
+      if (Platform.OS === 'android') {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      setCameraReady(true);
+      setIsLoading(false);
+      console.log("Camera initialized successfully");
+    } catch (error) {
+      console.error("Error initializing camera:", error);
+      setError("Failed to initialize camera");
+      setIsLoading(false);
+    }
+  };
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     if (scanned || !data || !cameraReady) {
-      console.log("Scan ignored:", { scanned, hasData: !!data, cameraReady });
       return;
     }
     
-    console.log("QR Code scanned successfully:", data);
+    console.log("QR Code scanned:", data);
     setScanned(true);
     
     // Add haptic feedback on mobile
@@ -119,14 +103,22 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
       }
     }
     
-    // Process the scan with a small delay to ensure UI updates
-    setTimeout(() => {
+    // Clear any existing timeout
+    if (scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current);
+    }
+    
+    // Process the scan with a small delay
+    scanTimeoutRef.current = setTimeout(() => {
       onScan(data);
     }, 100);
   };
 
   const handleClose = () => {
     console.log("Closing QR scanner");
+    if (scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current);
+    }
     if (onClose) {
       onClose();
     } else {
@@ -137,54 +129,16 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
   const handleScanAgain = () => {
     console.log("Scanning again");
     setScanned(false);
+    setError(null);
   };
 
   const handleRetryPermission = async () => {
-    try {
-      console.log("Retrying permission request");
-      const result = await requestPermission();
-      console.log("Retry permission result:", result);
-      
-      if (!result.granted) {
-        Alert.alert(
-          "Permission Denied",
-          "Camera permission is required to scan QR codes. Please enable it in your device settings.",
-          [
-            { text: "Cancel", onPress: handleClose },
-            { text: "Settings", onPress: () => {
-              // On Android, we can't directly open settings, but we can show instructions
-              if (Platform.OS === 'android') {
-                Alert.alert(
-                  "Enable Camera Permission",
-                  "Please go to Settings > Apps > [Your App Name] > Permissions > Camera and enable it.",
-                  [{ text: "OK", onPress: handleClose }]
-                );
-              }
-            }}
-          ]
-        );
-      } else {
-        // Permission granted, reinitialize
-        setCameraReady(false);
-        setIsLoading(true);
-        // Small delay before reinitializing
-        setTimeout(() => {
-          setCameraReady(true);
-          setIsLoading(false);
-        }, 500);
-      }
-    } catch (error) {
-      console.error("Error requesting permission:", error);
-      Alert.alert(
-        "Error",
-        "Failed to request camera permission. Please try again.",
-        [{ text: "OK", onPress: handleClose }]
-      );
-    }
+    setError(null);
+    await initializeCamera();
   };
 
   // Loading state
-  if (isLoading || permission === null || !cameraReady) {
+  if (isLoading) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -194,12 +148,10 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
           <Text style={styles.headerText}>QR Scanner</Text>
         </View>
         <View style={styles.centerContent}>
-          <Text style={styles.text}>
-            {permission === null ? "Checking camera permissions..." : "Initializing camera..."}
-          </Text>
+          <Text style={styles.text}>Initializing camera...</Text>
           {Platform.OS === 'android' && (
             <Text style={styles.subText}>
-              This may take a moment on Android devices
+              Please wait while we prepare the camera
             </Text>
           )}
         </View>
@@ -207,8 +159,37 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleClose}>
+            <ArrowLeft size={24} color={colors.white} />
+          </TouchableOpacity>
+          <Text style={styles.headerText}>Camera Error</Text>
+        </View>
+        
+        <View style={styles.centerContent}>
+          <Text style={styles.text}>{error}</Text>
+          <Text style={styles.subText}>
+            {error.includes('permission') 
+              ? "Camera access is required to scan QR codes"
+              : "Please try again or restart the app"
+            }
+          </Text>
+          <TouchableOpacity style={styles.button} onPress={handleRetryPermission}>
+            <Text style={styles.buttonText}>
+              {error.includes('permission') ? 'Grant Permission' : 'Try Again'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   // Permission denied state
-  if (!permission.granted) {
+  if (!permission?.granted) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -231,7 +212,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
     );
   }
 
-  // Main camera view - only render if we have permission and camera is ready
+  // Main camera view
   return (
     <View style={styles.container}>
       <CameraView
@@ -264,9 +245,15 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
             </View>
             
             {/* Scanning indicator */}
-            {!scanned && (
+            {!scanned && cameraReady && (
               <View style={styles.scanningIndicator}>
                 <Text style={styles.scanningText}>Looking for QR code...</Text>
+              </View>
+            )}
+            
+            {!cameraReady && (
+              <View style={styles.scanningIndicator}>
+                <Text style={styles.scanningText}>Preparing camera...</Text>
               </View>
             )}
           </View>
@@ -294,6 +281,9 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
               <View style={styles.debugInfo}>
                 <Text style={styles.debugText}>
                   Platform: {Platform.OS} | Ready: {cameraReady ? 'Yes' : 'No'} | Scanned: {scanned ? 'Yes' : 'No'}
+                </Text>
+                <Text style={styles.debugText}>
+                  Permission: {permission?.granted ? 'Granted' : 'Denied'}
                 </Text>
               </View>
             )}

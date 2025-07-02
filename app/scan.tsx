@@ -58,7 +58,7 @@ export default function ScanScreen() {
       console.log("Parsed QR data:", parsedData);
       
       // Add a small delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       switch (parsedData.type) {
         case 'order':
