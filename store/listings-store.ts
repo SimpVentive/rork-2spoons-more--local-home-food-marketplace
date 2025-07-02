@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { mockListings } from '@/mocks/data';
+import { mockFoodListings } from '@/mocks/data';
 import { FoodListing, FilterOptions, RouteSearchParams } from '@/types';
 import { useAuthStore } from './auth-store';
 
@@ -37,8 +37,8 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       // In a real app, we would fetch from an API
       // For demo purposes, we'll use mock data
       set({ 
-        listings: mockListings,
-        filteredListings: mockListings,
+        listings: mockFoodListings,
+        filteredListings: mockFoodListings,
         isLoading: false 
       });
     } catch (error) {
