@@ -22,13 +22,17 @@ import {
   ArrowLeft,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
+import { useListingsStore } from '@/store/listings-store';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
+import LocationPicker from '@/components/LocationPicker';
 import colors from '@/constants/colors';
 import { RouteLocation } from '@/types';
+import * as Location from 'expo-location';
 
 export default function RouteSettingsScreen() {
   const { user, updateProfile } = useAuthStore();
+  const { listings } = useListingsStore();
   const router = useRouter();
 
   const [officeAddress, setOfficeAddress] = useState(user?.officeAddress || '');
@@ -37,6 +41,8 @@ export default function RouteSettingsScreen() {
   const [routesSameAsHomeToOffice, setRoutesSameAsHomeToOffice] = useState(user?.routesSameAsHomeToOffice !== false);
   const [detourPreference, setDetourPreference] = useState(user?.detourPreference?.toString() || '500');
   const [isLoading, setIsLoading] = useState(false);
+  const [locationPickerVisible, setLocationPickerVisible] = useState(false);
+  const [pickingLocationFor, setPickingLocationFor] = useState<'home' | 'office' | 'homeToOffice' | 'officeToHome' | null>(null);
 
   // New route location form
   const [newLocationName, setNewLocationName] = useState('');
@@ -87,31 +93,48 @@ export default function RouteSettingsScreen() {
     }
   };
 
+  const openLocationPicker = (type: 'home' | 'office' | 'homeToOffice' | 'officeToHome') => {
+    setPickingLocationFor(type);
+    setLocationPickerVisible(true);
+  };
+
+  const handleLocationSelected = async (location: { latitude: number; longitude: number; address: string }) => {
+    if (pickingLocationFor === 'office') {
+      setOfficeAddress(location.address);
+    } else if (pickingLocationFor === 'homeToOffice' || pickingLocationFor === 'officeToHome') {
+      // Add to route
+      const newLocation: RouteLocation = {
+        id: `location-${Date.now()}`,
+        name: newLocationName.trim() || 'Route Point',
+        address: location.address,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      };
+
+      if (pickingLocationFor === 'homeToOffice') {
+        setHomeToOfficeRoute([...homeToOfficeRoute, newLocation]);
+      } else {
+        setOfficeToHomeRoute([...officeToHomeRoute, newLocation]);
+      }
+
+      // Reset form
+      setNewLocationName('');
+      setNewLocationAddress('');
+      setAddingToRoute(null);
+    }
+
+    setLocationPickerVisible(false);
+    setPickingLocationFor(null);
+  };
+
   const addRouteLocation = () => {
-    if (!newLocationName.trim() || !newLocationAddress.trim()) {
-      Alert.alert('Error', 'Please enter both location name and address');
+    if (!newLocationName.trim()) {
+      Alert.alert('Error', 'Please enter a location name');
       return;
     }
 
-    const newLocation: RouteLocation = {
-      id: `location-${Date.now()}`,
-      name: newLocationName.trim(),
-      address: newLocationAddress.trim(),
-      // Mock coordinates (in real app, you'd geocode the address)
-      latitude: 17.4200 + Math.random() * 0.1,
-      longitude: 78.3200 + Math.random() * 0.1,
-    };
-
-    if (addingToRoute === 'homeToOffice') {
-      setHomeToOfficeRoute([...homeToOfficeRoute, newLocation]);
-    } else if (addingToRoute === 'officeToHome') {
-      setOfficeToHomeRoute([...officeToHomeRoute, newLocation]);
-    }
-
-    // Reset form
-    setNewLocationName('');
-    setNewLocationAddress('');
-    setAddingToRoute(null);
+    // Open location picker to select the actual location
+    openLocationPicker(addingToRoute!);
   };
 
   const removeRouteLocation = (routeType: 'homeToOffice' | 'officeToHome', locationId: string) => {
@@ -137,6 +160,53 @@ export default function RouteSettingsScreen() {
     </View>
   );
 
+  // Get dishes available on the current route
+  const getDishesOnRoute = () => {
+    if (!user || !homeToOfficeRoute.length) return [];
+
+    const routePoints = [
+      { latitude: user.location.latitude, longitude: user.location.longitude, name: 'Home' },
+      ...homeToOfficeRoute,
+      ...(user.officeLocation ? [{ ...user.officeLocation, name: 'Office' }] : []),
+    ];
+
+    return listings.filter(listing => {
+      return routePoints.some(point => {
+        const distance = calculateDistance(
+          point.latitude,
+          point.longitude,
+          listing.location.latitude,
+          listing.location.longitude
+        ) * 1000; // Convert to meters
+        
+        return distance <= (user.detourPreference || 500);
+      });
+    }).map(listing => ({
+      latitude: listing.location.latitude,
+      longitude: listing.location.longitude,
+      dishName: listing.dishName,
+      availableUntil: listing.availableUntil,
+      sellerName: listing.sellerName,
+    }));
+  };
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2); 
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    const distance = R * c; // Distance in km
+    return distance;
+  };
+
+  const deg2rad = (deg: number): number => {
+    return deg * (Math.PI/180);
+  };
+
   if (!user) {
     return (
       <View style={styles.loadingContainer}>
@@ -144,6 +214,14 @@ export default function RouteSettingsScreen() {
       </View>
     );
   }
+
+  const routePoints = user ? [
+    { latitude: user.location.latitude, longitude: user.location.longitude, name: 'Home' },
+    ...homeToOfficeRoute,
+    ...(user.officeLocation ? [{ ...user.officeLocation, name: 'Office' }] : []),
+  ] : [];
+
+  const dishesOnRoute = getDishesOnRoute();
 
   return (
     <>
@@ -166,6 +244,18 @@ export default function RouteSettingsScreen() {
         )}
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Home Location</Text>
+          <Text style={styles.sectionDescription}>
+            Your current home address
+          </Text>
+          
+          <View style={styles.locationDisplay}>
+            <Home size={20} color={colors.primary} />
+            <Text style={styles.locationText}>{user.address}</Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Office Location</Text>
           <Text style={styles.sectionDescription}>
             Set your office address to enable route-based food discovery
@@ -178,6 +268,14 @@ export default function RouteSettingsScreen() {
             placeholder="Enter your office address"
             leftIcon={<Building size={20} color={colors.textLight} />}
           />
+          
+          <TouchableOpacity
+            style={styles.selectLocationButton}
+            onPress={() => openLocationPicker('office')}
+          >
+            <MapPin size={20} color={colors.primary} />
+            <Text style={styles.selectLocationText}>Select on Map</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -196,15 +294,9 @@ export default function RouteSettingsScreen() {
                 onChangeText={setNewLocationName}
                 placeholder="e.g., Metro Station, Shopping Mall"
               />
-              <Input
-                label="Address"
-                value={newLocationAddress}
-                onChangeText={setNewLocationAddress}
-                placeholder="Enter the address"
-              />
               <View style={styles.addLocationButtons}>
                 <Button
-                  title="Add Location"
+                  title="Select on Map"
                   onPress={addRouteLocation}
                   style={styles.addButton}
                 />
@@ -261,15 +353,9 @@ export default function RouteSettingsScreen() {
                     onChangeText={setNewLocationName}
                     placeholder="e.g., Metro Station, Shopping Mall"
                   />
-                  <Input
-                    label="Address"
-                    value={newLocationAddress}
-                    onChangeText={setNewLocationAddress}
-                    placeholder="Enter the address"
-                  />
                   <View style={styles.addLocationButtons}>
                     <Button
-                      title="Add Location"
+                      title="Select on Map"
                       onPress={addRouteLocation}
                       style={styles.addButton}
                     />
@@ -320,6 +406,23 @@ export default function RouteSettingsScreen() {
           style={styles.saveButton}
         />
       </ScrollView>
+
+      {locationPickerVisible && (
+        <LocationPicker
+          initialLocation={
+            pickingLocationFor === 'office' && user.officeLocation
+              ? { ...user.officeLocation, address: officeAddress }
+              : undefined
+          }
+          onSelectLocation={handleLocationSelected}
+          onClose={() => {
+            setLocationPickerVisible(false);
+            setPickingLocationFor(null);
+          }}
+          routePoints={routePoints}
+          dishesOnRoute={dishesOnRoute}
+        />
+      )}
     </>
   );
 }
@@ -374,6 +477,36 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginBottom: 16,
     lineHeight: 20,
+  },
+  locationDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    padding: 16,
+    borderRadius: 8,
+  },
+  locationText: {
+    fontSize: 16,
+    color: colors.text,
+    marginLeft: 12,
+    flex: 1,
+  },
+  selectLocationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  selectLocationText: {
+    fontSize: 14,
+    color: colors.primary,
+    marginLeft: 8,
+    fontWeight: '500',
   },
   routeLocationItem: {
     flexDirection: 'row',

@@ -25,12 +25,26 @@ interface LocationPickerProps {
     address: string;
   }) => void;
   onClose: () => void;
+  routePoints?: Array<{
+    latitude: number;
+    longitude: number;
+    name: string;
+  }>;
+  dishesOnRoute?: Array<{
+    latitude: number;
+    longitude: number;
+    dishName: string;
+    availableUntil: string;
+    sellerName: string;
+  }>;
 }
 
 const LocationPicker: React.FC<LocationPickerProps> = ({
   initialLocation,
   onSelectLocation,
   onClose,
+  routePoints = [],
+  dishesOnRoute = [],
 }) => {
   const [location, setLocation] = useState({
     latitude: initialLocation?.latitude || 17.4123,
@@ -158,6 +172,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
             <TextInput
               style={styles.searchInput}
               placeholder="Search for a location"
+              placeholderTextColor={colors.textLight}
               value={searchQuery}
               onChangeText={setSearchQuery}
               onSubmitEditing={handleSearch}
@@ -192,6 +207,35 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
             <Text style={styles.webMapText}>
               Map view is not available on web. Please enter an address in the search box.
             </Text>
+            
+            {routePoints.length > 0 && (
+              <View style={styles.routePointsContainer}>
+                <Text style={styles.routePointsTitle}>Route Points:</Text>
+                {routePoints.map((point, index) => (
+                  <View key={index} style={styles.routePointItem}>
+                    <MapPin size={16} color={colors.secondary} />
+                    <Text style={styles.routePointText}>{point.name}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            
+            {dishesOnRoute.length > 0 && (
+              <View style={styles.dishesContainer}>
+                <Text style={styles.dishesTitle}>Available Dishes on Route:</Text>
+                {dishesOnRoute.map((dish, index) => (
+                  <View key={index} style={styles.dishItem}>
+                    <Text style={styles.dishEmoji}>🍽️</Text>
+                    <View style={styles.dishInfo}>
+                      <Text style={styles.dishName}>{dish.dishName}</Text>
+                      <Text style={styles.dishDetails}>
+                        By {dish.sellerName} • Available until {new Date(dish.availableUntil).toLocaleTimeString()}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
             
             <View style={styles.selectedLocationContainer}>
               <Text style={styles.selectedLocationLabel}>Selected Location:</Text>
@@ -262,6 +306,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     marginRight: 8,
+    color: colors.text,
+    fontSize: 16,
   },
   searchButton: {
     width: 40,
@@ -296,8 +342,6 @@ const styles = StyleSheet.create({
   webMapFallback: {
     flex: 1,
     padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: colors.card,
     margin: 16,
     borderRadius: 8,
@@ -306,6 +350,60 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: colors.textLight,
     marginBottom: 20,
+  },
+  routePointsContainer: {
+    marginBottom: 20,
+  },
+  routePointsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  routePointItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  routePointText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: colors.text,
+  },
+  dishesContainer: {
+    marginBottom: 20,
+  },
+  dishesTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  dishItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    backgroundColor: colors.white,
+    borderRadius: 8,
+    marginBottom: 4,
+    paddingHorizontal: 12,
+  },
+  dishEmoji: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  dishInfo: {
+    flex: 1,
+  },
+  dishName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  dishDetails: {
+    fontSize: 12,
+    color: colors.textLight,
+    marginTop: 2,
   },
   selectedLocationContainer: {
     width: '100%',

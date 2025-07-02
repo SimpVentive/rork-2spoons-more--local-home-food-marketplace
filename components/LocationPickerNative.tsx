@@ -26,12 +26,26 @@ interface LocationPickerProps {
     address: string;
   }) => void;
   onClose: () => void;
+  routePoints?: Array<{
+    latitude: number;
+    longitude: number;
+    name: string;
+  }>;
+  dishesOnRoute?: Array<{
+    latitude: number;
+    longitude: number;
+    dishName: string;
+    availableUntil: string;
+    sellerName: string;
+  }>;
 }
 
 const LocationPickerNative: React.FC<LocationPickerProps> = ({
   initialLocation,
   onSelectLocation,
   onClose,
+  routePoints = [],
+  dishesOnRoute = [],
 }) => {
   const [location, setLocation] = useState({
     latitude: initialLocation?.latitude || 17.4123,
@@ -261,6 +275,7 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
             <TextInput
               style={styles.searchInput}
               placeholder="Search for a location"
+              placeholderTextColor={colors.textLight}
               value={searchQuery}
               onChangeText={setSearchQuery}
               onSubmitEditing={handleSearch}
@@ -314,6 +329,7 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
               scrollEnabled
               pitchEnabled
             >
+              {/* Selected location marker */}
               <Marker
                 coordinate={{
                   latitude: location.latitude,
@@ -323,6 +339,38 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
                 description={location.address}
                 pinColor={colors.primary}
               />
+              
+              {/* Route points markers */}
+              {routePoints.map((point, index) => (
+                <Marker
+                  key={`route-${index}`}
+                  coordinate={{
+                    latitude: point.latitude,
+                    longitude: point.longitude,
+                  }}
+                  title={point.name}
+                  description="Route point"
+                  pinColor={colors.secondary}
+                />
+              ))}
+              
+              {/* Dishes on route markers */}
+              {dishesOnRoute.map((dish, index) => (
+                <Marker
+                  key={`dish-${index}`}
+                  coordinate={{
+                    latitude: dish.latitude,
+                    longitude: dish.longitude,
+                  }}
+                  title={dish.dishName}
+                  description={`By ${dish.sellerName} • Available until ${new Date(dish.availableUntil).toLocaleTimeString()}`}
+                  pinColor={colors.vegetarian}
+                >
+                  <View style={styles.dishMarker}>
+                    <Text style={styles.dishMarkerText}>🍽️</Text>
+                  </View>
+                </Marker>
+              ))}
             </MapView>
             
             <View style={styles.mapControlsContainer}>
@@ -414,6 +462,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     marginRight: 8,
+    color: colors.text,
+    fontSize: 16,
   },
   searchButton: {
     width: 40,
@@ -501,6 +551,24 @@ const styles = StyleSheet.create({
     left: '50%',
     marginLeft: -16,
     marginTop: -32,
+  },
+  dishMarker: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.vegetarian,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  dishMarkerText: {
+    fontSize: 16,
   },
   addressContainer: {
     padding: 16,

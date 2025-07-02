@@ -76,44 +76,68 @@ export default function TabLayout() {
           }}
         />
         
-        {/* Explore (Search) - Always visible */}
+        {/* Explore (Search) - Only visible for buyers */}
         <Tabs.Screen
           name="search"
           options={{
             title: 'Explore',
             tabBarIcon: ({ color }) => <Search size={24} color={color} />,
             tabBarLabel: 'Explore',
+            tabBarButton: !isSeller ? undefined : () => null,
           }}
         />
         
-        {/* Following - Only visible for sellers */}
-        <Tabs.Screen
-          name="following"
-          options={{
-            title: 'Following',
-            tabBarIcon: ({ color }) => <Users size={24} color={color} />,
-            tabBarLabel: 'Following',
-            tabBarButton: isSeller ? undefined : () => null,
-          }}
-        />
-        
-        {/* Notifications/Alerts - Always visible */}
-        <Tabs.Screen
-          name="notifications"
-          options={{
-            title: 'Notifications',
-            tabBarIcon: ({ color }) => <Bell size={24} color={color} />,
-            tabBarLabel: 'Alerts',
-          }}
-        />
-        
-        {/* Profile - Always visible */}
+        {/* Profile - Always visible but positioned differently */}
         <Tabs.Screen
           name="profile"
           options={{
             title: 'Profile',
             tabBarIcon: ({ color }) => <User size={24} color={color} />,
             tabBarLabel: 'Profile',
+          }}
+        />
+        
+        {/* Create - Only visible for sellers */}
+        <Tabs.Screen
+          name="create"
+          options={{
+            title: 'Create',
+            tabBarIcon: ({ color }) => <PlusCircle size={24} color={color} />,
+            tabBarLabel: 'Create',
+            tabBarButton: isSeller ? undefined : () => null,
+          }}
+        />
+        
+        {/* Following/Followers - Only visible for sellers */}
+        <Tabs.Screen
+          name="following"
+          options={{
+            title: 'Followers',
+            tabBarIcon: ({ color }) => <Users size={24} color={color} />,
+            tabBarLabel: 'Followers',
+            tabBarButton: isSeller ? undefined : () => null,
+          }}
+        />
+        
+        {/* Notifications/Alerts - Only visible for buyers */}
+        <Tabs.Screen
+          name="notifications"
+          options={{
+            title: 'Alerts',
+            tabBarIcon: ({ color }) => <Bell size={24} color={color} />,
+            tabBarLabel: 'Alerts',
+            tabBarButton: !isSeller ? undefined : () => null,
+          }}
+        />
+        
+        {/* Wallet - Only visible for sellers */}
+        <Tabs.Screen
+          name="finances"
+          options={{
+            title: 'Wallet',
+            tabBarIcon: ({ color }) => <Wallet size={24} color={color} />,
+            tabBarLabel: 'Wallet',
+            tabBarButton: isSeller ? undefined : () => null,
           }}
         />
         
@@ -143,23 +167,9 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="create"
-          options={{
-            title: 'Create',
-            tabBarButton: () => null,
-          }}
-        />
-        <Tabs.Screen
           name="analytics"
           options={{
             title: 'Analytics',
-            tabBarButton: () => null,
-          }}
-        />
-        <Tabs.Screen
-          name="finances"
-          options={{
-            title: 'Wallet',
             tabBarButton: () => null,
           }}
         />
@@ -197,14 +207,25 @@ export default function TabLayout() {
               </TouchableOpacity>
             )}
             
-            {/* Create Listing - Only for sellers */}
+            {/* Explore - Only for sellers (since buyers have it in main tab) */}
             {isSeller && (
               <TouchableOpacity 
                 style={styles.moreMenuItem}
-                onPress={() => navigateTo('/(tabs)/create')}
+                onPress={() => navigateTo('/(tabs)/search')}
               >
-                <PlusCircle size={24} color={colors.text} />
-                <Text style={styles.moreMenuItemText}>Create Listing</Text>
+                <Search size={24} color={colors.text} />
+                <Text style={styles.moreMenuItemText}>Explore</Text>
+              </TouchableOpacity>
+            )}
+            
+            {/* Notifications - Only for sellers (since buyers have it in main tab) */}
+            {isSeller && (
+              <TouchableOpacity 
+                style={styles.moreMenuItem}
+                onPress={() => navigateTo('/(tabs)/notifications')}
+              >
+                <Bell size={24} color={colors.text} />
+                <Text style={styles.moreMenuItemText}>Notifications</Text>
               </TouchableOpacity>
             )}
             
@@ -219,14 +240,16 @@ export default function TabLayout() {
               </TouchableOpacity>
             )}
             
-            {/* Wallet - Always visible */}
-            <TouchableOpacity 
-              style={styles.moreMenuItem}
-              onPress={() => navigateTo('/(tabs)/finances')}
-            >
-              <Wallet size={24} color={colors.text} />
-              <Text style={styles.moreMenuItemText}>Wallet</Text>
-            </TouchableOpacity>
+            {/* Wallet - Only for buyers (since sellers have it in main tab) */}
+            {!isSeller && (
+              <TouchableOpacity 
+                style={styles.moreMenuItem}
+                onPress={() => navigateTo('/(tabs)/finances')}
+              >
+                <Wallet size={24} color={colors.text} />
+                <Text style={styles.moreMenuItemText}>Wallet</Text>
+              </TouchableOpacity>
+            )}
             
             {/* Route Settings - Always visible */}
             <TouchableOpacity 
@@ -273,7 +296,7 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 1000,
     backgroundColor: colors.white,
-    paddingHorizontal: 8, // Add horizontal padding for better spacing
+    paddingHorizontal: 8,
   },
   tabBarLabel: {
     fontSize: 10,
@@ -283,7 +306,7 @@ const styles = StyleSheet.create({
   tabBarItem: {
     height: 50,
     paddingVertical: 5,
-    flex: 1, // Ensure equal distribution
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
