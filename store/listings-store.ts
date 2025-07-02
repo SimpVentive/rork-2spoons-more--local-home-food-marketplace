@@ -13,8 +13,11 @@ interface ListingsState {
   searchListingsOnRoute: (params: RouteSearchParams) => void;
   addListing: (listing: Omit<FoodListing, 'id' | 'createdAt'>) => Promise<FoodListing>;
   updateListing: (id: string, updates: Partial<FoodListing>) => Promise<FoodListing>;
+  updateListingQuantity: (id: string, newQuantity: number) => Promise<void>;
   deleteListing: (id: string) => Promise<boolean>;
   getListing: (id: string) => FoodListing | undefined;
+  getListingById: (id: string) => FoodListing | undefined;
+  getSellerListings: (sellerId: string) => FoodListing[];
   getTopSellingItems: (limit?: number) => Promise<FoodListing[]>;
 }
 
@@ -48,7 +51,8 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
   },
   
   searchListings: (options: FilterOptions) => {
-    const { listings } = get();
+    const state = get();
+    const listings = state.listings || [];
     let filtered = [...listings];
     
     // Apply search query filter
@@ -170,7 +174,8 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
   },
   
   searchListingsOnRoute: (params: RouteSearchParams) => {
-    const { listings } = get();
+    const state = get();
+    const listings = state.listings || [];
     const user = useAuthStore.getState().user;
     
     if (!user) {
@@ -286,8 +291,8 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       
       // Update the store
       set(state => ({
-        listings: [newListing, ...state.listings],
-        filteredListings: [newListing, ...state.filteredListings],
+        listings: [newListing, ...(state.listings || [])],
+        filteredListings: [newListing, ...(state.filteredListings || [])],
         isLoading: false,
       }));
       
@@ -310,7 +315,9 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Find the listing to update
-      const listing = get().listings.find(l => l.id === id);
+      const state = get();
+      const listings = state.listings || [];
+      const listing = listings.find(l => l.id === id);
       
       if (!listing) {
         throw new Error('Listing not found');
@@ -324,8 +331,8 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       
       // Update the store
       set(state => ({
-        listings: state.listings.map(l => l.id === id ? updatedListing : l),
-        filteredListings: state.filteredListings.map(l => l.id === id ? updatedListing : l),
+        listings: (state.listings || []).map(l => l.id === id ? updatedListing : l),
+        filteredListings: (state.filteredListings || []).map(l => l.id === id ? updatedListing : l),
         isLoading: false,
       }));
       
@@ -340,6 +347,34 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
     }
   },
   
+  updateListingQuantity: async (id: string, newQuantity: number) => {
+    try {
+      // Find the listing to update
+      const state = get();
+      const listings = state.listings || [];
+      const listing = listings.find(l => l.id === id);
+      
+      if (!listing) {
+        throw new Error('Listing not found');
+      }
+      
+      // Update the listing quantity
+      const updatedListing: FoodListing = {
+        ...listing,
+        remainingQuantity: newQuantity,
+      };
+      
+      // Update the store
+      set(state => ({
+        listings: (state.listings || []).map(l => l.id === id ? updatedListing : l),
+        filteredListings: (state.filteredListings || []).map(l => l.id === id ? updatedListing : l),
+      }));
+    } catch (error) {
+      console.error('Error updating listing quantity:', error);
+      throw error;
+    }
+  },
+  
   deleteListing: async (id: string) => {
     try {
       set({ isLoading: true, error: null });
@@ -349,8 +384,8 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       
       // Update the store
       set(state => ({
-        listings: state.listings.filter(l => l.id !== id),
-        filteredListings: state.filteredListings.filter(l => l.id !== id),
+        listings: (state.listings || []).filter(l => l.id !== id),
+        filteredListings: (state.filteredListings || []).filter(l => l.id !== id),
         isLoading: false,
       }));
       
@@ -366,7 +401,21 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
   },
   
   getListing: (id: string) => {
-    return get().listings.find(l => l.id === id);
+    const state = get();
+    const listings = state.listings || [];
+    return listings.find(l => l.id === id);
+  },
+  
+  getListingById: (id: string) => {
+    const state = get();
+    const listings = state.listings || [];
+    return listings.find(l => l.id === id);
+  },
+  
+  getSellerListings: (sellerId: string) => {
+    const state = get();
+    const listings = state.listings || [];
+    return listings.filter(l => l.sellerId === sellerId);
   },
   
   getTopSellingItems: async (limit = 10) => {
@@ -374,8 +423,12 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
       
+      // Get current listings safely
+      const state = get();
+      const listings = state.listings || [];
+      
       // Sort listings by order count (descending)
-      const topItems = [...get().listings]
+      const topItems = [...listings]
         .sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0))
         .slice(0, limit);
       
