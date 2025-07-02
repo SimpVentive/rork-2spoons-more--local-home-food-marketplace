@@ -12,4 +12,5 @@ export default {
   success: '#27AE60',
   warning: '#F39C12',
   info: '#3498DB',
+  vegetarian: '#27AE60',
 };
