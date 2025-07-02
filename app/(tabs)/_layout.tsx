@@ -43,8 +43,8 @@ export default function TabLayout() {
     router.push(route);
   };
 
-  // Determine if user is a seller/chef
-  const isSeller = user?.isChef || userPreference?.type === 'seller';
+  // Determine if user is a seller/chef based on userPreference
+  const isSeller = userPreference?.type === 'seller';
 
   return (
     <View style={styles.container}>
@@ -66,7 +66,7 @@ export default function TabLayout() {
           tabBarHideOnKeyboard: true,
         }}
       >
-        {/* Home - Always visible */}
+        {/* Home - Always visible and always first */}
         <Tabs.Screen
           name="index"
           options={{
@@ -76,70 +76,78 @@ export default function TabLayout() {
           }}
         />
         
-        {/* Explore (Search) - Only visible for buyers */}
-        <Tabs.Screen
-          name="search"
-          options={{
-            title: 'Explore',
-            tabBarIcon: ({ color }) => <Search size={24} color={color} />,
-            tabBarLabel: 'Explore',
-            tabBarButton: !isSeller ? undefined : () => null,
-          }}
-        />
+        {/* For Buyers: Explore, Alerts, Profile, More */}
+        {!isSeller && (
+          <>
+            <Tabs.Screen
+              name="search"
+              options={{
+                title: 'Explore',
+                tabBarIcon: ({ color }) => <Search size={24} color={color} />,
+                tabBarLabel: 'Explore',
+              }}
+            />
+            
+            <Tabs.Screen
+              name="notifications"
+              options={{
+                title: 'Alerts',
+                tabBarIcon: ({ color }) => <Bell size={24} color={color} />,
+                tabBarLabel: 'Alerts',
+              }}
+            />
+            
+            <Tabs.Screen
+              name="profile"
+              options={{
+                title: 'Profile',
+                tabBarIcon: ({ color }) => <User size={24} color={color} />,
+                tabBarLabel: 'Profile',
+              }}
+            />
+          </>
+        )}
         
-        {/* Profile - Always visible but positioned differently */}
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: 'Profile',
-            tabBarIcon: ({ color }) => <User size={24} color={color} />,
-            tabBarLabel: 'Profile',
-          }}
-        />
-        
-        {/* Create - Only visible for sellers */}
-        <Tabs.Screen
-          name="create"
-          options={{
-            title: 'Create',
-            tabBarIcon: ({ color }) => <PlusCircle size={24} color={color} />,
-            tabBarLabel: 'Create',
-            tabBarButton: isSeller ? undefined : () => null,
-          }}
-        />
-        
-        {/* Following/Followers - Only visible for sellers */}
-        <Tabs.Screen
-          name="following"
-          options={{
-            title: 'Followers',
-            tabBarIcon: ({ color }) => <Users size={24} color={color} />,
-            tabBarLabel: 'Followers',
-            tabBarButton: isSeller ? undefined : () => null,
-          }}
-        />
-        
-        {/* Notifications/Alerts - Only visible for buyers */}
-        <Tabs.Screen
-          name="notifications"
-          options={{
-            title: 'Alerts',
-            tabBarIcon: ({ color }) => <Bell size={24} color={color} />,
-            tabBarLabel: 'Alerts',
-            tabBarButton: !isSeller ? undefined : () => null,
-          }}
-        />
-        
-        {/* Wallet - Only visible for sellers */}
-        <Tabs.Screen
-          name="finances"
-          options={{
-            title: 'Wallet',
-            tabBarIcon: ({ color }) => <Wallet size={24} color={color} />,
-            tabBarLabel: 'Wallet',
-            tabBarButton: isSeller ? undefined : () => null,
-          }}
-        />
+        {/* For Sellers: Profile, Create, Followers, Wallet */}
+        {isSeller && (
+          <>
+            <Tabs.Screen
+              name="profile"
+              options={{
+                title: 'Profile',
+                tabBarIcon: ({ color }) => <User size={24} color={color} />,
+                tabBarLabel: 'Profile',
+              }}
+            />
+            
+            <Tabs.Screen
+              name="create"
+              options={{
+                title: 'Create',
+                tabBarIcon: ({ color }) => <PlusCircle size={24} color={color} />,
+                tabBarLabel: 'Create',
+              }}
+            />
+            
+            <Tabs.Screen
+              name="following"
+              options={{
+                title: 'Followers',
+                tabBarIcon: ({ color }) => <Users size={24} color={color} />,
+                tabBarLabel: 'Followers',
+              }}
+            />
+            
+            <Tabs.Screen
+              name="finances"
+              options={{
+                title: 'Wallet',
+                tabBarIcon: ({ color }) => <Wallet size={24} color={color} />,
+                tabBarLabel: 'Wallet',
+              }}
+            />
+          </>
+        )}
         
         {/* More - Always visible and always last */}
         <Tabs.Screen
@@ -196,59 +204,54 @@ export default function TabLayout() {
               <Text style={styles.moreMenuItemText}>Orders</Text>
             </TouchableOpacity>
             
-            {/* Following - Only for buyers (since sellers have it in main tab) */}
+            {/* For Buyers: Following, Explore (if seller), Wallet */}
             {!isSeller && (
-              <TouchableOpacity 
-                style={styles.moreMenuItem}
-                onPress={() => navigateTo('/(tabs)/following')}
-              >
-                <Users size={24} color={colors.text} />
-                <Text style={styles.moreMenuItemText}>Following</Text>
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity 
+                  style={styles.moreMenuItem}
+                  onPress={() => navigateTo('/(tabs)/following')}
+                >
+                  <Users size={24} color={colors.text} />
+                  <Text style={styles.moreMenuItemText}>Following</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.moreMenuItem}
+                  onPress={() => navigateTo('/(tabs)/finances')}
+                >
+                  <Wallet size={24} color={colors.text} />
+                  <Text style={styles.moreMenuItemText}>Wallet</Text>
+                </TouchableOpacity>
+              </>
             )}
             
-            {/* Explore - Only for sellers (since buyers have it in main tab) */}
+            {/* For Sellers: Explore, Notifications, Analytics */}
             {isSeller && (
-              <TouchableOpacity 
-                style={styles.moreMenuItem}
-                onPress={() => navigateTo('/(tabs)/search')}
-              >
-                <Search size={24} color={colors.text} />
-                <Text style={styles.moreMenuItemText}>Explore</Text>
-              </TouchableOpacity>
-            )}
-            
-            {/* Notifications - Only for sellers (since buyers have it in main tab) */}
-            {isSeller && (
-              <TouchableOpacity 
-                style={styles.moreMenuItem}
-                onPress={() => navigateTo('/(tabs)/notifications')}
-              >
-                <Bell size={24} color={colors.text} />
-                <Text style={styles.moreMenuItemText}>Notifications</Text>
-              </TouchableOpacity>
-            )}
-            
-            {/* Analytics - Only for sellers */}
-            {isSeller && (
-              <TouchableOpacity 
-                style={styles.moreMenuItem}
-                onPress={() => navigateTo('/(tabs)/analytics')}
-              >
-                <PieChart size={24} color={colors.text} />
-                <Text style={styles.moreMenuItemText}>Analytics</Text>
-              </TouchableOpacity>
-            )}
-            
-            {/* Wallet - Only for buyers (since sellers have it in main tab) */}
-            {!isSeller && (
-              <TouchableOpacity 
-                style={styles.moreMenuItem}
-                onPress={() => navigateTo('/(tabs)/finances')}
-              >
-                <Wallet size={24} color={colors.text} />
-                <Text style={styles.moreMenuItemText}>Wallet</Text>
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity 
+                  style={styles.moreMenuItem}
+                  onPress={() => navigateTo('/(tabs)/search')}
+                >
+                  <Search size={24} color={colors.text} />
+                  <Text style={styles.moreMenuItemText}>Explore</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.moreMenuItem}
+                  onPress={() => navigateTo('/(tabs)/notifications')}
+                >
+                  <Bell size={24} color={colors.text} />
+                  <Text style={styles.moreMenuItemText}>Notifications</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.moreMenuItem}
+                  onPress={() => navigateTo('/(tabs)/analytics')}
+                >
+                  <PieChart size={24} color={colors.text} />
+                  <Text style={styles.moreMenuItemText}>Analytics</Text>
+                </TouchableOpacity>
+              </>
             )}
             
             {/* Route Settings - Always visible */}

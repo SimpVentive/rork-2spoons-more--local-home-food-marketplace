@@ -364,7 +364,7 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
                   }}
                   title={dish.dishName}
                   description={`By ${dish.sellerName} • Available until ${new Date(dish.availableUntil).toLocaleTimeString()}`}
-                  pinColor={colors.vegetarian}
+                  pinColor={colors.success}
                 >
                   <View style={styles.dishMarker}>
                     <Text style={styles.dishMarkerText}>🍽️</Text>
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: colors.vegetarian,
+    borderColor: colors.success,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,

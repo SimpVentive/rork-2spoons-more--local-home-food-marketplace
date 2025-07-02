@@ -13,4 +13,5 @@ export default {
   warning: '#F39C12',
   info: '#3498DB',
   vegetarian: '#27AE60',
+  nonVegetarian: '#E74C3C',
 };
