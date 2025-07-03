@@ -276,9 +276,9 @@ export default function CreateListingScreen() {
       lunchBoxItems: formData.isLunchBox ? formData.lunchBoxItems : [],
       location: formData.pickupLocation,
       isActive: true,
-      address: formData.address || 'Default Address',
-      spiceLevel: formData.spiceLevel || 'mild',
-      preparationTime: formData.preparationTime || 30,
+      address: formData.pickupLocation.address || 'Default Address',
+      spiceLevel: 'mild' as const,
+      preparationTime: 30,
       pickupTime: formData.availableFrom.toISOString(),
     };
     

@@ -52,7 +52,7 @@ const mockNotifications: Notification[] = [
     userId: 'user1',
     title: 'New Follower',
     message: 'Priya started following you',
-    type: 'follow' as const,
+    type: 'system',
     relatedId: 'user2',
     isRead: false,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
@@ -62,7 +62,7 @@ const mockNotifications: Notification[] = [
     userId: 'user1',
     title: 'Dish Alert',
     message: 'Biryani is now available near you',
-    type: 'dish' as const,
+    type: 'system',
     relatedId: 'listing1',
     isRead: false,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // 8 hours ago
@@ -121,22 +121,8 @@ export default function NotificationsScreen() {
       case 'review':
         router.push(`/profile/${user?.id}`);
         break;
-      case 'follow':
-        router.push(`/profile/${notification.relatedId}`);
-        break;
-      case 'dish':
-        router.push(`/listing/${notification.relatedId}`);
-        break;
-      case 'route_dish':
-        // Show alert and navigate to route settings
-        Alert.alert(
-          'Dish Available on Route',
-          notification.message,
-          [
-            { text: 'View Route', onPress: () => router.push('/route-settings') },
-            { text: 'OK' }
-          ]
-        );
+      case 'promotion':
+        // Handle promotion notifications
         break;
       case 'system':
         // Maybe show a modal with more info
@@ -150,12 +136,8 @@ export default function NotificationsScreen() {
         return <ShoppingBag size={24} color={colors.primary} />;
       case 'review':
         return <MessageSquare size={24} color="#FF9800" />;
-      case 'follow':
-        return <Users size={24} color="#9C27B0" />;
-      case 'dish':
-        return <Utensils size={24} color={colors.success} />;
-      case 'route_dish':
-        return <MapPin size={24} color={colors.success} />;
+      case 'promotion':
+        return <Info size={24} color="#FF9800" />;
       case 'system':
         return <Info size={24} color="#2196F3" />;
       default:

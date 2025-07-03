@@ -138,16 +138,6 @@ export const PACKAGING_TYPES = [
   'Biodegradable container',
 ];
 
-// Packaging Types
-export const PACKAGING_TYPES = [
-  'Eco-friendly container',
-  'Reusable lunch box',
-  'Disposable container',
-  'Glass container',
-  'Steel container',
-  'Biodegradable container',
-];
-
 // Subscription Plans
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
@@ -395,6 +385,13 @@ export const mockOrders: Order[] = [
     buyerId: 'user1',
     sellerId: 'user2',
     listingId: 'listing1',
+    dishName: 'Homemade Butter Chicken',
+    pickupTime: '2023-06-27T13:30:00Z',
+    buyerName: 'John Doe',
+    buyerPhone: '+1234567890',
+    sellerName: 'Jane Smith',
+    sellerPhone: '+1987654321',
+    sellerAddress: '456 Oak St, Othertown, USA',
     listingSnapshot: {
       dishName: 'Homemade Butter Chicken',
       price: 250,
@@ -412,7 +409,7 @@ export const mockOrders: Order[] = [
     deliveryInstructions: 'Leave at the door',
     paymentMethod: 'UPI',
     paymentStatus: 'paid',
-    status: 'delivered',
+    status: 'completed',
     rating: 4,
     reviewComment: 'Delicious food, will order again!',
     isRated: true,
@@ -429,6 +426,13 @@ export const mockOrders: Order[] = [
     buyerId: 'user1',
     sellerId: 'user2',
     listingId: 'listing2',
+    dishName: 'Vegetable Biryani',
+    pickupTime: '2023-06-27T16:00:00Z',
+    buyerName: 'John Doe',
+    buyerPhone: '+1234567890',
+    sellerName: 'Jane Smith',
+    sellerPhone: '+1987654321',
+    sellerAddress: '456 Oak St, Othertown, USA',
     listingSnapshot: {
       dishName: 'Vegetable Biryani',
       price: 180,
@@ -476,6 +480,8 @@ export const mockComplaints: Complaint[] = [
   {
     id: 'complaint1',
     userId: 'user1',
+    userName: 'John Doe',
+    userEmail: 'john@example.com',
     orderId: 'order1',
     sellerId: 'user2',
     type: 'order',
