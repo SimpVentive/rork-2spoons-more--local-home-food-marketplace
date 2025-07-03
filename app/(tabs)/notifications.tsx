@@ -52,7 +52,7 @@ const mockNotifications: Notification[] = [
     userId: 'user1',
     title: 'New Follower',
     message: 'Priya started following you',
-    type: 'follow',
+    type: 'follow' as const,
     relatedId: 'user2',
     isRead: false,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
@@ -62,7 +62,7 @@ const mockNotifications: Notification[] = [
     userId: 'user1',
     title: 'Dish Alert',
     message: 'Biryani is now available near you',
-    type: 'dish',
+    type: 'dish' as const,
     relatedId: 'listing1',
     isRead: false,
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // 8 hours ago

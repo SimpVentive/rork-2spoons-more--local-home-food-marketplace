@@ -196,7 +196,7 @@ export interface Notification {
   userId: string;
   title: string;
   message: string;
-  type: 'order' | 'review' | 'system' | 'promotion';
+  type: 'order' | 'review' | 'system' | 'promotion' | 'follow' | 'dish' | 'route_dish';
   isRead: boolean;
   createdAt: string;
   data?: any;

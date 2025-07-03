@@ -191,7 +191,7 @@ export const useNotificationsStore = create<NotificationsState>()(
                 userId,
                 title: `${dishNotification.dishName} Available on Your Route!`,
                 message: `${dishNotification.dishName} is now available along your route. Tap to view details.`,
-                type: 'route_dish',
+                type: 'route_dish' as const,
                 relatedId: dishNotification.id,
                 isRead: false,
                 createdAt: new Date().toISOString(),

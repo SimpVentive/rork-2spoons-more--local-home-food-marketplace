@@ -275,6 +275,11 @@ export default function CreateListingScreen() {
       isLunchBox: formData.isLunchBox,
       lunchBoxItems: formData.isLunchBox ? formData.lunchBoxItems : [],
       location: formData.pickupLocation,
+      isActive: true,
+      address: formData.address || 'Default Address',
+      spiceLevel: formData.spiceLevel || 'mild',
+      preparationTime: formData.preparationTime || 30,
+      pickupTime: formData.availableFrom.toISOString(),
     };
     
     const success = await addListing(newListing);
@@ -773,7 +778,7 @@ export default function CreateListingScreen() {
             )}
             
             <View style={styles.tagsContainer}>
-              {PACKAGING_TYPES.map((packaging) => (
+              {PACKAGING_TYPES.map((packaging: string) => (
                 <TouchableOpacity
                   key={packaging}
                   style={[

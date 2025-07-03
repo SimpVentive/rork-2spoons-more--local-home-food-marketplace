@@ -128,6 +128,26 @@ export const PAYMENT_METHODS = [
   'Net Banking',
 ];
 
+// Packaging Types
+export const PACKAGING_TYPES = [
+  'Eco-friendly container',
+  'Reusable lunch box',
+  'Disposable container',
+  'Glass container',
+  'Steel container',
+  'Biodegradable container',
+];
+
+// Packaging Types
+export const PACKAGING_TYPES = [
+  'Eco-friendly container',
+  'Reusable lunch box',
+  'Disposable container',
+  'Glass container',
+  'Steel container',
+  'Biodegradable container',
+];
+
 // Subscription Plans
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
@@ -209,6 +229,11 @@ export const mockFoodListings: FoodListing[] = [
     isFeatured: true,
     isApproved: true,
     isActive: true,
+    address: '456 Oak St, Othertown, USA',
+    spiceLevel: 'medium',
+    preparationTime: 30,
+    pickupTime: '2023-06-27T12:00:00Z',
+    quantity: 10,
   },
   {
     id: 'listing2',
@@ -242,6 +267,11 @@ export const mockFoodListings: FoodListing[] = [
     isFeatured: false,
     isApproved: true,
     isActive: true,
+    address: '456 Oak St, Othertown, USA',
+    spiceLevel: 'mild',
+    preparationTime: 45,
+    pickupTime: '2023-06-27T13:00:00Z',
+    quantity: 15,
   },
   {
     id: 'listing3',
@@ -274,6 +304,11 @@ export const mockFoodListings: FoodListing[] = [
     isFeatured: false,
     isApproved: true,
     isActive: true,
+    address: '456 Oak St, Othertown, USA',
+    spiceLevel: 'mild',
+    preparationTime: 25,
+    pickupTime: '2023-06-27T14:00:00Z',
+    quantity: 8,
   },
   {
     id: 'listing4',
@@ -345,6 +380,11 @@ export const mockFoodListings: FoodListing[] = [
         image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307',
       },
     ],
+    address: '456 Oak St, Othertown, USA',
+    spiceLevel: 'mild',
+    preparationTime: 20,
+    pickupTime: '2023-06-27T11:00:00Z',
+    quantity: 20,
   },
 ];
 

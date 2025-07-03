@@ -14,4 +14,5 @@ export default {
   info: '#3498DB',
   vegetarian: '#27AE60',
   nonVegetarian: '#E74C3C',
+  shadow: '#000000',
 };
