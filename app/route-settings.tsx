@@ -26,6 +26,7 @@ import { useListingsStore } from '@/store/listings-store';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import LocationPicker from '@/components/LocationPicker';
+import RouteMapView from '@/components/RouteMapView';
 import colors from '@/constants/colors';
 import { RouteLocation } from '@/types';
 import * as Location from 'expo-location';
@@ -48,6 +49,7 @@ export default function RouteSettingsScreen() {
   const [newLocationName, setNewLocationName] = useState('');
   const [newLocationAddress, setNewLocationAddress] = useState('');
   const [addingToRoute, setAddingToRoute] = useState<'homeToOffice' | 'officeToHome' | null>(null);
+  const [showMapView, setShowMapView] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -228,11 +230,6 @@ export default function RouteSettingsScreen() {
       <Stack.Screen 
         options={{ 
           title: 'Route Settings',
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-              <ArrowLeft size={24} color={colors.text} />
-            </TouchableOpacity>
-          ),
         }} 
       />
       
@@ -399,6 +396,41 @@ export default function RouteSettingsScreen() {
             leftIcon={<Navigation size={20} color={colors.textLight} />}
           />
         </View>
+
+        {/* Route Map View */}
+        {(homeToOfficeRoute.length > 0 || user?.officeLocation) && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Route Map</Text>
+            <Text style={styles.sectionDescription}>
+              View your route and available dishes along the way
+            </Text>
+            
+            <RouteMapView
+              routePoints={routePoints}
+              dishesOnRoute={dishesOnRoute}
+              onDishPress={(dish) => {
+                // Navigate to dish details or show more info
+                Alert.alert(
+                  dish.dishName,
+                  `Available from ${dish.sellerName} until ${new Date(dish.availableUntil).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}`,
+                  [
+                    { text: 'OK' },
+                    { text: 'View Details', onPress: () => {
+                      // Find the listing and navigate to it
+                      const listing = listings.find(l => l.dishName === dish.dishName && l.sellerName === dish.sellerName);
+                      if (listing) {
+                        router.push(`/listing/${listing.id}`);
+                      }
+                    }}
+                  ]
+                );
+              }}
+            />
+          </View>
+        )}
 
         <Button
           title="Save Route Settings"

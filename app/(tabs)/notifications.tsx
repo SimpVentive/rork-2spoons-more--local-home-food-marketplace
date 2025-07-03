@@ -6,6 +6,7 @@ import {
   FlatList, 
   TouchableOpacity, 
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { 
@@ -17,6 +18,7 @@ import {
   Utensils,
   Check,
   ChevronRight,
+  MapPin,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import EmptyState from '@/components/EmptyState';
@@ -125,6 +127,17 @@ export default function NotificationsScreen() {
       case 'dish':
         router.push(`/listing/${notification.relatedId}`);
         break;
+      case 'route_dish':
+        // Show alert and navigate to route settings
+        Alert.alert(
+          'Dish Available on Route',
+          notification.message,
+          [
+            { text: 'View Route', onPress: () => router.push('/route-settings') },
+            { text: 'OK' }
+          ]
+        );
+        break;
       case 'system':
         // Maybe show a modal with more info
         break;
@@ -141,6 +154,8 @@ export default function NotificationsScreen() {
         return <Users size={24} color="#9C27B0" />;
       case 'dish':
         return <Utensils size={24} color={colors.success} />;
+      case 'route_dish':
+        return <MapPin size={24} color={colors.success} />;
       case 'system':
         return <Info size={24} color="#2196F3" />;
       default:

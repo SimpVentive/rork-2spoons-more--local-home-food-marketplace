@@ -76,7 +76,24 @@ export default function TabLayout() {
           }}
         />
         
-        {/* For Buyers: Explore, Alerts, Profile, More */}
+        {/* More - Always visible and always second (next to Home) */}
+        <Tabs.Screen
+          name="more"
+          options={{
+            title: 'More',
+            tabBarIcon: ({ color }) => <MoreHorizontal size={24} color={color} />,
+            tabBarLabel: 'More',
+          }}
+          listeners={{
+            tabPress: (e) => {
+              // Prevent default navigation
+              e.preventDefault();
+              toggleMoreMenu();
+            },
+          }}
+        />
+        
+        {/* For Buyers: Explore, Alerts, Profile */}
         {!isSeller && (
           <>
             <Tabs.Screen
@@ -148,23 +165,6 @@ export default function TabLayout() {
             />
           </>
         )}
-        
-        {/* More - Always visible and always last */}
-        <Tabs.Screen
-          name="more"
-          options={{
-            title: 'More',
-            tabBarIcon: ({ color }) => <MoreHorizontal size={24} color={color} />,
-            tabBarLabel: 'More',
-          }}
-          listeners={{
-            tabPress: (e) => {
-              // Prevent default navigation
-              e.preventDefault();
-              toggleMoreMenu();
-            },
-          }}
-        />
         
         {/* Hidden tabs that will be accessible from the more menu */}
         <Tabs.Screen

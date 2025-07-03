@@ -18,6 +18,8 @@ interface NotificationsState {
   addDishNotification: (notification: Omit<DishNotification, 'id' | 'createdAt'>) => Promise<void>;
   getDishNotifications: (userId: string) => DishNotification[];
   removeDishNotification: (notificationId: string) => Promise<void>;
+  checkRouteNotifications: (userId: string) => Promise<void>;
+  getRouteBasedNotifications: (userId: string) => Notification[];
 }
 
 export const useNotificationsStore = create<NotificationsState>()(
@@ -167,6 +169,47 @@ export const useNotificationsStore = create<NotificationsState>()(
           set({ error: 'Failed to remove dish notification.' });
           throw error;
         }
+      },
+
+      checkRouteNotifications: async (userId: string) => {
+        try {
+          // This would check for dishes available on user's route
+          // and create notifications for dishes they've subscribed to
+          const { dishNotifications } = get();
+          const activeDishNotifications = dishNotifications.filter(n => n.userId === userId && n.isActive);
+          
+          // Simulate checking route for available dishes
+          // In a real app, this would call an API to check current listings against user's route
+          for (const dishNotification of activeDishNotifications) {
+            // Check if dish is available on route
+            const isAvailableOnRoute = Math.random() > 0.7; // Simulate availability
+            
+            if (isAvailableOnRoute) {
+              // Create a notification
+              const routeNotification: Notification = {
+                id: `route-notification-${Date.now()}-${Math.random()}`,
+                userId,
+                title: `${dishNotification.dishName} Available on Your Route!`,
+                message: `${dishNotification.dishName} is now available along your route. Tap to view details.`,
+                type: 'route_dish',
+                relatedId: dishNotification.id,
+                isRead: false,
+                createdAt: new Date().toISOString(),
+              };
+              
+              set(state => ({
+                notifications: [routeNotification, ...state.notifications]
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Error checking route notifications:', error);
+        }
+      },
+
+      getRouteBasedNotifications: (userId: string) => {
+        const { notifications } = get();
+        return notifications.filter(n => n.userId === userId && n.type === 'route_dish' && !n.isRead);
       },
     }),
     {

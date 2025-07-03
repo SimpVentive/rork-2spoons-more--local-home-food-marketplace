@@ -162,8 +162,8 @@ export default function CreateListingScreen() {
       newErrors.quantity = 'Quantity is required';
     } else if (isNaN(Number(formData.quantity)) || Number(formData.quantity) <= 0) {
       newErrors.quantity = 'Please enter a valid quantity';
-    } else if (Number(formData.quantity) > 3) {
-      newErrors.quantity = 'Maximum quantity allowed is 3';
+    } else if (Number(formData.quantity) > 4) {
+      newErrors.quantity = 'Maximum quantity allowed is 4';
     }
     
     if (!formData.price.trim()) {
@@ -603,7 +603,7 @@ export default function CreateListingScreen() {
                 onChangeText={(text) => updateFormData('quantity', text)}
                 keyboardType="number-pad"
                 error={errors.quantity}
-                helperText="Maximum 3 portions allowed"
+                helperText="Maximum 4 portions allowed"
               />
             </View>
             
