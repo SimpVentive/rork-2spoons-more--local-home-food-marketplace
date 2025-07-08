@@ -21,7 +21,7 @@ import {
   Navigation,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
-import LocationPicker from '@/components/LocationPicker';
+import LocationPickerNative from '@/components/LocationPickerNative';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
 import { RoutePoint } from '@/types';
@@ -276,7 +276,7 @@ export default function RouteSettingsScreen() {
       </View>
       
       {showLocationPicker && (
-        <LocationPicker
+        <LocationPickerNative
           onSelectLocation={handleLocationSelect}
           onClose={() => setShowLocationPicker(false)}
           routePoints={homeLocation && officeLocation ? [

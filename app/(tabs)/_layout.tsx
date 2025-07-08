@@ -19,7 +19,7 @@ import colors from '@/constants/colors';
 import { Platform, StyleSheet, View, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function TabLayout() {
+export default function TabLayout(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [isMounted, setIsMounted] = useState(false);
@@ -101,7 +101,7 @@ export default function TabLayout() {
   // Calculate tab bar height with proper safe area handling for Android
   const tabBarHeight = Platform.OS === 'ios' 
     ? 80 + insets.bottom 
-    : 70 + Math.max(insets.bottom, 10); // Ensure minimum padding on Android
+    : 80 + Math.max(insets.bottom, 16); // Increased minimum padding for Android
 
   const { switchRole } = useAuthStore();
 
@@ -122,8 +122,9 @@ export default function TabLayout() {
           styles.tabBar,
           {
             height: tabBarHeight,
-            paddingBottom: Platform.OS === 'ios' ? insets.bottom : Math.max(insets.bottom, 10),
-            paddingTop: 8,
+            paddingBottom: Platform.OS === 'ios' ? insets.bottom : Math.max(insets.bottom, 16),
+            paddingTop: 12,
+            marginBottom: Platform.OS === 'android' ? 0 : 0, // Ensure no margin on Android
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,
@@ -149,7 +150,8 @@ export default function TabLayout() {
         tabBarItemStyle: [
           styles.tabBarItem,
           {
-            height: Platform.OS === 'ios' ? 60 : 50,
+            height: Platform.OS === 'ios' ? 60 : 56,
+            paddingBottom: Platform.OS === 'android' ? 4 : 0,
           }
         ],
         tabBarHideOnKeyboard: true,
@@ -231,7 +233,7 @@ export default function TabLayout() {
       {!isSeller && (
         <>
           <Tabs.Screen
-            name="search"
+            name="index"
             options={{
               title: 'Explore',
               tabBarIcon: ({ color, focused }) => (
@@ -286,9 +288,9 @@ export default function TabLayout() {
       
       {/* Hidden tabs that will be accessible from the more screen */}
       <Tabs.Screen
-        name="index"
+        name="search"
         options={{
-          title: 'Home',
+          title: 'Search',
           tabBarButton: () => null,
         }}
       />
@@ -306,6 +308,28 @@ export default function TabLayout() {
           tabBarButton: () => null,
         }}
       />
+      
+      {/* For sellers, hide the index tab */}
+      {isSeller && (
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarButton: () => null,
+          }}
+        />
+      )}
+      
+      {/* For buyers, hide the profile tab */}
+      {!isSeller && (
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarButton: () => null,
+          }}
+        />
+      )}
     </Tabs>
   );
 }
@@ -320,7 +344,7 @@ const styles = StyleSheet.create({
   tabBar: {
     borderTopColor: colors.border,
     borderTopWidth: 1,
-    elevation: Platform.OS === 'android' ? 8 : 0,
+    elevation: Platform.OS === 'android' ? 12 : 0,
     shadowColor: Platform.OS === 'ios' ? '#000' : 'transparent',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: Platform.OS === 'ios' ? 0.1 : 0,
@@ -328,6 +352,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     paddingHorizontal: 4,
     position: 'relative',
+    // Ensure tab bar doesn't overlap with Android navigation
+    ...(Platform.OS === 'android' && {
+      borderTopWidth: 2,
+      borderTopColor: colors.border,
+    }),
   },
   tabBarLabel: {
     fontSize: Platform.OS === 'android' ? 11 : 10,
