@@ -18,42 +18,63 @@ import { Platform, StyleSheet, View, ActivityIndicator } from 'react-native';
 
 export default function TabLayout() {
   const router = useRouter();
-  const { isAuthenticated, userPreference } = useAuthStore();
   const [isMounted, setIsMounted] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
+  const [authState, setAuthState] = useState<{
+    isAuthenticated: boolean;
+    userPreference: any;
+  } | null>(null);
   
   // Wait for component to mount
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Check authentication and redirect if needed, but only after mounting
+  // Get auth state after mounting
   useEffect(() => {
     if (!isMounted) return;
     
+    try {
+      const { isAuthenticated, userPreference } = useAuthStore.getState();
+      setAuthState({ isAuthenticated, userPreference });
+    } catch (error) {
+      console.error('Error getting auth state:', error);
+      setAuthState({ isAuthenticated: false, userPreference: null });
+    }
+  }, [isMounted]);
+
+  // Check authentication and redirect if needed, but only after mounting and getting auth state
+  useEffect(() => {
+    if (!isMounted || !authState) return;
+    
     // Add a small delay to ensure everything is properly initialized
     const checkAuth = async () => {
-      if (!isAuthenticated) {
-        router.replace('/(auth)');
-        return;
+      try {
+        if (!authState.isAuthenticated) {
+          router.replace('/(auth)');
+          return;
+        }
+        
+        if (!authState.userPreference) {
+          router.replace('/user-preference');
+          return;
+        }
+        
+        setHasCheckedAuth(true);
+      } catch (error) {
+        console.error('Navigation error:', error);
+        setHasCheckedAuth(true);
       }
-      
-      if (!userPreference) {
-        router.replace('/user-preference');
-        return;
-      }
-      
-      setHasCheckedAuth(true);
     };
 
     // Use setTimeout to ensure navigation happens after render
-    const timeoutId = setTimeout(checkAuth, 100);
+    const timeoutId = setTimeout(checkAuth, 200);
     
     return () => clearTimeout(timeoutId);
-  }, [isMounted, isAuthenticated, userPreference, router]);
+  }, [isMounted, authState, router]);
 
   // Show loading while checking authentication
-  if (!isMounted || !hasCheckedAuth) {
+  if (!isMounted || !authState || !hasCheckedAuth) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -62,12 +83,16 @@ export default function TabLayout() {
   }
 
   // Don't render tabs if not authenticated or no user preference
-  if (!isAuthenticated || !userPreference) {
-    return null;
+  if (!authState.isAuthenticated || !authState.userPreference) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
   }
 
   // Determine if user is a seller/chef based on userPreference
-  const isSeller = userPreference?.type === 'seller';
+  const isSeller = authState.userPreference?.type === 'seller';
 
   return (
     <Tabs
@@ -109,77 +134,80 @@ export default function TabLayout() {
       />
       
       {/* For Buyers: Explore, Alerts, Profile */}
-      {!isSeller && (
-        <>
-          <Tabs.Screen
-            name="search"
-            options={{
-              title: 'Explore',
-              tabBarIcon: ({ color }) => <Search size={24} color={color} />,
-              tabBarLabel: 'Explore',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="notifications"
-            options={{
-              title: 'Alerts',
-              tabBarIcon: ({ color }) => <Bell size={24} color={color} />,
-              tabBarLabel: 'Alerts',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="profile"
-            options={{
-              title: 'Profile',
-              tabBarIcon: ({ color }) => <User size={24} color={color} />,
-              tabBarLabel: 'Profile',
-            }}
-          />
-        </>
-      )}
+      {!isSeller ? [
+        <Tabs.Screen
+          key="search"
+          name="search"
+          options={{
+            title: 'Explore',
+            tabBarIcon: ({ color }) => <Search size={24} color={color} />,
+            tabBarLabel: 'Explore',
+          }}
+        />,
+        
+        <Tabs.Screen
+          key="notifications"
+          name="notifications"
+          options={{
+            title: 'Alerts',
+            tabBarIcon: ({ color }) => <Bell size={24} color={color} />,
+            tabBarLabel: 'Alerts',
+          }}
+        />,
+        
+        <Tabs.Screen
+          key="profile"
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color }) => <User size={24} color={color} />,
+            tabBarLabel: 'Profile',
+          }}
+        />
+      ] as const : null}
       
       {/* For Sellers: Profile, Create, Followers, Wallet */}
-      {isSeller && (
-        <>
-          <Tabs.Screen
-            name="profile"
-            options={{
-              title: 'Profile',
-              tabBarIcon: ({ color }) => <User size={24} color={color} />,
-              tabBarLabel: 'Profile',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="create"
-            options={{
-              title: 'Create',
-              tabBarIcon: ({ color }) => <PlusCircle size={24} color={color} />,
-              tabBarLabel: 'Create',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="following"
-            options={{
-              title: 'Followers',
-              tabBarIcon: ({ color }) => <Users size={24} color={color} />,
-              tabBarLabel: 'Followers',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="finances"
-            options={{
-              title: 'Wallet',
-              tabBarIcon: ({ color }) => <Wallet size={24} color={color} />,
-              tabBarLabel: 'Wallet',
-            }}
-          />
-        </>
-      )}
+      {isSeller ? [
+        <Tabs.Screen
+          key="profile"
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color }) => <User size={24} color={color} />,
+            tabBarLabel: 'Profile',
+          }}
+        />,
+        
+        <Tabs.Screen
+          key="create"
+          name="create"
+          options={{
+            title: 'Create',
+            tabBarIcon: ({ color }) => <PlusCircle size={24} color={color} />,
+            tabBarLabel: 'Create',
+          }}
+        />,
+        
+        <Tabs.Screen
+          key="following"
+          name="following"
+          options={{
+            title: 'Followers',
+            tabBarIcon: ({ color }) => <Users size={24} color={color} />,
+            tabBarLabel: 'Followers',
+          }}
+        />,
+        
+        <Tabs.Screen
+          key="finances"
+          name="finances"
+          options={{
+            title: 'Wallet',
+            tabBarIcon: ({ color }) => <Wallet size={24} color={color} />,
+            tabBarLabel: 'Wallet',
+          }}
+        />
+      ] as const : null}
       
       {/* Hidden tabs that will be accessible from the more screen */}
       <Tabs.Screen

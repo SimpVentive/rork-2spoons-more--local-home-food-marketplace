@@ -10,6 +10,7 @@ interface AuthState {
   token: string | null;
   isAdmin: boolean;
   userPreference: UserPreference | null;
+  isInitialized: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   adminLogin: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -27,6 +28,7 @@ interface AuthState {
   incrementPostCount: () => Promise<boolean>;
   checkPostingEligibility: () => { eligible: boolean; message: string };
   resetFreePostsRemaining: () => Promise<void>;
+  initialize: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -37,6 +39,17 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAdmin: false,
       userPreference: null,
+      isInitialized: false,
+      
+      initialize: async () => {
+        try {
+          // This will be called after the store is rehydrated from AsyncStorage
+          set({ isInitialized: true });
+        } catch (error) {
+          console.error('Auth store initialization error:', error);
+          set({ isInitialized: true });
+        }
+      },
       
       login: async (email: string, password: string) => {
         try {
@@ -544,6 +557,12 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      onRehydrateStorage: () => (state) => {
+        // Initialize the store after rehydration
+        if (state) {
+          state.initialize();
+        }
+      },
     }
   )
 );

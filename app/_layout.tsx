@@ -1,13 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import colors from '@/constants/colors';
 
 export default function RootLayout() {
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+  
+  // Ensure component is mounted before allowing navigation
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Show loading while mounting
+  if (!isMounted) {
+    return (
+      <SafeAreaProvider>
+        <View style={{ 
+          flex: 1, 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          backgroundColor: colors.background 
+        }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaProvider>
+    );
+  }
   
   return (
     <SafeAreaProvider>
