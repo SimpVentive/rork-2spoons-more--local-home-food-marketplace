@@ -42,18 +42,18 @@ export default function LoginScreen() {
       if (!success) {
         setError('Invalid email or password. Try using john@example.com');
       } else {
-        // If login is successful, manually navigate to ensure it works
-        const { isAuthenticated, userPreference } = useAuthStore.getState();
-        
-        if (isAuthenticated) {
-          if (!userPreference) {
-            router.replace('/user-preference');
-          } else if (userPreference.type === 'seller') {
-            router.replace('/(tabs)/profile');
-          } else {
-            router.replace('/(tabs)');
+        // If login is successful, use setTimeout to ensure navigation happens after state update
+        setTimeout(() => {
+          const { isAuthenticated, userPreference } = useAuthStore.getState();
+          
+          if (isAuthenticated) {
+            if (!userPreference) {
+              router.replace('/user-preference');
+            } else {
+              router.replace('/(tabs)');
+            }
           }
-        }
+        }, 100);
       }
     } catch (error) {
       console.log('Login error:', error);
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   forgotPasswordContainer: {
     alignSelf: 'flex-end',
     marginBottom: 24,
-    padding: 4, // Increased touch target
+    padding: 4,
   },
   forgotPasswordText: {
     color: colors.primary,
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
   adminLoginButton: {
     alignItems: 'center',
-    padding: 12, // Increased touch target
+    padding: 12,
   },
   adminLoginText: {
     color: colors.primary,
@@ -290,6 +290,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   eyeIconButton: {
-    padding: 8, // Increased touch target
+    padding: 8,
   },
 });

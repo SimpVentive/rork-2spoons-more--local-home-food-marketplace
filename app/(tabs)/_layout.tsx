@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { 
   Home, 
@@ -14,24 +14,52 @@ import {
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, View, ActivityIndicator } from 'react-native';
 
 export default function TabLayout() {
   const router = useRouter();
   const { isAuthenticated, userPreference } = useAuthStore();
+  const [isMounted, setIsMounted] = useState(false);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   
-  // Check authentication and redirect if needed
+  // Wait for component to mount
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/(auth)');
-      return;
-    }
+    setIsMounted(true);
+  }, []);
+
+  // Check authentication and redirect if needed, but only after mounting
+  useEffect(() => {
+    if (!isMounted) return;
     
-    if (!userPreference) {
-      router.replace('/user-preference');
-      return;
-    }
-  }, [isAuthenticated, userPreference]);
+    // Add a small delay to ensure everything is properly initialized
+    const checkAuth = async () => {
+      if (!isAuthenticated) {
+        router.replace('/(auth)');
+        return;
+      }
+      
+      if (!userPreference) {
+        router.replace('/user-preference');
+        return;
+      }
+      
+      setHasCheckedAuth(true);
+    };
+
+    // Use setTimeout to ensure navigation happens after render
+    const timeoutId = setTimeout(checkAuth, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [isMounted, isAuthenticated, userPreference, router]);
+
+  // Show loading while checking authentication
+  if (!isMounted || !hasCheckedAuth) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   // Don't render tabs if not authenticated or no user preference
   if (!isAuthenticated || !userPreference) {
@@ -173,6 +201,12 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
   tabBar: {
     borderTopColor: colors.border,
     height: Platform.OS === 'ios' ? 85 : 60,

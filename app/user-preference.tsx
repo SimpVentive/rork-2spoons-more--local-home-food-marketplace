@@ -23,13 +23,20 @@ export default function UserPreferenceScreen() {
   const handleContinue = async () => {
     if (!selectedOption) return;
     
-    await updateUserPreference(selectedOption);
-    
-    if (selectedOption === 'buyer') {
-      router.replace('/(tabs)');
-    } else {
-      // Navigate to seller onboarding screen
-      router.push('/seller-onboarding');
+    try {
+      await updateUserPreference(selectedOption);
+      
+      // Use setTimeout to ensure navigation happens after state update
+      setTimeout(() => {
+        if (selectedOption === 'buyer') {
+          router.replace('/(tabs)');
+        } else {
+          // Navigate to seller onboarding screen
+          router.push('/seller-onboarding');
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error updating user preference:', error);
     }
   };
 
