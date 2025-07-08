@@ -110,12 +110,12 @@ export default function RouteSettingsScreen() {
         homeCoordinates: homeLocation ? {
           latitude: homeLocation.latitude,
           longitude: homeLocation.longitude,
-        } : null,
+        } : undefined,
         officeAddress: officeLocation?.address || '',
         officeCoordinates: officeLocation ? {
           latitude: officeLocation.latitude,
           longitude: officeLocation.longitude,
-        } : null,
+        } : undefined,
         customLocations: customLocations,
       };
       
