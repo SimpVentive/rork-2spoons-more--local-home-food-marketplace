@@ -15,9 +15,11 @@ import {
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
 import { Platform, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [isMounted, setIsMounted] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [authState, setAuthState] = useState<{
@@ -93,12 +95,23 @@ export default function TabLayout() {
   // Determine if user is a seller/chef based on userPreference
   const isSeller = authState.userPreference?.type === 'seller';
 
+  // Calculate tab bar height with proper safe area handling
+  const tabBarHeight = Platform.OS === 'ios' 
+    ? 80 + insets.bottom 
+    : 70;
+
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textLight,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: tabBarHeight,
+            paddingBottom: Platform.OS === 'ios' ? insets.bottom : 10,
+          }
+        ],
         tabBarLabelStyle: styles.tabBarLabel,
         headerStyle: {
           borderBottomColor: colors.border,
@@ -108,7 +121,12 @@ export default function TabLayout() {
           fontWeight: '600',
           fontSize: 18,
         },
-        tabBarItemStyle: styles.tabBarItem,
+        tabBarItemStyle: [
+          styles.tabBarItem,
+          {
+            height: Platform.OS === 'ios' ? 60 : 50,
+          }
+        ],
         tabBarHideOnKeyboard: true,
         tabBarAllowFontScaling: false,
       }}
@@ -142,94 +160,92 @@ export default function TabLayout() {
       />
       
       {/* For Buyers: Explore, Alerts, Profile */}
-      {!isSeller ? [
-        <Tabs.Screen
-          key="search"
-          name="search"
-          options={{
-            title: 'Explore',
-            tabBarIcon: ({ color, focused }) => (
-              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                <Search size={24} color={color} />
-              </View>
-            ),
-            tabBarLabel: 'Explore',
-          }}
-        />,
-        
-        <Tabs.Screen
-          key="notifications"
-          name="notifications"
-          options={{
-            title: 'Alerts',
-            tabBarIcon: ({ color, focused }) => (
-              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                <Bell size={24} color={color} />
-              </View>
-            ),
-            tabBarLabel: 'Alerts',
-          }}
-        />,
-        
-        <Tabs.Screen
-          key="profile"
-          name="profile"
-          options={{
-            title: 'Profile',
-            tabBarIcon: ({ color, focused }) => (
-              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                <User size={24} color={color} />
-              </View>
-            ),
-            tabBarLabel: 'Profile',
-          }}
-        />
-      ] as const : null}
+      {!isSeller && (
+        <>
+          <Tabs.Screen
+            name="search"
+            options={{
+              title: 'Explore',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <Search size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'Explore',
+            }}
+          />
+          
+          <Tabs.Screen
+            name="notifications"
+            options={{
+              title: 'Alerts',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <Bell size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'Alerts',
+            }}
+          />
+          
+          <Tabs.Screen
+            name="profile"
+            options={{
+              title: 'Profile',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <User size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'Profile',
+            }}
+          />
+        </>
+      )}
       
-      {/* For Sellers: Create, Profile, Followers, Wallet */}
-      {isSeller ? [
-        <Tabs.Screen
-          key="create"
-          name="create"
-          options={{
-            title: 'Create',
-            tabBarIcon: ({ color, focused }) => (
-              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                <PlusCircle size={24} color={color} />
-              </View>
-            ),
-            tabBarLabel: 'Create',
-          }}
-        />,
-        
-        <Tabs.Screen
-          key="profile"
-          name="profile"
-          options={{
-            title: 'Profile',
-            tabBarIcon: ({ color, focused }) => (
-              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                <User size={24} color={color} />
-              </View>
-            ),
-            tabBarLabel: 'Profile',
-          }}
-        />,
-        
-        <Tabs.Screen
-          key="following"
-          name="following"
-          options={{
-            title: 'Followers',
-            tabBarIcon: ({ color, focused }) => (
-              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                <Users size={24} color={color} />
-              </View>
-            ),
-            tabBarLabel: 'Followers',
-          }}
-        />
-      ] as const : null}
+      {/* For Sellers: Create, Profile, Followers */}
+      {isSeller && (
+        <>
+          <Tabs.Screen
+            name="create"
+            options={{
+              title: 'Create',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <PlusCircle size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'Create',
+            }}
+          />
+          
+          <Tabs.Screen
+            name="profile"
+            options={{
+              title: 'Profile',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <User size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'Profile',
+            }}
+          />
+          
+          <Tabs.Screen
+            name="following"
+            options={{
+              title: 'Followers',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <Users size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'Followers',
+            }}
+          />
+        </>
+      )}
       
       {/* Hidden tabs that will be accessible from the more screen */}
       <Tabs.Screen
@@ -267,34 +283,29 @@ const styles = StyleSheet.create({
   tabBar: {
     borderTopColor: colors.border,
     borderTopWidth: 1,
-    height: Platform.OS === 'ios' ? 90 : 80,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 15,
-    paddingTop: 10,
-    elevation: 8,
-    shadowColor: '#000',
+    paddingTop: 8,
+    elevation: Platform.OS === 'android' ? 8 : 0,
+    shadowColor: Platform.OS === 'ios' ? '#000' : 'transparent',
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowOpacity: Platform.OS === 'ios' ? 0.1 : 0,
+    shadowRadius: Platform.OS === 'ios' ? 3 : 0,
     backgroundColor: colors.white,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     position: 'relative',
-    zIndex: 1,
   },
   tabBarLabel: {
     fontSize: Platform.OS === 'android' ? 11 : 10,
-    marginTop: 4,
-    paddingTop: 0,
+    marginTop: 2,
     fontWeight: '500',
   },
   tabBarItem: {
-    height: Platform.OS === 'android' ? 65 : 55,
-    paddingVertical: 6,
+    paddingVertical: 4,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 60,
     borderRadius: 12,
-    marginHorizontal: 4,
+    marginHorizontal: 2,
   },
   iconContainer: {
     width: 36,
