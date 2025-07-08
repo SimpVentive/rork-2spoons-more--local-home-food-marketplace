@@ -24,18 +24,10 @@ import { useAuthStore } from '@/store/auth-store';
 import LocationPicker from '@/components/LocationPicker';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
-
-interface RoutePoint {
-  id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  type: 'home' | 'office' | 'custom';
-}
+import { RoutePoint } from '@/types';
 
 export default function RouteSettingsScreen() {
-  const { user, updateUser } = useAuthStore();
+  const { user, updateProfile } = useAuthStore();
   const router = useRouter();
   
   const [homeLocation, setHomeLocation] = useState<RoutePoint | null>(null);
@@ -65,15 +57,18 @@ export default function RouteSettingsScreen() {
     }
     
     // Load office location
-    if (user.officeAddress && user.officeCoordinates) {
-      setOfficeLocation({
-        id: 'office',
-        name: 'Office',
-        address: user.officeAddress,
-        latitude: user.officeCoordinates.latitude,
-        longitude: user.officeCoordinates.longitude,
-        type: 'office',
-      });
+    if (user.officeAddress && (user.officeCoordinates || user.officeLocation)) {
+      const coords = user.officeCoordinates || user.officeLocation;
+      if (coords) {
+        setOfficeLocation({
+          id: 'office',
+          name: 'Office',
+          address: user.officeAddress,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          type: 'office',
+        });
+      }
     }
     
     // Load custom locations
@@ -124,7 +119,7 @@ export default function RouteSettingsScreen() {
         customLocations: customLocations,
       };
       
-      await updateUser(updatedUser);
+      await updateProfile(updatedUser);
       
       Alert.alert(
         'Success',
@@ -274,7 +269,7 @@ export default function RouteSettingsScreen() {
         <Button
           title="Save Route Settings"
           onPress={handleSaveRoute}
-          loading={isLoading}
+          isLoading={isLoading}
           icon={<Save size={16} color={colors.white} />}
           style={styles.saveButton}
         />
@@ -282,13 +277,20 @@ export default function RouteSettingsScreen() {
       
       {showLocationPicker && (
         <LocationPicker
-          visible={showLocationPicker}
-          onLocationSelect={handleLocationSelect}
+          onSelectLocation={handleLocationSelect}
           onClose={() => setShowLocationPicker(false)}
-          title={`Select ${locationPickerType === 'home' ? 'Home' : locationPickerType === 'office' ? 'Office' : 'Custom'} Location`}
-          showRoute={homeLocation && officeLocation ? true : false}
-          routeStart={homeLocation}
-          routeEnd={officeLocation}
+          routePoints={homeLocation && officeLocation ? [
+            {
+              latitude: homeLocation.latitude,
+              longitude: homeLocation.longitude,
+              name: homeLocation.name,
+            },
+            {
+              latitude: officeLocation.latitude,
+              longitude: officeLocation.longitude,
+              name: officeLocation.name,
+            }
+          ] : []}
         />
       )}
     </ScrollView>

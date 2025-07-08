@@ -19,12 +19,22 @@ export interface User {
   rating?: number;
   reviewCount?: number;
   commissionPercentage?: number;
-  // New route-related fields
+  // Route-related fields
+  homeAddress?: string;
+  homeCoordinates?: {
+    latitude: number;
+    longitude: number;
+  };
   officeAddress?: string;
   officeLocation?: {
     latitude: number;
     longitude: number;
   };
+  officeCoordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+  customLocations?: RoutePoint[];
   homeToOfficeRoute?: RouteLocation[];
   officeToHomeRoute?: RouteLocation[];
   routesSameAsHomeToOffice?: boolean;
@@ -35,6 +45,15 @@ export interface User {
   firstPostDate?: string | null;
   postCount?: number;
   freePostsRemaining?: number;
+}
+
+export interface RoutePoint {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  type: 'home' | 'office' | 'custom';
 }
 
 export interface RouteLocation {
