@@ -25,6 +25,7 @@ import {
   Share2,
   PlusCircle,
   Users,
+  Search,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
@@ -111,6 +112,17 @@ export default function MoreScreen() {
           >
             <Users size={22} color={colors.primary} />
             <Text style={styles.menuItemText}>Following</Text>
+          </TouchableOpacity>
+        )}
+        
+        {/* Explore - Show for sellers since buyers have it in main tab */}
+        {isSeller && (
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/(tabs)/search')}
+          >
+            <Search size={22} color={colors.primary} />
+            <Text style={styles.menuItemText}>Explore</Text>
           </TouchableOpacity>
         )}
         

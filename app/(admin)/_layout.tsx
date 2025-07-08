@@ -1,6 +1,6 @@
 import React from 'react';
 import { Stack } from 'expo-router';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { 
   LayoutDashboard, 
@@ -146,6 +146,7 @@ export default function AdminLayout() {
         headerTitleStyle: {
           fontWeight: '600',
         },
+        animation: 'slide_from_right',
       }}
     >
       <Stack.Screen

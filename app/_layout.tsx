@@ -50,6 +50,7 @@ export default function RootLayout() {
         <Stack.Screen name="admin-login" options={{ title: 'Admin Login' }} />
         <Stack.Screen name="scan" options={{ title: 'Scan QR Code' }} />
         <Stack.Screen name="analytics" options={{ title: 'Analytics' }} />
+        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         <Stack.Screen name="+not-found" options={{ title: 'Not Found' }} />
       </Stack>
     </SafeAreaProvider>
