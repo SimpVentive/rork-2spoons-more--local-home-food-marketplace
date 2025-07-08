@@ -409,7 +409,6 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
                   }))}
                   strokeColor={colors.primary}
                   strokeWidth={3}
-                  strokePattern={[5, 5]}
                 />
               )}
               
