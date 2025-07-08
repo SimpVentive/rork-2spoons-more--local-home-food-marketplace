@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
-import { X, Search, MapPin, Navigation, CheckCircle } from 'lucide-react-native';
+import { X, Search, MapPin, Navigation, CheckCircle, Route } from 'lucide-react-native';
 import * as Location from 'expo-location';
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE, Region, Polyline } from 'react-native-maps';
 import colors from '@/constants/colors';
 import Button from './Button';
 
@@ -62,6 +63,7 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   });
+  const [showRouteOverlay, setShowRouteOverlay] = useState(false);
   
   useEffect(() => {
     requestLocationPermission();
@@ -254,6 +256,30 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
   const handleRegionChange = (region: Region) => {
     setMapRegion(region);
   };
+
+  const fitToRoute = () => {
+    if (routePoints.length === 0) return;
+    
+    const latitudes = routePoints.map(p => p.latitude);
+    const longitudes = routePoints.map(p => p.longitude);
+    
+    const minLat = Math.min(...latitudes);
+    const maxLat = Math.max(...latitudes);
+    const minLng = Math.min(...longitudes);
+    const maxLng = Math.max(...longitudes);
+    
+    const centerLat = (minLat + maxLat) / 2;
+    const centerLng = (minLng + maxLng) / 2;
+    const deltaLat = (maxLat - minLat) * 1.2; // Add padding
+    const deltaLng = (maxLng - minLng) * 1.2;
+    
+    setMapRegion({
+      latitude: centerLat,
+      longitude: centerLng,
+      latitudeDelta: Math.max(deltaLat, 0.01),
+      longitudeDelta: Math.max(deltaLng, 0.01),
+    });
+  };
   
   return (
     <Modal
@@ -266,9 +292,19 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
         <View style={styles.modalContent}>
           <View style={styles.header}>
             <Text style={styles.title}>Select Location</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={24} color={colors.text} />
-            </TouchableOpacity>
+            <View style={styles.headerButtons}>
+              {routePoints.length > 0 && (
+                <TouchableOpacity 
+                  style={styles.routeButton}
+                  onPress={() => setShowRouteOverlay(!showRouteOverlay)}
+                >
+                  <Route size={20} color={colors.primary} />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <X size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
           </View>
           
           <View style={styles.searchContainer}>
@@ -286,7 +322,7 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
           </View>
           
           {searchResults.length > 0 && (
-            <View style={styles.searchResultsContainer}>
+            <ScrollView style={styles.searchResultsContainer} nestedScrollEnabled>
               {searchResults.map((result, index) => (
                 <TouchableOpacity
                   key={index}
@@ -298,7 +334,7 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
                   <CheckCircle size={16} color={colors.primary} style={styles.checkIcon} />
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           )}
           
           <View style={styles.mapContainer}>
@@ -341,7 +377,7 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
               />
               
               {/* Route points markers */}
-              {routePoints.map((point, index) => (
+              {showRouteOverlay && routePoints.map((point, index) => (
                 <Marker
                   key={`route-${index}`}
                   coordinate={{
@@ -350,12 +386,35 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
                   }}
                   title={point.name}
                   description="Route point"
-                  pinColor={colors.secondary}
-                />
+                  pinColor={index === 0 ? colors.success : index === routePoints.length - 1 ? colors.secondary : colors.warning}
+                >
+                  <View style={[
+                    styles.routeMarker,
+                    index === 0 && styles.startMarker,
+                    index === routePoints.length - 1 && styles.endMarker
+                  ]}>
+                    <Text style={styles.routeMarkerText}>
+                      {index === 0 ? '🏠' : index === routePoints.length - 1 ? '🏢' : index}
+                    </Text>
+                  </View>
+                </Marker>
               ))}
               
+              {/* Route polyline */}
+              {showRouteOverlay && routePoints.length > 1 && (
+                <Polyline
+                  coordinates={routePoints.map(point => ({
+                    latitude: point.latitude,
+                    longitude: point.longitude,
+                  }))}
+                  strokeColor={colors.primary}
+                  strokeWidth={3}
+                  strokePattern={[5, 5]}
+                />
+              )}
+              
               {/* Dishes on route markers */}
-              {dishesOnRoute.map((dish, index) => (
+              {showRouteOverlay && dishesOnRoute.map((dish, index) => (
                 <Marker
                   key={`dish-${index}`}
                   coordinate={{
@@ -381,12 +440,14 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
                 <Navigation size={24} color={colors.primary} />
               </TouchableOpacity>
               
-              <TouchableOpacity 
-                style={styles.mapTypeButton}
-                onPress={() => {/* Toggle map type */}}
-              >
-                <Text style={styles.mapTypeText}>Map</Text>
-              </TouchableOpacity>
+              {routePoints.length > 0 && (
+                <TouchableOpacity 
+                  style={styles.mapControlButton}
+                  onPress={fitToRoute}
+                >
+                  <Route size={24} color={colors.secondary} />
+                </TouchableOpacity>
+              )}
             </View>
             
             <View style={styles.markerFixed}>
@@ -397,6 +458,14 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
           <View style={styles.addressContainer}>
             <Text style={styles.addressLabel}>Selected Address:</Text>
             <Text style={styles.addressText}>{location.address || 'Tap on the map to select a location'}</Text>
+            
+            {showRouteOverlay && routePoints.length > 0 && (
+              <View style={styles.routeInfo}>
+                <Text style={styles.routeInfoText}>
+                  📍 Showing {routePoints.length} route points and {dishesOnRoute.length} available dishes
+                </Text>
+              </View>
+            )}
           </View>
           
           <View style={styles.footer}>
@@ -444,6 +513,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: colors.text,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  routeButton: {
+    padding: 8,
+    marginRight: 8,
+    borderRadius: 8,
+    backgroundColor: colors.card,
   },
   closeButton: {
     padding: 4,
@@ -529,28 +608,37 @@ const styles = StyleSheet.create({
     elevation: 4,
     marginBottom: 8,
   },
-  mapTypeButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: colors.white,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  mapTypeText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.text,
-  },
   markerFixed: {
     position: 'absolute',
     top: '50%',
     left: '50%',
     marginLeft: -16,
     marginTop: -32,
+  },
+  routeMarker: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: colors.warning,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  startMarker: {
+    borderColor: colors.success,
+  },
+  endMarker: {
+    borderColor: colors.secondary,
+  },
+  routeMarkerText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   dishMarker: {
     width: 30,
@@ -584,6 +672,17 @@ const styles = StyleSheet.create({
   addressText: {
     fontSize: 14,
     color: colors.text,
+  },
+  routeInfo: {
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: colors.card,
+    borderRadius: 6,
+  },
+  routeInfoText: {
+    fontSize: 12,
+    color: colors.textLight,
+    textAlign: 'center',
   },
   footer: {
     flexDirection: 'row',

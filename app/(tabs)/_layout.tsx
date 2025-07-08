@@ -113,21 +113,7 @@ export default function TabLayout() {
         tabBarAllowFontScaling: false,
       }}
     >
-      {/* Home - Always visible and always first */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-              <Home size={24} color={color} />
-            </View>
-          ),
-          tabBarLabel: 'Home',
-        }}
-      />
-      
-      {/* More - Always visible and always second (next to Home) */}
+      {/* More - Always first (leftmost) */}
       <Tabs.Screen
         name="more"
         options={{
@@ -141,8 +127,22 @@ export default function TabLayout() {
         }}
       />
       
+      {/* Home - Always second */}
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+              <Home size={24} color={color} />
+            </View>
+          ),
+          tabBarLabel: 'Home',
+        }}
+      />
+      
       {/* For Buyers: Explore, Alerts, Profile */}
-      {!isSeller ? ([
+      {!isSeller ? [
         <Tabs.Screen
           key="search"
           name="search"
@@ -184,24 +184,10 @@ export default function TabLayout() {
             tabBarLabel: 'Profile',
           }}
         />
-      ] as const) : null}
+      ] as const : null}
       
-      {/* For Sellers: Profile, Create, Followers, Wallet */}
-      {isSeller ? ([
-        <Tabs.Screen
-          key="profile"
-          name="profile"
-          options={{
-            title: 'Profile',
-            tabBarIcon: ({ color, focused }) => (
-              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                <User size={24} color={color} />
-              </View>
-            ),
-            tabBarLabel: 'Profile',
-          }}
-        />,
-        
+      {/* For Sellers: Create, Profile, Followers, Wallet */}
+      {isSeller ? [
         <Tabs.Screen
           key="create"
           name="create"
@@ -217,6 +203,20 @@ export default function TabLayout() {
         />,
         
         <Tabs.Screen
+          key="profile"
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color, focused }) => (
+              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                <User size={24} color={color} />
+              </View>
+            ),
+            tabBarLabel: 'Profile',
+          }}
+        />,
+        
+        <Tabs.Screen
           key="following"
           name="following"
           options={{
@@ -228,22 +228,8 @@ export default function TabLayout() {
             ),
             tabBarLabel: 'Followers',
           }}
-        />,
-        
-        <Tabs.Screen
-          key="finances"
-          name="finances"
-          options={{
-            title: 'Wallet',
-            tabBarIcon: ({ color, focused }) => (
-              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                <Wallet size={24} color={color} />
-              </View>
-            ),
-            tabBarLabel: 'Wallet',
-          }}
         />
-      ] as const) : null}
+      ] as const : null}
       
       {/* Hidden tabs that will be accessible from the more screen */}
       <Tabs.Screen
@@ -257,6 +243,13 @@ export default function TabLayout() {
         name="analytics"
         options={{
           title: 'Analytics',
+          tabBarButton: () => null,
+        }}
+      />
+      <Tabs.Screen
+        name="finances"
+        options={{
+          title: 'Wallet',
           tabBarButton: () => null,
         }}
       />
@@ -274,41 +267,41 @@ const styles = StyleSheet.create({
   tabBar: {
     borderTopColor: colors.border,
     borderTopWidth: 1,
-    height: Platform.OS === 'ios' ? 85 : 70,
-    paddingBottom: Platform.OS === 'ios' ? 25 : 10,
-    paddingTop: 8,
+    height: Platform.OS === 'ios' ? 90 : 80,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 15,
+    paddingTop: 10,
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     backgroundColor: colors.white,
-    paddingHorizontal: 4,
+    paddingHorizontal: 8,
     position: 'relative',
     zIndex: 1,
   },
   tabBarLabel: {
     fontSize: Platform.OS === 'android' ? 11 : 10,
-    marginTop: 2,
+    marginTop: 4,
     paddingTop: 0,
     fontWeight: '500',
   },
   tabBarItem: {
-    height: Platform.OS === 'android' ? 60 : 50,
-    paddingVertical: 4,
+    height: Platform.OS === 'android' ? 65 : 55,
+    paddingVertical: 6,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 60,
-    borderRadius: 8,
-    marginHorizontal: 2,
+    borderRadius: 12,
+    marginHorizontal: 4,
   },
   iconContainer: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 18,
   },
   focusedIconContainer: {
     backgroundColor: `${colors.primary}15`,

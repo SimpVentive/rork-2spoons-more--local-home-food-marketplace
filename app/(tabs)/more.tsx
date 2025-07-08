@@ -26,6 +26,12 @@ import {
   PlusCircle,
   Users,
   Search,
+  TrendingUp,
+  Heart,
+  MapPin,
+  CreditCard,
+  Shield,
+  Gift,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
@@ -85,6 +91,7 @@ export default function MoreScreen() {
         </TouchableOpacity>
       </View>
       
+      {/* Account Section */}
       <View style={styles.menuSection}>
         <Text style={styles.menuSectionTitle}>Account</Text>
         
@@ -104,49 +111,6 @@ export default function MoreScreen() {
           <Text style={styles.menuItemText}>My Orders</Text>
         </TouchableOpacity>
         
-        {/* Following - Show for buyers since sellers have it in main tab */}
-        {!isSeller && (
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => router.push('/(tabs)/following')}
-          >
-            <Users size={22} color={colors.primary} />
-            <Text style={styles.menuItemText}>Following</Text>
-          </TouchableOpacity>
-        )}
-        
-        {/* Explore - Show for sellers since buyers have it in main tab */}
-        {isSeller && (
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => router.push('/(tabs)/search')}
-          >
-            <Search size={22} color={colors.primary} />
-            <Text style={styles.menuItemText}>Explore</Text>
-          </TouchableOpacity>
-        )}
-        
-        {/* Seller-specific options */}
-        {isSeller && (
-          <>
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/analytics')}
-            >
-              <PieChart size={22} color={colors.primary} />
-              <Text style={styles.menuItemText}>Analytics</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/create')}
-            >
-              <PlusCircle size={22} color={colors.primary} />
-              <Text style={styles.menuItemText}>Create Listing</Text>
-            </TouchableOpacity>
-          </>
-        )}
-        
         <TouchableOpacity 
           style={styles.menuItem}
           onPress={() => router.push('/(tabs)/finances')}
@@ -156,36 +120,113 @@ export default function MoreScreen() {
         </TouchableOpacity>
       </View>
       
-      <View style={styles.menuSection}>
-        <Text style={styles.menuSectionTitle}>Preferences</Text>
-        
-        <TouchableOpacity 
-          style={styles.menuItem}
-          onPress={() => router.push('/route-settings')}
-        >
-          <Route size={22} color={colors.secondary} />
-          <Text style={styles.menuItemText}>Route Settings</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.menuItem}
-          onPress={() => router.push('/(tabs)/notifications')}
-        >
-          <Bell size={22} color={colors.secondary} />
-          <Text style={styles.menuItemText}>Notification Preferences</Text>
-        </TouchableOpacity>
-        
-        {isSeller && (
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => router.push('/seller-onboarding')}
-          >
-            <ChefHat size={22} color={colors.secondary} />
-            <Text style={styles.menuItemText}>Seller Settings</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      {/* Buyer-specific menu items */}
+      {!isSeller && (
+        <>
+          <View style={styles.menuSection}>
+            <Text style={styles.menuSectionTitle}>Discover</Text>
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/(tabs)/search')}
+            >
+              <Search size={22} color={colors.secondary} />
+              <Text style={styles.menuItemText}>Explore Food</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/(tabs)/following')}
+            >
+              <Heart size={22} color={colors.secondary} />
+              <Text style={styles.menuItemText}>Following</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/route-settings')}
+            >
+              <Route size={22} color={colors.secondary} />
+              <Text style={styles.menuItemText}>Route Settings</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.menuSection}>
+            <Text style={styles.menuSectionTitle}>Notifications</Text>
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/(tabs)/notifications')}
+            >
+              <Bell size={22} color={colors.info} />
+              <Text style={styles.menuItemText}>Food Alerts</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
       
+      {/* Seller-specific menu items */}
+      {isSeller && (
+        <>
+          <View style={styles.menuSection}>
+            <Text style={styles.menuSectionTitle}>Business</Text>
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/(tabs)/create')}
+            >
+              <PlusCircle size={22} color={colors.secondary} />
+              <Text style={styles.menuItemText}>Create Listing</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/(tabs)/analytics')}
+            >
+              <TrendingUp size={22} color={colors.secondary} />
+              <Text style={styles.menuItemText}>Analytics</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/(tabs)/following')}
+            >
+              <Users size={22} color={colors.secondary} />
+              <Text style={styles.menuItemText}>My Followers</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/seller-onboarding')}
+            >
+              <ChefHat size={22} color={colors.secondary} />
+              <Text style={styles.menuItemText}>Seller Settings</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.menuSection}>
+            <Text style={styles.menuSectionTitle}>Tools</Text>
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/route-settings')}
+            >
+              <MapPin size={22} color={colors.info} />
+              <Text style={styles.menuItemText}>Delivery Routes</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/(tabs)/notifications')}
+            >
+              <Bell size={22} color={colors.info} />
+              <Text style={styles.menuItemText}>Order Notifications</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+      
+      {/* Common sections for both */}
       <View style={styles.menuSection}>
         <Text style={styles.menuSectionTitle}>Support</Text>
         
@@ -193,7 +234,7 @@ export default function MoreScreen() {
           style={styles.menuItem}
           onPress={() => router.push('/file-complaint')}
         >
-          <FileText size={22} color={colors.info} />
+          <FileText size={22} color={colors.warning} />
           <Text style={styles.menuItemText}>File a Complaint</Text>
         </TouchableOpacity>
         
@@ -201,7 +242,7 @@ export default function MoreScreen() {
           style={styles.menuItem}
           onPress={() => Alert.alert('Help & Support', 'Our support team is available 24/7. Please email us at support@homefood.com or call us at +1-800-123-4567.')}
         >
-          <HelpCircle size={22} color={colors.info} />
+          <HelpCircle size={22} color={colors.warning} />
           <Text style={styles.menuItemText}>Help & Support</Text>
         </TouchableOpacity>
         
@@ -209,7 +250,7 @@ export default function MoreScreen() {
           style={styles.menuItem}
           onPress={() => Alert.alert('Rate App', 'Thank you for using our app! Your feedback helps us improve.')}
         >
-          <Star size={22} color={colors.info} />
+          <Star size={22} color={colors.warning} />
           <Text style={styles.menuItemText}>Rate App</Text>
         </TouchableOpacity>
         
@@ -217,8 +258,28 @@ export default function MoreScreen() {
           style={styles.menuItem}
           onPress={() => Alert.alert('Share App', 'Share this app with your friends and family!')}
         >
-          <Share2 size={22} color={colors.info} />
+          <Share2 size={22} color={colors.warning} />
           <Text style={styles.menuItemText}>Share App</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <View style={styles.menuSection}>
+        <Text style={styles.menuSectionTitle}>Legal & Privacy</Text>
+        
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => Alert.alert('Privacy Policy', 'View our privacy policy at homefood.com/privacy')}
+        >
+          <Shield size={22} color={colors.textLight} />
+          <Text style={styles.menuItemText}>Privacy Policy</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => Alert.alert('Terms of Service', 'View our terms at homefood.com/terms')}
+        >
+          <FileText size={22} color={colors.textLight} />
+          <Text style={styles.menuItemText}>Terms of Service</Text>
         </TouchableOpacity>
       </View>
       

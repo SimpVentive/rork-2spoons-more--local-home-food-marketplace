@@ -20,6 +20,7 @@ import {
   Home,
   Building,
   ArrowLeft,
+  Map,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { useListingsStore } from '@/store/listings-store';
@@ -44,12 +45,12 @@ export default function RouteSettingsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [locationPickerVisible, setLocationPickerVisible] = useState(false);
   const [pickingLocationFor, setPickingLocationFor] = useState<'home' | 'office' | 'homeToOffice' | 'officeToHome' | null>(null);
+  const [showRouteMap, setShowRouteMap] = useState(false);
 
   // New route location form
   const [newLocationName, setNewLocationName] = useState('');
   const [newLocationAddress, setNewLocationAddress] = useState('');
   const [addingToRoute, setAddingToRoute] = useState<'homeToOffice' | 'officeToHome' | null>(null);
-  const [showMapView, setShowMapView] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -400,35 +401,50 @@ export default function RouteSettingsScreen() {
         {/* Route Map View */}
         {(homeToOfficeRoute.length > 0 || user?.officeLocation) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Route Map</Text>
+            <View style={styles.mapHeader}>
+              <Text style={styles.sectionTitle}>Route Map</Text>
+              <TouchableOpacity
+                style={styles.viewMapButton}
+                onPress={() => setShowRouteMap(!showRouteMap)}
+              >
+                <Map size={20} color={colors.primary} />
+                <Text style={styles.viewMapText}>
+                  {showRouteMap ? 'Hide Map' : 'View Map'}
+                </Text>
+              </TouchableOpacity>
+            </View>
             <Text style={styles.sectionDescription}>
               View your route and available dishes along the way
             </Text>
             
-            <RouteMapView
-              routePoints={routePoints}
-              dishesOnRoute={dishesOnRoute}
-              onDishPress={(dish) => {
-                // Navigate to dish details or show more info
-                Alert.alert(
-                  dish.dishName,
-                  `Available from ${dish.sellerName} until ${new Date(dish.availableUntil).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}`,
-                  [
-                    { text: 'OK' },
-                    { text: 'View Details', onPress: () => {
-                      // Find the listing and navigate to it
-                      const listing = listings.find(l => l.dishName === dish.dishName && l.sellerName === dish.sellerName);
-                      if (listing) {
-                        router.push(`/listing/${listing.id}`);
-                      }
-                    }}
-                  ]
-                );
-              }}
-            />
+            {showRouteMap && (
+              <View style={styles.mapContainer}>
+                <RouteMapView
+                  routePoints={routePoints}
+                  dishesOnRoute={dishesOnRoute}
+                  onDishPress={(dish) => {
+                    // Navigate to dish details or show more info
+                    Alert.alert(
+                      dish.dishName,
+                      `Available from ${dish.sellerName} until ${new Date(dish.availableUntil).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}`,
+                      [
+                        { text: 'OK' },
+                        { text: 'View Details', onPress: () => {
+                          // Find the listing and navigate to it
+                          const listing = listings.find(l => l.dishName === dish.dishName && l.sellerName === dish.sellerName);
+                          if (listing) {
+                            router.push(`/listing/${listing.id}`);
+                          }
+                        }}
+                      ]
+                    );
+                  }}
+                />
+              </View>
+            )}
           </View>
         )}
 
@@ -627,6 +643,34 @@ const styles = StyleSheet.create({
   sameRouteText: {
     fontSize: 14,
     color: colors.text,
+  },
+  mapHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  viewMapButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  viewMapText: {
+    fontSize: 14,
+    color: colors.primary,
+    marginLeft: 8,
+    fontWeight: '500',
+  },
+  mapContainer: {
+    height: 300,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginTop: 8,
   },
   saveButton: {
     margin: 16,
