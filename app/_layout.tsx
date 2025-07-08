@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, View, ActivityIndicator, Platform } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import colors from '@/constants/colors';
@@ -12,7 +12,11 @@ export default function RootLayout() {
   
   // Ensure component is mounted before allowing navigation
   useEffect(() => {
-    setIsMounted(true);
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 50);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   // Show loading while mounting
@@ -46,8 +50,25 @@ export default function RootLayout() {
             if (canGoBack) {
               return (
                 <TouchableOpacity 
-                  onPress={() => router.back()}
-                  style={{ padding: 8, marginLeft: -8 }}
+                  onPress={() => {
+                    try {
+                      router.back();
+                    } catch (error) {
+                      console.error('Navigation error:', error);
+                    }
+                  }}
+                  style={{ 
+                    padding: 12, 
+                    marginLeft: -8,
+                    borderRadius: 20,
+                  }}
+                  hitSlop={{ 
+                    top: 15, 
+                    bottom: 15, 
+                    left: 15, 
+                    right: 15 
+                  }}
+                  activeOpacity={0.7}
                 >
                   <ArrowLeft size={24} color={colors.text} />
                 </TouchableOpacity>
@@ -55,6 +76,8 @@ export default function RootLayout() {
             }
             return null;
           },
+          gestureEnabled: Platform.OS === 'ios',
+          animation: Platform.OS === 'android' ? 'slide_from_right' : 'default',
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

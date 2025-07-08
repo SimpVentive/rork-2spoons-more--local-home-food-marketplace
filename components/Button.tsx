@@ -9,6 +9,7 @@ import {
   StyleProp,
   Platform,
   View,
+  Pressable,
 } from 'react-native';
 import colors from '@/constants/colors';
 
@@ -21,7 +22,7 @@ interface ButtonProps {
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
-  icon?: React.ReactNode; // Added icon prop
+  icon?: React.ReactNode;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -33,7 +34,7 @@ const Button: React.FC<ButtonProps> = ({
   disabled = false,
   style,
   textStyle,
-  icon, // Added icon prop
+  icon,
 }) => {
   const getButtonStyle = () => {
     const baseStyle: ViewStyle = {
@@ -42,7 +43,7 @@ const Button: React.FC<ButtonProps> = ({
       alignItems: 'center',
       paddingHorizontal: 16,
       paddingVertical: 12,
-      minHeight: 48, // Ensure minimum height for touch target
+      minHeight: 48,
     };
 
     if (variant === 'primary') {
@@ -109,16 +110,36 @@ const Button: React.FC<ButtonProps> = ({
     return baseStyle;
   };
 
-  // Increase hitSlop for better touch targets on mobile
-  const hitSlopValue = Platform.OS === 'web' ? 8 : 20;
+  // Use Pressable for better Android touch handling
+  const ButtonComponent = Platform.OS === 'android' ? Pressable : TouchableOpacity;
+  
+  const hitSlopValue = Platform.OS === 'android' ? 15 : 8;
+
+  const buttonProps = Platform.OS === 'android' 
+    ? {
+        android_ripple: { 
+          color: variant === 'outline' ? `${colors.primary}20` : 'rgba(255, 255, 255, 0.3)',
+          borderless: false,
+        },
+        onPress: onPress,
+        disabled: disabled || isLoading,
+      }
+    : {
+        onPress: onPress,
+        disabled: disabled || isLoading,
+        activeOpacity: 0.8,
+      };
 
   return (
-    <TouchableOpacity
+    <ButtonComponent
       style={[getButtonStyle(), getSizeStyle(), getDisabledStyle(), style]}
-      onPress={onPress}
-      disabled={disabled || isLoading}
-      activeOpacity={0.8}
-      hitSlop={{ top: hitSlopValue, bottom: hitSlopValue, left: hitSlopValue, right: hitSlopValue }}
+      hitSlop={{ 
+        top: hitSlopValue, 
+        bottom: hitSlopValue, 
+        left: hitSlopValue, 
+        right: hitSlopValue 
+      }}
+      {...buttonProps}
     >
       {isLoading ? (
         <ActivityIndicator size="small" color={variant === 'outline' ? colors.primary : colors.white} />
@@ -128,7 +149,7 @@ const Button: React.FC<ButtonProps> = ({
           <Text style={[getTextStyle(), textStyle]}>{title}</Text>
         </View>
       )}
-    </TouchableOpacity>
+    </ButtonComponent>
   );
 };
 

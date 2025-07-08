@@ -37,15 +37,17 @@ export default function TabLayout() {
     try {
       const { isAuthenticated, userPreference } = useAuthStore.getState();
       setAuthState({ isAuthenticated, userPreference });
+      setHasCheckedAuth(true);
     } catch (error) {
       console.error('Error getting auth state:', error);
       setAuthState({ isAuthenticated: false, userPreference: null });
+      setHasCheckedAuth(true);
     }
   }, [isMounted]);
 
   // Check authentication and redirect if needed, but only after mounting and getting auth state
   useEffect(() => {
-    if (!isMounted || !authState) return;
+    if (!isMounted || !authState || !hasCheckedAuth) return;
     
     // Add a small delay to ensure everything is properly initialized
     const checkAuth = async () => {
@@ -59,19 +61,16 @@ export default function TabLayout() {
           router.replace('/user-preference');
           return;
         }
-        
-        setHasCheckedAuth(true);
       } catch (error) {
         console.error('Navigation error:', error);
-        setHasCheckedAuth(true);
       }
     };
 
     // Use setTimeout to ensure navigation happens after render
-    const timeoutId = setTimeout(checkAuth, 200);
+    const timeoutId = setTimeout(checkAuth, 100);
     
     return () => clearTimeout(timeoutId);
-  }, [isMounted, authState, router]);
+  }, [isMounted, authState, hasCheckedAuth, router]);
 
   // Show loading while checking authentication
   if (!isMounted || !authState || !hasCheckedAuth) {
@@ -111,6 +110,9 @@ export default function TabLayout() {
         },
         tabBarItemStyle: styles.tabBarItem,
         tabBarHideOnKeyboard: true,
+        tabBarAllowFontScaling: false,
+        tabBarPressColor: Platform.OS === 'android' ? `${colors.primary}20` : undefined,
+        tabBarPressOpacity: Platform.OS === 'ios' ? 0.8 : undefined,
       }}
     >
       {/* Home - Always visible and always first */}
@@ -118,7 +120,11 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <Home size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+              <Home size={24} color={color} />
+            </View>
+          ),
           tabBarLabel: 'Home',
         }}
       />
@@ -128,19 +134,27 @@ export default function TabLayout() {
         name="more"
         options={{
           title: 'More',
-          tabBarIcon: ({ color }) => <MoreHorizontal size={24} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+              <MoreHorizontal size={24} color={color} />
+            </View>
+          ),
           tabBarLabel: 'More',
         }}
       />
       
       {/* For Buyers: Explore, Alerts, Profile */}
-      {!isSeller ? [
+      {!isSeller ? ([
         <Tabs.Screen
           key="search"
           name="search"
           options={{
             title: 'Explore',
-            tabBarIcon: ({ color }) => <Search size={24} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                <Search size={24} color={color} />
+              </View>
+            ),
             tabBarLabel: 'Explore',
           }}
         />,
@@ -150,7 +164,11 @@ export default function TabLayout() {
           name="notifications"
           options={{
             title: 'Alerts',
-            tabBarIcon: ({ color }) => <Bell size={24} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                <Bell size={24} color={color} />
+              </View>
+            ),
             tabBarLabel: 'Alerts',
           }}
         />,
@@ -160,20 +178,28 @@ export default function TabLayout() {
           name="profile"
           options={{
             title: 'Profile',
-            tabBarIcon: ({ color }) => <User size={24} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                <User size={24} color={color} />
+              </View>
+            ),
             tabBarLabel: 'Profile',
           }}
         />
-      ] as const : null}
+      ] as const) : null}
       
       {/* For Sellers: Profile, Create, Followers, Wallet */}
-      {isSeller ? [
+      {isSeller ? ([
         <Tabs.Screen
           key="profile"
           name="profile"
           options={{
             title: 'Profile',
-            tabBarIcon: ({ color }) => <User size={24} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                <User size={24} color={color} />
+              </View>
+            ),
             tabBarLabel: 'Profile',
           }}
         />,
@@ -183,7 +209,11 @@ export default function TabLayout() {
           name="create"
           options={{
             title: 'Create',
-            tabBarIcon: ({ color }) => <PlusCircle size={24} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                <PlusCircle size={24} color={color} />
+              </View>
+            ),
             tabBarLabel: 'Create',
           }}
         />,
@@ -193,7 +223,11 @@ export default function TabLayout() {
           name="following"
           options={{
             title: 'Followers',
-            tabBarIcon: ({ color }) => <Users size={24} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                <Users size={24} color={color} />
+              </View>
+            ),
             tabBarLabel: 'Followers',
           }}
         />,
@@ -203,11 +237,15 @@ export default function TabLayout() {
           name="finances"
           options={{
             title: 'Wallet',
-            tabBarIcon: ({ color }) => <Wallet size={24} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                <Wallet size={24} color={color} />
+              </View>
+            ),
             tabBarLabel: 'Wallet',
           }}
         />
-      ] as const : null}
+      ] as const) : null}
       
       {/* Hidden tabs that will be accessible from the more screen */}
       <Tabs.Screen
@@ -237,27 +275,44 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     borderTopColor: colors.border,
-    height: Platform.OS === 'ios' ? 85 : 60,
-    paddingBottom: Platform.OS === 'ios' ? 25 : 5,
-    paddingTop: 5,
-    elevation: 24,
+    borderTopWidth: 1,
+    height: Platform.OS === 'ios' ? 85 : 70,
+    paddingBottom: Platform.OS === 'ios' ? 25 : 10,
+    paddingTop: 8,
+    elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
     backgroundColor: colors.white,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
+    position: 'relative',
+    zIndex: 1,
   },
   tabBarLabel: {
-    fontSize: 10,
-    marginTop: 0,
+    fontSize: Platform.OS === 'android' ? 11 : 10,
+    marginTop: 2,
     paddingTop: 0,
+    fontWeight: '500',
   },
   tabBarItem: {
-    height: 50,
-    paddingVertical: 5,
+    height: Platform.OS === 'android' ? 60 : 50,
+    paddingVertical: 4,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    minWidth: 60,
+    borderRadius: 8,
+    marginHorizontal: 2,
+  },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 16,
+  },
+  focusedIconContainer: {
+    backgroundColor: `${colors.primary}15`,
   },
 });
