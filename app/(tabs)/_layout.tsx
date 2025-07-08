@@ -111,7 +111,6 @@ export default function TabLayout() {
         tabBarItemStyle: styles.tabBarItem,
         tabBarHideOnKeyboard: true,
         tabBarAllowFontScaling: false,
-        tabBarPressOpacity: Platform.OS === 'ios' ? 0.8 : undefined,
       }}
     >
       {/* Home - Always visible and always first */}
@@ -143,7 +142,7 @@ export default function TabLayout() {
       />
       
       {/* For Buyers: Explore, Alerts, Profile */}
-      {!isSeller ? [
+      {!isSeller ? ([
         <Tabs.Screen
           key="search"
           name="search"
@@ -185,10 +184,10 @@ export default function TabLayout() {
             tabBarLabel: 'Profile',
           }}
         />
-      ] as const : null}
+      ] as const) : null}
       
       {/* For Sellers: Profile, Create, Followers, Wallet */}
-      {isSeller ? [
+      {isSeller ? ([
         <Tabs.Screen
           key="profile"
           name="profile"
@@ -244,7 +243,7 @@ export default function TabLayout() {
             tabBarLabel: 'Wallet',
           }}
         />
-      ] as const : null}
+      ] as const) : null}
       
       {/* Hidden tabs that will be accessible from the more screen */}
       <Tabs.Screen
