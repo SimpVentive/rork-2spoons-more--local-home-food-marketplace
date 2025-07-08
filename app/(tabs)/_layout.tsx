@@ -11,10 +11,12 @@ import {
   PieChart, 
   PlusCircle,
   MoreHorizontal,
+  Route,
+  RefreshCw,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
-import { Platform, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { Platform, StyleSheet, View, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
@@ -25,6 +27,7 @@ export default function TabLayout() {
   const [authState, setAuthState] = useState<{
     isAuthenticated: boolean;
     userPreference: any;
+    user: any;
   } | null>(null);
   
   // Wait for component to mount
@@ -37,12 +40,12 @@ export default function TabLayout() {
     if (!isMounted) return;
     
     try {
-      const { isAuthenticated, userPreference } = useAuthStore.getState();
-      setAuthState({ isAuthenticated, userPreference });
+      const { isAuthenticated, userPreference, user } = useAuthStore.getState();
+      setAuthState({ isAuthenticated, userPreference, user });
       setHasCheckedAuth(true);
     } catch (error) {
       console.error('Error getting auth state:', error);
-      setAuthState({ isAuthenticated: false, userPreference: null });
+      setAuthState({ isAuthenticated: false, userPreference: null, user: null });
       setHasCheckedAuth(true);
     }
   }, [isMounted]);
@@ -93,12 +96,22 @@ export default function TabLayout() {
   }
 
   // Determine if user is a seller/chef based on userPreference
-  const isSeller = authState.userPreference?.type === 'seller';
+  const isSeller = authState.userPreference?.type === 'seller' || authState.user?.isChef;
 
-  // Calculate tab bar height with proper safe area handling
+  // Calculate tab bar height with proper safe area handling for Android
   const tabBarHeight = Platform.OS === 'ios' 
     ? 80 + insets.bottom 
-    : 70;
+    : 70 + Math.max(insets.bottom, 10); // Ensure minimum padding on Android
+
+  const { switchRole } = useAuthStore();
+
+  const handleSwitchRole = async () => {
+    try {
+      await switchRole();
+    } catch (error) {
+      console.error('Error switching role:', error);
+    }
+  };
 
   return (
     <Tabs
@@ -109,7 +122,8 @@ export default function TabLayout() {
           styles.tabBar,
           {
             height: tabBarHeight,
-            paddingBottom: Platform.OS === 'ios' ? insets.bottom : 10,
+            paddingBottom: Platform.OS === 'ios' ? insets.bottom : Math.max(insets.bottom, 10),
+            paddingTop: 8,
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,
@@ -121,6 +135,17 @@ export default function TabLayout() {
           fontWeight: '600',
           fontSize: 18,
         },
+        headerRight: () => (
+          <TouchableOpacity 
+            style={styles.switchButton}
+            onPress={handleSwitchRole}
+          >
+            <RefreshCw size={16} color={colors.primary} />
+            <Text style={styles.switchButtonText}>
+              {isSeller ? 'Buyer' : 'Seller'}
+            </Text>
+          </TouchableOpacity>
+        ),
         tabBarItemStyle: [
           styles.tabBarItem,
           {
@@ -145,81 +170,10 @@ export default function TabLayout() {
         }}
       />
       
-      {/* Home - Always second */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-              <Home size={24} color={color} />
-            </View>
-          ),
-          tabBarLabel: 'Home',
-        }}
-      />
-      
-      {/* For Buyers: Explore, Alerts, Profile */}
-      {!isSeller && (
-        <>
-          <Tabs.Screen
-            name="search"
-            options={{
-              title: 'Explore',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Search size={24} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'Explore',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="notifications"
-            options={{
-              title: 'Alerts',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Bell size={24} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'Alerts',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="profile"
-            options={{
-              title: 'Profile',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <User size={24} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'Profile',
-            }}
-          />
-        </>
-      )}
-      
-      {/* For Sellers: Create, Profile, Followers */}
+      {/* For Sellers: Profile (landing), Orders, Wallet, Followers */}
       {isSeller && (
         <>
           <Tabs.Screen
-            name="create"
-            options={{
-              title: 'Create',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <PlusCircle size={24} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'Create',
-            }}
-          />
-          
-          <Tabs.Screen
             name="profile"
             options={{
               title: 'Profile',
@@ -229,6 +183,32 @@ export default function TabLayout() {
                 </View>
               ),
               tabBarLabel: 'Profile',
+            }}
+          />
+          
+          <Tabs.Screen
+            name="orders"
+            options={{
+              title: 'My Orders',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <ShoppingBag size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'Orders',
+            }}
+          />
+          
+          <Tabs.Screen
+            name="finances"
+            options={{
+              title: 'Wallet',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <Wallet size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'Wallet',
             }}
           />
           
@@ -247,11 +227,68 @@ export default function TabLayout() {
         </>
       )}
       
+      {/* For Buyers: Explore (landing), Route Settings, Following, Notifications */}
+      {!isSeller && (
+        <>
+          <Tabs.Screen
+            name="search"
+            options={{
+              title: 'Explore',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <Search size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'Explore',
+            }}
+          />
+          
+          <Tabs.Screen
+            name="route-settings"
+            options={{
+              title: 'Route Settings',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <Route size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'Routes',
+            }}
+          />
+          
+          <Tabs.Screen
+            name="following"
+            options={{
+              title: 'Following',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <Users size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'Following',
+            }}
+          />
+          
+          <Tabs.Screen
+            name="notifications"
+            options={{
+              title: 'Notifications',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <Bell size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'Alerts',
+            }}
+          />
+        </>
+      )}
+      
       {/* Hidden tabs that will be accessible from the more screen */}
       <Tabs.Screen
-        name="orders"
+        name="index"
         options={{
-          title: 'Orders',
+          title: 'Home',
           tabBarButton: () => null,
         }}
       />
@@ -263,9 +300,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="finances"
+        name="create"
         options={{
-          title: 'Wallet',
+          title: 'Create',
           tabBarButton: () => null,
         }}
       />
@@ -283,7 +320,6 @@ const styles = StyleSheet.create({
   tabBar: {
     borderTopColor: colors.border,
     borderTopWidth: 1,
-    paddingTop: 8,
     elevation: Platform.OS === 'android' ? 8 : 0,
     shadowColor: Platform.OS === 'ios' ? '#000' : 'transparent',
     shadowOffset: { width: 0, height: -2 },
@@ -316,5 +352,20 @@ const styles = StyleSheet.create({
   },
   focusedIconContainer: {
     backgroundColor: `${colors.primary}15`,
+  },
+  switchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 16,
+    borderRadius: 16,
+    backgroundColor: `${colors.primary}10`,
+  },
+  switchButtonText: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: '600',
+    marginLeft: 4,
   },
 });

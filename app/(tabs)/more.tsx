@@ -32,12 +32,14 @@ import {
   CreditCard,
   Shield,
   Gift,
+  Home,
+  RefreshCw,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
 
 export default function MoreScreen() {
-  const { user, logout, userPreference } = useAuthStore();
+  const { user, logout, userPreference, switchRole } = useAuthStore();
   const router = useRouter();
   
   const handleLogout = () => {
@@ -59,6 +61,19 @@ export default function MoreScreen() {
         },
       ]
     );
+  };
+
+  const handleSwitchRole = async () => {
+    try {
+      await switchRole();
+      Alert.alert(
+        'Role Switched',
+        `You are now a ${user?.isChef ? 'buyer' : 'seller'}.`,
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to switch role. Please try again.');
+    }
   };
   
   const isSeller = user?.isChef || userPreference?.type === 'seller';
@@ -84,92 +99,42 @@ export default function MoreScreen() {
         </View>
         
         <TouchableOpacity 
-          style={styles.editProfileButton}
+          style={styles.switchRoleButton}
+          onPress={handleSwitchRole}
+        >
+          <RefreshCw size={16} color={colors.white} />
+          <Text style={styles.switchRoleText}>
+            Switch to {isSeller ? 'Buyer' : 'Seller'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      
+      {/* Quick Access Section */}
+      <View style={styles.menuSection}>
+        <Text style={styles.menuSectionTitle}>Quick Access</Text>
+        
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => router.push('/(tabs)/index')}
+        >
+          <Home size={22} color={colors.primary} />
+          <Text style={styles.menuItemText}>Home</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.menuItem}
           onPress={() => router.push('/edit-profile')}
         >
-          <Text style={styles.editProfileText}>Edit Profile</Text>
-        </TouchableOpacity>
-      </View>
-      
-      {/* Account Section */}
-      <View style={styles.menuSection}>
-        <Text style={styles.menuSectionTitle}>Account</Text>
-        
-        <TouchableOpacity 
-          style={styles.menuItem}
-          onPress={() => router.push('/(tabs)/profile')}
-        >
           <User size={22} color={colors.primary} />
-          <Text style={styles.menuItemText}>My Profile</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.menuItem}
-          onPress={() => router.push('/(tabs)/orders')}
-        >
-          <ShoppingBag size={22} color={colors.primary} />
-          <Text style={styles.menuItemText}>My Orders</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.menuItem}
-          onPress={() => router.push('/(tabs)/finances')}
-        >
-          <Wallet size={22} color={colors.primary} />
-          <Text style={styles.menuItemText}>Wallet & Payments</Text>
+          <Text style={styles.menuItemText}>Edit Profile</Text>
         </TouchableOpacity>
       </View>
-      
-      {/* Buyer-specific menu items */}
-      {!isSeller && (
-        <>
-          <View style={styles.menuSection}>
-            <Text style={styles.menuSectionTitle}>Discover</Text>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/search')}
-            >
-              <Search size={22} color={colors.secondary} />
-              <Text style={styles.menuItemText}>Explore Food</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/following')}
-            >
-              <Heart size={22} color={colors.secondary} />
-              <Text style={styles.menuItemText}>Following</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/route-settings')}
-            >
-              <Route size={22} color={colors.secondary} />
-              <Text style={styles.menuItemText}>Route Settings</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.menuSection}>
-            <Text style={styles.menuSectionTitle}>Notifications</Text>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/notifications')}
-            >
-              <Bell size={22} color={colors.info} />
-              <Text style={styles.menuItemText}>Food Alerts</Text>
-            </TouchableOpacity>
-          </View>
-        </>
-      )}
       
       {/* Seller-specific menu items */}
       {isSeller && (
         <>
           <View style={styles.menuSection}>
-            <Text style={styles.menuSectionTitle}>Business</Text>
+            <Text style={styles.menuSectionTitle}>Business Tools</Text>
             
             <TouchableOpacity 
               style={styles.menuItem}
@@ -189,38 +154,43 @@ export default function MoreScreen() {
             
             <TouchableOpacity 
               style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/following')}
-            >
-              <Users size={22} color={colors.secondary} />
-              <Text style={styles.menuItemText}>My Followers</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
               onPress={() => router.push('/seller-onboarding')}
             >
               <ChefHat size={22} color={colors.secondary} />
               <Text style={styles.menuItemText}>Seller Settings</Text>
             </TouchableOpacity>
           </View>
-          
+        </>
+      )}
+      
+      {/* Buyer-specific menu items */}
+      {!isSeller && (
+        <>
           <View style={styles.menuSection}>
-            <Text style={styles.menuSectionTitle}>Tools</Text>
+            <Text style={styles.menuSectionTitle}>Discover</Text>
             
             <TouchableOpacity 
               style={styles.menuItem}
-              onPress={() => router.push('/route-settings')}
+              onPress={() => router.push('/(tabs)/index')}
             >
-              <MapPin size={22} color={colors.info} />
-              <Text style={styles.menuItemText}>Delivery Routes</Text>
+              <Home size={22} color={colors.secondary} />
+              <Text style={styles.menuItemText}>Home Feed</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/notifications')}
+              onPress={() => router.push('/(tabs)/orders')}
             >
-              <Bell size={22} color={colors.info} />
-              <Text style={styles.menuItemText}>Order Notifications</Text>
+              <ShoppingBag size={22} color={colors.secondary} />
+              <Text style={styles.menuItemText}>My Orders</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/(tabs)/finances')}
+            >
+              <Wallet size={22} color={colors.secondary} />
+              <Text style={styles.menuItemText}>Wallet & Payments</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -345,17 +315,19 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
-  editProfileButton: {
-    backgroundColor: colors.card,
+  switchRoleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
-    alignItems: 'center',
   },
-  editProfileText: {
-    fontSize: 14,
+  switchRoleText: {
+    color: colors.white,
     fontWeight: '600',
-    color: colors.primary,
+    marginLeft: 8,
   },
   menuSection: {
     backgroundColor: colors.white,
