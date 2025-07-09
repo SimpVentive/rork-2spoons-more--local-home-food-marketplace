@@ -101,7 +101,7 @@ export default function TabLayout(): React.ReactElement {
   // Calculate tab bar height with proper safe area handling for Android
   const tabBarHeight = Platform.OS === 'ios' 
     ? 80 + insets.bottom 
-    : 80 + Math.max(insets.bottom, 16); // Increased minimum padding for Android
+    : 80 + Math.max(insets.bottom, 20); // Increased minimum padding for Android
 
   const { switchRole } = useAuthStore();
 
@@ -122,9 +122,22 @@ export default function TabLayout(): React.ReactElement {
           styles.tabBar,
           {
             height: tabBarHeight,
-            paddingBottom: Platform.OS === 'ios' ? insets.bottom : Math.max(insets.bottom, 16),
+            paddingBottom: Platform.OS === 'ios' ? insets.bottom : Math.max(insets.bottom, 20),
             paddingTop: 12,
-            marginBottom: Platform.OS === 'android' ? 0 : 0, // Ensure no margin on Android
+            // Fix Android overlap issue
+            ...(Platform.OS === 'android' && {
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              borderTopWidth: 2,
+              borderTopColor: colors.border,
+              elevation: 20,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: -2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 3,
+            }),
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,
@@ -151,7 +164,7 @@ export default function TabLayout(): React.ReactElement {
           styles.tabBarItem,
           {
             height: Platform.OS === 'ios' ? 60 : 56,
-            paddingBottom: Platform.OS === 'android' ? 4 : 0,
+            paddingBottom: Platform.OS === 'android' ? 8 : 0,
           }
         ],
         tabBarHideOnKeyboard: true,
@@ -344,18 +357,12 @@ const styles = StyleSheet.create({
   tabBar: {
     borderTopColor: colors.border,
     borderTopWidth: 1,
-    elevation: Platform.OS === 'android' ? 12 : 0,
-    shadowColor: Platform.OS === 'ios' ? '#000' : 'transparent',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: Platform.OS === 'ios' ? 0.1 : 0,
-    shadowRadius: Platform.OS === 'ios' ? 3 : 0,
     backgroundColor: colors.white,
     paddingHorizontal: 4,
-    position: 'relative',
-    // Ensure tab bar doesn't overlap with Android navigation
+    // Ensure proper positioning on Android
     ...(Platform.OS === 'android' && {
-      borderTopWidth: 2,
-      borderTopColor: colors.border,
+      marginBottom: 0,
+      paddingBottom: 20,
     }),
   },
   tabBarLabel: {

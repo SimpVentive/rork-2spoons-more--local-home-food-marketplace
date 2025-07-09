@@ -1,6 +1,5 @@
 import React from 'react';
 import { Platform } from 'react-native';
-import LocationPickerNative from './LocationPickerNative';
 
 interface LocationPickerProps {
   initialLocation?: {
@@ -28,10 +27,15 @@ interface LocationPickerProps {
   }>;
 }
 
-const LocationPicker: React.FC<LocationPickerProps> = (props) => {
-  // For now, always use the native implementation
-  // In the future, you could add web-specific implementation here
-  return <LocationPickerNative {...props} />;
+const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElement => {
+  // Use platform-specific imports to avoid native modules on web
+  if (Platform.OS === 'web') {
+    const LocationPickerWeb = require('./LocationPicker.web').default;
+    return <LocationPickerWeb {...props} />;
+  } else {
+    const LocationPickerNative = require('./LocationPickerNative').default;
+    return <LocationPickerNative {...props} />;
+  }
 };
 
 export default LocationPicker;

@@ -35,140 +35,152 @@ export default function RouteMapView({ routePoints, dishesOnRoute, onDishPress }
   const [mapError, setMapError] = useState(false);
 
   // For web and fallback, we'll show a comprehensive route overview
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Route size={20} color={colors.primary} />
-        <Text style={styles.headerTitle}>Your Route Overview</Text>
-        <View style={styles.routeStats}>
-          <Text style={styles.routeStatsText}>
-            {routePoints.length} stops • {dishesOnRoute.length} dishes available
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Route size={20} color={colors.primary} />
+          <Text style={styles.headerTitle}>Your Route Overview</Text>
+          <View style={styles.routeStats}>
+            <Text style={styles.routeStatsText}>
+              {routePoints.length} stops • {dishesOnRoute.length} dishes available
+            </Text>
+          </View>
+        </View>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Route Visualization */}
+          <View style={styles.routeVisualization}>
+            {routePoints.map((point, index) => (
+              <View key={index} style={styles.routePointContainer}>
+                <View style={styles.routePointLeft}>
+                  <View style={[
+                    styles.routePointDot,
+                    index === 0 && styles.startPoint,
+                    index === routePoints.length - 1 && styles.endPoint
+                  ]}>
+                    <Text style={styles.routePointNumber}>
+                      {index === 0 ? '🏠' : index === routePoints.length - 1 ? '🏢' : index}
+                    </Text>
+                  </View>
+                  {index < routePoints.length - 1 && <View style={styles.routeLine} />}
+                </View>
+                
+                <View style={styles.routePointInfo}>
+                  <Text style={styles.routePointName}>{point.name}</Text>
+                  <Text style={styles.routePointCoords}>
+                    {point.latitude.toFixed(4)}, {point.longitude.toFixed(4)}
+                  </Text>
+                  
+                  {/* Show dishes near this point */}
+                  {dishesOnRoute.filter(dish => {
+                    const distance = calculateDistance(
+                      point.latitude,
+                      point.longitude,
+                      dish.latitude,
+                      dish.longitude
+                    );
+                    return distance < 0.5; // Within 500m
+                  }).map((dish, dishIndex) => (
+                    <TouchableOpacity
+                      key={dishIndex}
+                      style={styles.nearbyDish}
+                      onPress={() => onDishPress?.(dish)}
+                    >
+                      <Utensils size={14} color={colors.secondary} />
+                      <Text style={styles.nearbyDishText}>{dish.dishName}</Text>
+                      <Text style={styles.nearbyDishSeller}>by {dish.sellerName}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ))}
+          </View>
+
+          {/* All Dishes on Route */}
+          {dishesOnRoute.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>All Available Dishes on Route</Text>
+              {dishesOnRoute.map((dish, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.dishItem}
+                  onPress={() => onDishPress?.(dish)}
+                >
+                  <View style={styles.dishIcon}>
+                    <Utensils size={16} color={colors.white} />
+                  </View>
+                  <View style={styles.dishInfo}>
+                    <Text style={styles.dishName}>{dish.dishName}</Text>
+                    <Text style={styles.dishSeller}>by {dish.sellerName}</Text>
+                    <View style={styles.dishTime}>
+                      <Clock size={12} color={colors.textLight} />
+                      <Text style={styles.dishTimeText}>
+                        Until {new Date(dish.availableUntil).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </Text>
+                    </View>
+                    <View style={styles.dishLocation}>
+                      <MapPin size={12} color={colors.textLight} />
+                      <Text style={styles.dishLocationText}>
+                        {dish.latitude.toFixed(4)}, {dish.longitude.toFixed(4)}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {dishesOnRoute.length === 0 && (
+            <View style={styles.emptyState}>
+              <Utensils size={48} color={colors.textLight} />
+              <Text style={styles.emptyStateTitle}>No dishes found on your route</Text>
+              <Text style={styles.emptyStateText}>
+                Set up your route preferences to discover food along your daily commute
+              </Text>
+            </View>
+          )}
+
+          {/* Route Summary */}
+          <View style={styles.routeSummary}>
+            <Text style={styles.routeSummaryTitle}>Route Summary</Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Total Stops:</Text>
+              <Text style={styles.summaryValue}>{routePoints.length}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Available Dishes:</Text>
+              <Text style={styles.summaryValue}>{dishesOnRoute.length}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Estimated Distance:</Text>
+              <Text style={styles.summaryValue}>
+                {calculateTotalDistance(routePoints).toFixed(1)} km
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+
+        <View style={styles.mapNotice}>
+          <Text style={styles.mapNoticeText}>
+            🗺️ Interactive Google Maps integration coming soon!
           </Text>
         </View>
       </View>
+    );
+  }
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Route Visualization */}
-        <View style={styles.routeVisualization}>
-          {routePoints.map((point, index) => (
-            <View key={index} style={styles.routePointContainer}>
-              <View style={styles.routePointLeft}>
-                <View style={[
-                  styles.routePointDot,
-                  index === 0 && styles.startPoint,
-                  index === routePoints.length - 1 && styles.endPoint
-                ]}>
-                  <Text style={styles.routePointNumber}>
-                    {index === 0 ? '🏠' : index === routePoints.length - 1 ? '🏢' : index}
-                  </Text>
-                </View>
-                {index < routePoints.length - 1 && <View style={styles.routeLine} />}
-              </View>
-              
-              <View style={styles.routePointInfo}>
-                <Text style={styles.routePointName}>{point.name}</Text>
-                <Text style={styles.routePointCoords}>
-                  {point.latitude.toFixed(4)}, {point.longitude.toFixed(4)}
-                </Text>
-                
-                {/* Show dishes near this point */}
-                {dishesOnRoute.filter(dish => {
-                  const distance = calculateDistance(
-                    point.latitude,
-                    point.longitude,
-                    dish.latitude,
-                    dish.longitude
-                  );
-                  return distance < 0.5; // Within 500m
-                }).map((dish, dishIndex) => (
-                  <TouchableOpacity
-                    key={dishIndex}
-                    style={styles.nearbyDish}
-                    onPress={() => onDishPress?.(dish)}
-                  >
-                    <Utensils size={14} color={colors.secondary} />
-                    <Text style={styles.nearbyDishText}>{dish.dishName}</Text>
-                    <Text style={styles.nearbyDishSeller}>by {dish.sellerName}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          ))}
-        </View>
-
-        {/* All Dishes on Route */}
-        {dishesOnRoute.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>All Available Dishes on Route</Text>
-            {dishesOnRoute.map((dish, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.dishItem}
-                onPress={() => onDishPress?.(dish)}
-              >
-                <View style={styles.dishIcon}>
-                  <Utensils size={16} color={colors.white} />
-                </View>
-                <View style={styles.dishInfo}>
-                  <Text style={styles.dishName}>{dish.dishName}</Text>
-                  <Text style={styles.dishSeller}>by {dish.sellerName}</Text>
-                  <View style={styles.dishTime}>
-                    <Clock size={12} color={colors.textLight} />
-                    <Text style={styles.dishTimeText}>
-                      Until {new Date(dish.availableUntil).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </Text>
-                  </View>
-                  <View style={styles.dishLocation}>
-                    <MapPin size={12} color={colors.textLight} />
-                    <Text style={styles.dishLocationText}>
-                      {dish.latitude.toFixed(4)}, {dish.longitude.toFixed(4)}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {dishesOnRoute.length === 0 && (
-          <View style={styles.emptyState}>
-            <Utensils size={48} color={colors.textLight} />
-            <Text style={styles.emptyStateTitle}>No dishes found on your route</Text>
-            <Text style={styles.emptyStateText}>
-              Set up your route preferences to discover food along your daily commute
-            </Text>
-          </View>
-        )}
-
-        {/* Route Summary */}
-        <View style={styles.routeSummary}>
-          <Text style={styles.routeSummaryTitle}>Route Summary</Text>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total Stops:</Text>
-            <Text style={styles.summaryValue}>{routePoints.length}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Available Dishes:</Text>
-            <Text style={styles.summaryValue}>{dishesOnRoute.length}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Estimated Distance:</Text>
-            <Text style={styles.summaryValue}>
-              {calculateTotalDistance(routePoints).toFixed(1)} km
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
-
-      <View style={styles.mapNotice}>
-        <Text style={styles.mapNoticeText}>
-          🗺️ Interactive Google Maps integration coming soon!
-        </Text>
-      </View>
-    </View>
+  // For native platforms, use the native map component
+  const RouteMapViewNative = require('./RouteMapViewNative').default;
+  return (
+    <RouteMapViewNative
+      routePoints={routePoints}
+      dishesOnRoute={dishesOnRoute}
+      onDishPress={onDishPress}
+    />
   );
 }
 

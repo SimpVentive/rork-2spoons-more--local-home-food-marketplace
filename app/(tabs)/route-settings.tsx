@@ -21,7 +21,7 @@ import {
   Navigation,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
-import LocationPickerNative from '@/components/LocationPickerNative';
+import LocationPicker from '@/components/LocationPicker';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
 import { RoutePoint } from '@/types';
@@ -44,34 +44,31 @@ export default function RouteSettingsScreen() {
   const loadUserLocations = () => {
     if (!user) return;
     
-    // Load home location
-    if (user.homeAddress && user.homeCoordinates) {
+    // Load home location from user address
+    if (user.address && user.location) {
       setHomeLocation({
         id: 'home',
         name: 'Home',
-        address: user.homeAddress,
-        latitude: user.homeCoordinates.latitude,
-        longitude: user.homeCoordinates.longitude,
+        address: user.address,
+        latitude: user.location.latitude,
+        longitude: user.location.longitude,
         type: 'home',
       });
     }
     
     // Load office location
-    if (user.officeAddress && (user.officeCoordinates || user.officeLocation)) {
-      const coords = user.officeCoordinates || user.officeLocation;
-      if (coords) {
-        setOfficeLocation({
-          id: 'office',
-          name: 'Office',
-          address: user.officeAddress,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          type: 'office',
-        });
-      }
+    if (user.officeAddress && user.officeLocation) {
+      setOfficeLocation({
+        id: 'office',
+        name: 'Office',
+        address: user.officeAddress,
+        latitude: user.officeLocation.latitude,
+        longitude: user.officeLocation.longitude,
+        type: 'office',
+      });
     }
     
-    // Load custom locations
+    // Load custom locations (if they exist in user data)
     if (user.customLocations) {
       setCustomLocations(user.customLocations);
     }
@@ -106,13 +103,8 @@ export default function RouteSettingsScreen() {
     try {
       const updatedUser = {
         ...user,
-        homeAddress: homeLocation?.address || '',
-        homeCoordinates: homeLocation ? {
-          latitude: homeLocation.latitude,
-          longitude: homeLocation.longitude,
-        } : undefined,
         officeAddress: officeLocation?.address || '',
-        officeCoordinates: officeLocation ? {
+        officeLocation: officeLocation ? {
           latitude: officeLocation.latitude,
           longitude: officeLocation.longitude,
         } : undefined,
@@ -276,7 +268,7 @@ export default function RouteSettingsScreen() {
       </View>
       
       {showLocationPicker && (
-        <LocationPickerNative
+        <LocationPicker
           onSelectLocation={handleLocationSelect}
           onClose={() => setShowLocationPicker(false)}
           routePoints={homeLocation && officeLocation ? [
