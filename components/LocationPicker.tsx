@@ -28,11 +28,12 @@ interface LocationPickerProps {
 }
 
 const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElement => {
-  // Use platform-specific imports to avoid native modules on web
   if (Platform.OS === 'web') {
+    // Import web component dynamically to avoid bundling native modules
     const LocationPickerWeb = require('./LocationPicker.web').default;
     return <LocationPickerWeb {...props} />;
   } else {
+    // Import native component dynamically to avoid bundling on web
     const LocationPickerNative = require('./LocationPickerNative').default;
     return <LocationPickerNative {...props} />;
   }

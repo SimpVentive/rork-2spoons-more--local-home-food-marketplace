@@ -174,6 +174,7 @@ export default function RouteMapView({ routePoints, dishesOnRoute, onDishPress }
   }
 
   // For native platforms, use the native map component
+  // Import dynamically to avoid bundling on web
   const RouteMapViewNative = require('./RouteMapViewNative').default;
   return (
     <RouteMapViewNative
