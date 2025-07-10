@@ -40,11 +40,11 @@ interface LocationPickerProps {
 const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElement => {
   if (Platform.OS === 'web') {
     // Use web-specific component
-    const LocationPickerWeb = require('./LocationPicker.web').default;
+    const LocationPickerWeb = require('./LocationPickerNative.web').default;
     return <LocationPickerWeb {...props} />;
   } else {
-    // Use native component (will automatically use .web.tsx fallback on web if needed)
-    const LocationPickerNative = require('./LocationPickerNative.web').default;
+    // Use native component
+    const LocationPickerNative = require('./LocationPickerNative').default;
     return <LocationPickerNative {...props} />;
   }
 };

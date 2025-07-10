@@ -81,6 +81,24 @@ export default function MoreScreen() {
   
   const handleShareApp = async () => {
     try {
+      if (Platform.OS === 'web') {
+        // For web, use Web Share API if available, otherwise fallback
+        if (navigator.share) {
+          await navigator.share({
+            title: 'Home Food App',
+            text: 'Check out this amazing home food app! Get delicious homemade food from local chefs.',
+            url: 'https://homefood.app',
+          });
+        } else {
+          // Fallback for web browsers without Web Share API
+          const url = 'https://homefood.app';
+          const text = 'Check out this amazing home food app! Get delicious homemade food from local chefs.';
+          const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+          window.open(shareUrl, '_blank');
+        }
+        return;
+      }
+      
       const shareOptions = {
         message: Platform.OS === 'ios' 
           ? 'Check out this amazing home food app! Get delicious homemade food from local chefs.'
@@ -259,6 +277,14 @@ export default function MoreScreen() {
             >
               <Search size={22} color={colors.secondary} />
               <Text style={styles.menuItemText}>Explore</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/(tabs)/route-settings')}
+            >
+              <Route size={22} color={colors.secondary} />
+              <Text style={styles.menuItemText}>Route Settings</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 

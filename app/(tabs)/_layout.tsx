@@ -22,7 +22,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function TabLayout(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { switchRole } = useAuthStore();
   const [isMounted, setIsMounted] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [authState, setAuthState] = useState<{
@@ -30,6 +29,7 @@ export default function TabLayout(): React.ReactElement {
     userPreference: any;
     user: any;
   } | null>(null);
+  const { switchRole } = useAuthStore();
   
   // Wait for component to mount
   useEffect(() => {
@@ -170,21 +170,7 @@ export default function TabLayout(): React.ReactElement {
         tabBarAllowFontScaling: false,
       }}
     >
-      {/* More - Always first (leftmost) */}
-      <Tabs.Screen
-        name="more"
-        options={{
-          title: 'More',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-              <Menu size={24} color={color} />
-            </View>
-          ),
-          tabBarLabel: 'More',
-        }}
-      />
-      
-      {/* For Sellers: Profile (landing), Orders, Wallet, Followers */}
+      {/* For Sellers: Profile (landing), Orders, Wallet, Followers, More */}
       {isSeller && (
         <>
           <Tabs.Screen
@@ -238,12 +224,38 @@ export default function TabLayout(): React.ReactElement {
               tabBarLabel: 'Followers',
             }}
           />
+          
+          <Tabs.Screen
+            name="more"
+            options={{
+              title: 'More',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <Menu size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'More',
+            }}
+          />
         </>
       )}
       
-      {/* For Buyers: Explore (landing), Route Settings, Following, Notifications */}
+      {/* For Buyers: More, Explore (landing), Route Settings, Following, Notifications */}
       {!isSeller && (
         <>
+          <Tabs.Screen
+            name="more"
+            options={{
+              title: 'More',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <Menu size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'More',
+            }}
+          />
+          
           <Tabs.Screen
             name="index"
             options={{

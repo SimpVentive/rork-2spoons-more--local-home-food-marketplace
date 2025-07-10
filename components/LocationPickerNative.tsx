@@ -11,7 +11,18 @@ import {
 } from 'react-native';
 import { X, Search, MapPin, Navigation, CheckCircle, Route } from 'lucide-react-native';
 import * as Location from 'expo-location';
-import MapView, { Marker, PROVIDER_GOOGLE, Region, Polyline } from 'react-native-maps';
+import { Platform } from 'react-native';
+
+// Conditional import for react-native-maps
+let MapView: any, Marker: any, PROVIDER_GOOGLE: any, Polyline: any;
+
+if (Platform.OS !== 'web') {
+  const maps = require('react-native-maps');
+  MapView = maps.default;
+  Marker = maps.Marker;
+  PROVIDER_GOOGLE = maps.PROVIDER_GOOGLE;
+  Polyline = maps.Polyline;
+}
 import colors from '@/constants/colors';
 import Button from './Button';
 
@@ -57,7 +68,7 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [mapReady, setMapReady] = useState(false);
-  const [mapRegion, setMapRegion] = useState<Region>({
+  const [mapRegion, setMapRegion] = useState<any>({
     latitude: initialLocation?.latitude || 17.4123,
     longitude: initialLocation?.longitude || 78.2679,
     latitudeDelta: 0.01,
@@ -253,9 +264,23 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
     }
   };
 
-  const handleRegionChange = (region: Region) => {
+  const handleRegionChange = (region: any) => {
     setMapRegion(region);
   };
+
+  // If on web, return web fallback
+  if (Platform.OS === 'web') {
+    const LocationPickerWeb = require('./LocationPickerNative.web').default;
+    return (
+      <LocationPickerWeb
+        initialLocation={initialLocation}
+        onSelectLocation={onSelectLocation}
+        onClose={onClose}
+        routePoints={routePoints}
+        dishesOnRoute={dishesOnRoute}
+      />
+    );
+  }
 
   const fitToRoute = () => {
     if (routePoints.length === 0) return;
