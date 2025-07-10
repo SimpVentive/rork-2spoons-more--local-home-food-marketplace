@@ -19,6 +19,7 @@ interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'danger';
   size?: 'small' | 'medium' | 'large';
   isLoading?: boolean;
+  loading?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
@@ -31,11 +32,13 @@ const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'medium',
   isLoading = false,
+  loading = false,
   disabled = false,
   style,
   textStyle,
   icon,
 }) => {
+  const actualLoading = isLoading || loading;
   const getButtonStyle = () => {
     const baseStyle: ViewStyle = {
       borderRadius: 8,
@@ -122,11 +125,11 @@ const Button: React.FC<ButtonProps> = ({
           borderless: false,
         },
         onPress: onPress,
-        disabled: disabled || isLoading,
+        disabled: disabled || actualLoading,
       }
     : {
         onPress: onPress,
-        disabled: disabled || isLoading,
+        disabled: disabled || actualLoading,
         activeOpacity: 0.8,
       };
 
@@ -141,7 +144,7 @@ const Button: React.FC<ButtonProps> = ({
       }}
       {...buttonProps}
     >
-      {isLoading ? (
+      {actualLoading ? (
         <ActivityIndicator size="small" color={variant === 'outline' ? colors.primary : colors.white} />
       ) : (
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>

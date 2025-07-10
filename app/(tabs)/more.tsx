@@ -81,51 +81,80 @@ export default function MoreScreen() {
   
   const handleShareApp = async () => {
     try {
-      const result = await Share.share({
-        message: 'Check out this amazing home food app! Get delicious homemade food from local chefs. Download now: https://homefood.app',
+      const shareOptions = {
+        message: Platform.OS === 'ios' 
+          ? 'Check out this amazing home food app! Get delicious homemade food from local chefs.'
+          : 'Check out this amazing home food app! Get delicious homemade food from local chefs. Download now: https://homefood.app',
         title: 'Home Food App',
         ...(Platform.OS === 'ios' && {
           url: 'https://homefood.app',
         }),
-      });
+      };
+      
+      const result = await Share.share(shareOptions);
       
       if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          // Shared with activity type of result.activityType
-        } else {
-          // Shared
-        }
+        // Successfully shared
+        console.log('App shared successfully');
       } else if (result.action === Share.dismissedAction) {
-        // Dismissed
+        // User dismissed the share dialog
+        console.log('Share dismissed');
       }
-    } catch (error) {
-      Alert.alert('Error', 'Unable to share the app. Please try again.');
+    } catch (error: any) {
+      console.error('Share error:', error);
+      Alert.alert(
+        'Share Failed', 
+        'Unable to share the app at this time. Please try again later.',
+        [{ text: 'OK' }]
+      );
     }
   };
   
   const handleRateApp = async () => {
     try {
+      if (Platform.OS === 'web') {
+        // For web, show a message
+        Alert.alert(
+          'Rate Our App',
+          'Thank you for your interest! Please visit our app on the App Store or Google Play Store to leave a rating.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
       const appStoreUrl = Platform.select({
         ios: 'https://apps.apple.com/app/id123456789', // Replace with actual App Store ID
-        android: 'https://play.google.com/store/apps/details?id=com.homefood.app', // Replace with actual package name
+        android: 'market://details?id=com.homefood.app', // Use market:// for better Android support
         default: 'https://homefood.app',
       });
       
-      const supported = await Linking.canOpenURL(appStoreUrl);
+      const fallbackUrl = Platform.select({
+        ios: 'https://apps.apple.com/app/id123456789',
+        android: 'https://play.google.com/store/apps/details?id=com.homefood.app',
+        default: 'https://homefood.app',
+      });
       
-      if (supported) {
-        await Linking.openURL(appStoreUrl);
-      } else {
+      try {
+        const supported = await Linking.canOpenURL(appStoreUrl!);
+        if (supported) {
+          await Linking.openURL(appStoreUrl!);
+        } else {
+          // Try fallback URL
+          await Linking.openURL(fallbackUrl!);
+        }
+      } catch (linkingError) {
+        // If both fail, show a message
         Alert.alert(
           'Rate Our App',
-          'Thank you for using our app! Please visit your app store to rate us.',
+          'Thank you for using our app! Please visit your device\'s app store to rate us.',
           [{ text: 'OK' }]
         );
       }
     } catch (error) {
+      console.error('Rate app error:', error);
       Alert.alert(
         'Rate Our App',
-        'Thank you for using our app! Your feedback helps us improve. Please visit your app store to rate us.',
+        'Thank you for your feedback! Please visit your app store to rate us.',
         [{ text: 'OK' }]
       );
     }

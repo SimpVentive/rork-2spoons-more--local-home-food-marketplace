@@ -16,6 +16,7 @@ interface AuthState {
   logout: () => void;
   register: (userData: Partial<User>) => Promise<boolean>;
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
+  updateUser: (updates: Partial<User>) => Promise<boolean>;
   updateUserPreference: (preference: 'buyer' | 'seller') => Promise<void>;
   switchRole: () => Promise<void>;
   addRouteLocation: (type: 'homeToOffice' | 'officeToHome', location: RouteLocation) => Promise<void>;
@@ -218,6 +219,10 @@ export const useAuthStore = create<AuthState>()(
           console.error('Profile update error:', error);
           return false;
         }
+      },
+      
+      updateUser: async (updates: Partial<User>) => {
+        return get().updateProfile(updates);
       },
 
       updateUserPreference: async (preference: 'buyer' | 'seller') => {

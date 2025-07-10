@@ -24,7 +24,7 @@ export interface User {
   homeCoordinates?: {
     latitude: number;
     longitude: number;
-  };
+  } | undefined;
   officeAddress?: string;
   officeLocation?: {
     latitude: number;
@@ -33,7 +33,7 @@ export interface User {
   officeCoordinates?: {
     latitude: number;
     longitude: number;
-  };
+  } | undefined;
   customLocations?: RoutePoint[];
   homeToOfficeRoute?: RouteLocation[];
   officeToHomeRoute?: RouteLocation[];

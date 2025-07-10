@@ -2,17 +2,27 @@ import React from 'react';
 import { Platform } from 'react-native';
 
 interface LocationPickerProps {
+  visible: boolean;
   initialLocation?: {
     latitude: number;
     longitude: number;
     address?: string;
   };
-  onSelectLocation: (location: {
+  onLocationSelect: (location: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  }) => void;
+  onSelectLocation?: (location: {
     latitude: number;
     longitude: number;
     address: string;
   }) => void;
   onClose: () => void;
+  title: string;
+  showRoute: boolean;
+  routeStart: any;
+  routeEnd: any;
   routePoints?: Array<{
     latitude: number;
     longitude: number;

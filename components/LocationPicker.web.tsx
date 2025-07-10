@@ -14,17 +14,27 @@ import colors from '@/constants/colors';
 import Button from './Button';
 
 interface LocationPickerProps {
+  visible: boolean;
   initialLocation?: {
     latitude: number;
     longitude: number;
     address?: string;
   };
-  onSelectLocation: (location: {
+  onLocationSelect: (location: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  }) => void;
+  onSelectLocation?: (location: {
     latitude: number;
     longitude: number;
     address: string;
   }) => void;
   onClose: () => void;
+  title: string;
+  showRoute: boolean;
+  routeStart: any;
+  routeEnd: any;
   routePoints?: Array<{
     latitude: number;
     longitude: number;
@@ -40,12 +50,19 @@ interface LocationPickerProps {
 }
 
 const LocationPicker: React.FC<LocationPickerProps> = ({
+  visible,
   initialLocation,
+  onLocationSelect,
   onSelectLocation,
   onClose,
+  title,
+  showRoute,
+  routeStart,
+  routeEnd,
   routePoints = [],
   dishesOnRoute = [],
 }) => {
+  const handleLocationSelect = onLocationSelect || onSelectLocation;
   const [location, setLocation] = useState({
     latitude: initialLocation?.latitude || 17.4123,
     longitude: initialLocation?.longitude || 78.2679,
@@ -149,12 +166,14 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   };
   
   const handleConfirm = () => {
-    onSelectLocation(location);
+    if (handleLocationSelect) {
+      handleLocationSelect(location);
+    }
   };
   
   return (
     <Modal
-      visible={true}
+      visible={visible}
       animationType="slide"
       transparent={true}
       onRequestClose={onClose}
@@ -162,7 +181,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <View style={styles.header}>
-            <Text style={styles.title}>Select Location</Text>
+            <Text style={styles.title}>{title || 'Select Location'}</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <X size={24} color={colors.text} />
             </TouchableOpacity>

@@ -101,7 +101,7 @@ export default function RouteSettingsScreen() {
     setIsLoading(true);
     
     try {
-      const updates = {
+      const updates: Partial<User> = {
         officeAddress: officeLocation?.address || '',
         officeLocation: officeLocation ? {
           latitude: officeLocation.latitude,
@@ -260,7 +260,7 @@ export default function RouteSettingsScreen() {
         <Button
           title="Save Route Settings"
           onPress={handleSaveRoute}
-          isLoading={isLoading}
+          loading={isLoading}
           icon={<Save size={16} color={colors.white} />}
           style={styles.saveButton}
         />
@@ -268,20 +268,13 @@ export default function RouteSettingsScreen() {
       
       {showLocationPicker && (
         <LocationPicker
-          onSelectLocation={handleLocationSelect}
+          visible={showLocationPicker}
+          onLocationSelect={handleLocationSelect}
           onClose={() => setShowLocationPicker(false)}
-          routePoints={homeLocation && officeLocation ? [
-            {
-              latitude: homeLocation.latitude,
-              longitude: homeLocation.longitude,
-              name: homeLocation.name,
-            },
-            {
-              latitude: officeLocation.latitude,
-              longitude: officeLocation.longitude,
-              name: officeLocation.name,
-            }
-          ] : []}
+          title={`Select ${locationPickerType === 'home' ? 'Home' : locationPickerType === 'office' ? 'Office' : 'Custom'} Location`}
+          showRoute={false}
+          routeStart={homeLocation}
+          routeEnd={officeLocation}
         />
       )}
     </ScrollView>

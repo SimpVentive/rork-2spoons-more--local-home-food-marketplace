@@ -170,7 +170,7 @@ export default function HomeScreen() {
       </ImageBackground>
 
       {/* Route Settings Banner */}
-      {(!user?.officeAddress || !user?.homeToOfficeRoute?.length) && (
+      {(!user?.officeAddress) && (
         <TouchableOpacity 
           style={styles.routeBanner}
           onPress={handleRouteSettingsPress}
