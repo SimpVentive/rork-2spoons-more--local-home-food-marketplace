@@ -232,7 +232,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'More',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Menu size={24} color={color} />
+                  <MoreHorizontal size={24} color={color} />
                 </View>
               ),
               tabBarLabel: 'More',
