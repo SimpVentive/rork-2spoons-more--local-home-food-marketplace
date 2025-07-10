@@ -25,7 +25,7 @@ import LocationPicker from '@/components/LocationPicker';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
 import { RoutePoint } from '@/types';
-import type { User } from '@/types';
+import { User } from '@/types';
 
 export default function RouteSettingsScreen() {
   const { user, updateProfile } = useAuthStore();

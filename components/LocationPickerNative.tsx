@@ -268,19 +268,7 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
     setMapRegion(region);
   };
 
-  // If on web, return web fallback
-  if (Platform.OS === 'web') {
-    const LocationPickerWeb = require('./LocationPickerNative.web').default;
-    return (
-      <LocationPickerWeb
-        initialLocation={initialLocation}
-        onSelectLocation={onSelectLocation}
-        onClose={onClose}
-        routePoints={routePoints}
-        dishesOnRoute={dishesOnRoute}
-      />
-    );
-  }
+
 
   const fitToRoute = () => {
     if (routePoints.length === 0) return;

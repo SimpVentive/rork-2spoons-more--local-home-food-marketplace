@@ -44,7 +44,7 @@ const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElemen
     return <LocationPickerWeb {...props} />;
   } else {
     // Use native component
-    const LocationPickerNative = require('./LocationPickerNative').default;
+    const LocationPickerNative = require('./LocationPicker.native').default;
     return <LocationPickerNative {...props} />;
   }
 };

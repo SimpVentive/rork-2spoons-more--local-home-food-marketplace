@@ -18,7 +18,11 @@ interface RouteMapViewProps {
 }
 
 export default function RouteMapView(props: RouteMapViewProps) {
-  // Always use the native component which handles web fallback internally
-  const RouteMapViewNative = require('./RouteMapViewNative').default;
-  return <RouteMapViewNative {...props} />;
+  if (Platform.OS === 'web') {
+    const RouteMapViewWeb = require('./RouteMapViewNative.web').default;
+    return <RouteMapViewWeb {...props} />;
+  } else {
+    const RouteMapViewNative = require('./RouteMapView.native').default;
+    return <RouteMapViewNative {...props} />;
+  }
 }

@@ -8,18 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { MapPin, Navigation, Clock, Utensils, Route } from 'lucide-react-native';
-import { Platform } from 'react-native';
-
-// Conditional import for react-native-maps
-let MapView: any, Marker: any, PROVIDER_GOOGLE: any, Polyline: any;
-
-if (Platform.OS !== 'web') {
-  const maps = require('react-native-maps');
-  MapView = maps.default;
-  Marker = maps.Marker;
-  PROVIDER_GOOGLE = maps.PROVIDER_GOOGLE;
-  Polyline = maps.Polyline;
-}
+import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
 import colors from '@/constants/colors';
 import { RouteLocation } from '@/types';
 import { useAuthStore } from '@/store/auth-store';
@@ -49,8 +38,6 @@ export default function RouteMapViewNative({ routePoints, dishesOnRoute, onDishP
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
   });
-
-
 
   useEffect(() => {
     if (routePoints.length > 0) {

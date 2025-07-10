@@ -21,7 +21,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout(): React.ReactElement {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [isMounted, setIsMounted] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [authState, setAuthState] = useState<{
@@ -30,6 +29,7 @@ export default function TabLayout(): React.ReactElement {
     user: any;
   } | null>(null);
   const { switchRole } = useAuthStore();
+  const insets = useSafeAreaInsets();
   
   // Wait for component to mount
   useEffect(() => {
@@ -69,6 +69,7 @@ export default function TabLayout(): React.ReactElement {
         }
       } catch (error) {
         console.error('Navigation error:', error);
+        // Don't redirect on error, let user stay in tabs
       }
     };
 
@@ -240,22 +241,9 @@ export default function TabLayout(): React.ReactElement {
         </>
       )}
       
-      {/* For Buyers: More, Explore (landing), Route Settings, Following, Notifications */}
+      {/* For Buyers: Explore (landing), Route Settings, Following, Notifications, More */}
       {!isSeller && (
         <>
-          <Tabs.Screen
-            name="more"
-            options={{
-              title: 'More',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Menu size={24} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'More',
-            }}
-          />
-          
           <Tabs.Screen
             name="index"
             options={{
@@ -305,6 +293,19 @@ export default function TabLayout(): React.ReactElement {
                 </View>
               ),
               tabBarLabel: 'Alerts',
+            }}
+          />
+          
+          <Tabs.Screen
+            name="more"
+            options={{
+              title: 'More',
+              tabBarIcon: ({ color, focused }) => (
+                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+                  <Menu size={24} color={color} />
+                </View>
+              ),
+              tabBarLabel: 'More',
             }}
           />
         </>

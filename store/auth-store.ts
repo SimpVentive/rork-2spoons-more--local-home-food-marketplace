@@ -45,6 +45,20 @@ export const useAuthStore = create<AuthState>()(
       initialize: async () => {
         try {
           // This will be called after the store is rehydrated from AsyncStorage
+          const { isAuthenticated, user } = get();
+          
+          // For development: if no user is authenticated, set a default user
+          if (!isAuthenticated || !user) {
+            const defaultUser = mockUsers[0]; // Use first user as default
+            set({
+              user: defaultUser,
+              isAuthenticated: true,
+              userPreference: { type: defaultUser.isChef ? 'seller' : 'buyer' },
+              token: 'dev-token',
+              isAdmin: defaultUser.isAdmin || false,
+            });
+          }
+          
           set({ isInitialized: true });
         } catch (error) {
           console.error('Auth store initialization error:', error);
