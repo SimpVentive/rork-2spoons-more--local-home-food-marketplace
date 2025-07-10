@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function TabLayout(): React.ReactElement {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { switchRole } = useAuthStore();
   const [isMounted, setIsMounted] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [authState, setAuthState] = useState<{
@@ -102,8 +103,6 @@ export default function TabLayout(): React.ReactElement {
   const tabBarHeight = Platform.OS === 'ios' 
     ? 80 + insets.bottom 
     : 80 + Math.max(insets.bottom, 20); // Increased minimum padding for Android
-
-  const { switchRole } = useAuthStore();
 
   const handleSwitchRole = async () => {
     try {
