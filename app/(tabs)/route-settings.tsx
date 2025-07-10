@@ -24,7 +24,7 @@ import { useAuthStore } from '@/store/auth-store';
 import LocationPicker from '@/components/LocationPicker';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
-import { RoutePoint, User } from '@/types';
+import { RoutePoint, User as UserType } from '@/types';
 
 export default function RouteSettingsScreen() {
   const { user, updateProfile } = useAuthStore();
@@ -101,7 +101,7 @@ export default function RouteSettingsScreen() {
     setIsLoading(true);
     
     try {
-      const updates: Partial<User> = {
+      const updates: Partial<UserType> = {
         officeAddress: officeLocation?.address || '',
         officeCoordinates: officeLocation ? {
           latitude: officeLocation.latitude,

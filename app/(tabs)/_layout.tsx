@@ -10,7 +10,7 @@ import {
   User, 
   PieChart, 
   PlusCircle,
-  Menu,
+  MoreHorizontal,
   Route,
   RefreshCw,
 } from 'lucide-react-native';
@@ -241,19 +241,19 @@ export default function TabLayout(): React.ReactElement {
         </>
       )}
       
-      {/* For Buyers: More (left), Route Settings, Following, Notifications, Explore (right) */}
+      {/* For Buyers: Explore (left), Route Settings, Following, Notifications, More (right) */}
       {!isSeller && (
         <>
           <Tabs.Screen
-            name="more"
+            name="index"
             options={{
-              title: 'More',
+              title: 'Explore',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Menu size={24} color={color} />
+                  <Search size={24} color={color} />
                 </View>
               ),
-              tabBarLabel: 'More',
+              tabBarLabel: 'Explore',
             }}
           />
           
@@ -297,15 +297,15 @@ export default function TabLayout(): React.ReactElement {
           />
           
           <Tabs.Screen
-            name="index"
+            name="more"
             options={{
-              title: 'Explore',
+              title: 'More',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Search size={24} color={color} />
+                  <MoreHorizontal size={24} color={color} />
                 </View>
               ),
-              tabBarLabel: 'Explore',
+              tabBarLabel: 'More',
             }}
           />
         </>

@@ -217,10 +217,10 @@ export default function MoreScreen() {
         
         <TouchableOpacity 
           style={styles.menuItem}
-          onPress={() => router.push('/(tabs)/index')}
+          onPress={() => router.push('/(tabs)/search')}
         >
           <Search size={22} color={colors.primary} />
-          <Text style={styles.menuItemText}>Explore</Text>
+          <Text style={styles.menuItemText}>Search</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -275,8 +275,8 @@ export default function MoreScreen() {
               style={styles.menuItem}
               onPress={() => router.push('/(tabs)/index')}
             >
-              <Search size={22} color={colors.secondary} />
-              <Text style={styles.menuItemText}>Explore</Text>
+              <Home size={22} color={colors.secondary} />
+              <Text style={styles.menuItemText}>Home</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
