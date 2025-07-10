@@ -204,8 +204,8 @@ export const mockFoodListings: FoodListing[] = [
     allergens: ['Dairy', 'Nuts'],
     availableQuantity: 4,
     remainingQuantity: 3,
-    availableFrom: '2023-06-27T10:00:00Z',
-    availableUntil: '2023-06-27T18:00:00Z',
+    availableFrom: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+    availableUntil: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6 hours from now
     servings: 2,
     packaging: 'Eco-friendly container',
     location: {
@@ -215,14 +215,14 @@ export const mockFoodListings: FoodListing[] = [
     rating: 4.7,
     reviewCount: 15,
     orderCount: 25,
-    createdAt: '2023-06-26T08:00:00Z',
+    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
     isFeatured: true,
     isApproved: true,
     isActive: true,
     address: '456 Oak St, Othertown, USA',
     spiceLevel: 'medium',
     preparationTime: 30,
-    pickupTime: '2023-06-27T12:00:00Z',
+    pickupTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
     quantity: 4,
   },
   {

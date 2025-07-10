@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout(): React.ReactElement {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [isMounted, setIsMounted] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [authState, setAuthState] = useState<{
@@ -29,7 +30,6 @@ export default function TabLayout(): React.ReactElement {
     user: any;
   } | null>(null);
   const { switchRole } = useAuthStore();
-  const insets = useSafeAreaInsets();
   
   // Wait for component to mount
   useEffect(() => {
@@ -241,19 +241,19 @@ export default function TabLayout(): React.ReactElement {
         </>
       )}
       
-      {/* For Buyers: Explore (landing), Route Settings, Following, Notifications, More */}
+      {/* For Buyers: More (left), Route Settings, Following, Notifications, Explore (right) */}
       {!isSeller && (
         <>
           <Tabs.Screen
-            name="index"
+            name="more"
             options={{
-              title: 'Explore',
+              title: 'More',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Search size={24} color={color} />
+                  <Menu size={24} color={color} />
                 </View>
               ),
-              tabBarLabel: 'Explore',
+              tabBarLabel: 'More',
             }}
           />
           
@@ -297,15 +297,15 @@ export default function TabLayout(): React.ReactElement {
           />
           
           <Tabs.Screen
-            name="more"
+            name="index"
             options={{
-              title: 'More',
+              title: 'Explore',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Menu size={24} color={color} />
+                  <Search size={24} color={color} />
                 </View>
               ),
-              tabBarLabel: 'More',
+              tabBarLabel: 'Explore',
             }}
           />
         </>

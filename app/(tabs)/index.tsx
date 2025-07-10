@@ -115,6 +115,10 @@ export default function HomeScreen() {
   const handleSearchPress = () => {
     router.push('/(tabs)/search');
   };
+
+  const handleExploreNowPress = () => {
+    router.push('/(tabs)/search');
+  };
   
   return (
     <ScrollView 
@@ -166,7 +170,7 @@ export default function HomeScreen() {
           <Text style={styles.heroSubtitle}>From local kitchens to your plate</Text>
           <TouchableOpacity 
             style={styles.exploreButton}
-            onPress={handleSearchPress}
+            onPress={handleExploreNowPress}
           >
             <Text style={styles.exploreButtonText}>Explore Now</Text>
           </TouchableOpacity>
