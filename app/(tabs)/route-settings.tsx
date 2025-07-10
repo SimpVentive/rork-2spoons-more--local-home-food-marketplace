@@ -101,8 +101,7 @@ export default function RouteSettingsScreen() {
     setIsLoading(true);
     
     try {
-      const updatedUser = {
-        ...user,
+      const updates = {
         officeAddress: officeLocation?.address || '',
         officeLocation: officeLocation ? {
           latitude: officeLocation.latitude,
@@ -111,7 +110,7 @@ export default function RouteSettingsScreen() {
         customLocations: customLocations,
       };
       
-      await updateProfile(updatedUser);
+      await updateProfile(updates);
       
       Alert.alert(
         'Success',

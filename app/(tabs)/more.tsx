@@ -6,6 +6,9 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Share,
+  Linking,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -73,6 +76,58 @@ export default function MoreScreen() {
       );
     } catch (error) {
       Alert.alert('Error', 'Failed to switch role. Please try again.');
+    }
+  };
+  
+  const handleShareApp = async () => {
+    try {
+      const result = await Share.share({
+        message: 'Check out this amazing home food app! Get delicious homemade food from local chefs. Download now: https://homefood.app',
+        title: 'Home Food App',
+        ...(Platform.OS === 'ios' && {
+          url: 'https://homefood.app',
+        }),
+      });
+      
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          // Shared with activity type of result.activityType
+        } else {
+          // Shared
+        }
+      } else if (result.action === Share.dismissedAction) {
+        // Dismissed
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Unable to share the app. Please try again.');
+    }
+  };
+  
+  const handleRateApp = async () => {
+    try {
+      const appStoreUrl = Platform.select({
+        ios: 'https://apps.apple.com/app/id123456789', // Replace with actual App Store ID
+        android: 'https://play.google.com/store/apps/details?id=com.homefood.app', // Replace with actual package name
+        default: 'https://homefood.app',
+      });
+      
+      const supported = await Linking.canOpenURL(appStoreUrl);
+      
+      if (supported) {
+        await Linking.openURL(appStoreUrl);
+      } else {
+        Alert.alert(
+          'Rate Our App',
+          'Thank you for using our app! Please visit your app store to rate us.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        'Rate Our App',
+        'Thank you for using our app! Your feedback helps us improve. Please visit your app store to rate us.',
+        [{ text: 'OK' }]
+      );
     }
   };
   
@@ -173,8 +228,8 @@ export default function MoreScreen() {
               style={styles.menuItem}
               onPress={() => router.push('/(tabs)/index')}
             >
-              <Home size={22} color={colors.secondary} />
-              <Text style={styles.menuItemText}>Home Feed</Text>
+              <Search size={22} color={colors.secondary} />
+              <Text style={styles.menuItemText}>Explore</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -218,7 +273,7 @@ export default function MoreScreen() {
         
         <TouchableOpacity 
           style={styles.menuItem}
-          onPress={() => Alert.alert('Rate App', 'Thank you for using our app! Your feedback helps us improve.')}
+          onPress={handleRateApp}
         >
           <Star size={22} color={colors.warning} />
           <Text style={styles.menuItemText}>Rate App</Text>
@@ -226,7 +281,7 @@ export default function MoreScreen() {
         
         <TouchableOpacity 
           style={styles.menuItem}
-          onPress={() => Alert.alert('Share App', 'Share this app with your friends and family!')}
+          onPress={handleShareApp}
         >
           <Share2 size={22} color={colors.warning} />
           <Text style={styles.menuItemText}>Share App</Text>

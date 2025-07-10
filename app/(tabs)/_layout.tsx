@@ -21,7 +21,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout(): React.ReactElement {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { switchRole } = useAuthStore();
   const [isMounted, setIsMounted] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
@@ -30,6 +29,9 @@ export default function TabLayout(): React.ReactElement {
     userPreference: any;
     user: any;
   } | null>(null);
+  
+  // Only use insets after component is mounted and authenticated
+  const insets = useSafeAreaInsets();
   
   // Wait for component to mount
   useEffect(() => {
@@ -170,20 +172,6 @@ export default function TabLayout(): React.ReactElement {
         tabBarAllowFontScaling: false,
       }}
     >
-      {/* More - Always first (leftmost) */}
-      <Tabs.Screen
-        name="more"
-        options={{
-          title: 'More',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-              <MoreHorizontal size={24} color={color} />
-            </View>
-          ),
-          tabBarLabel: 'More',
-        }}
-      />
-      
       {/* For Sellers: Profile (landing), Orders, Wallet, Followers */}
       {isSeller && (
         <>
@@ -297,6 +285,20 @@ export default function TabLayout(): React.ReactElement {
           />
         </>
       )}
+      
+      {/* More - Always last (rightmost) */}
+      <Tabs.Screen
+        name="more"
+        options={{
+          title: 'More',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
+              <MoreHorizontal size={24} color={color} />
+            </View>
+          ),
+          tabBarLabel: 'More',
+        }}
+      />
       
       {/* Hidden tabs that will be accessible from the more screen */}
       <Tabs.Screen

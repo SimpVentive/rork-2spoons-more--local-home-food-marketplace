@@ -22,6 +22,9 @@ const COMPLAINT_REASONS = [
   'Hygiene concerns',
   'Quantity issues',
   'Packaging problems',
+  'App technical issue',
+  'Payment issue',
+  'Seller behavior',
   'Other',
 ];
 
@@ -73,10 +76,10 @@ export default function FileComplaintScreen() {
     );
   };
   
-  if (!order || !user) {
+  if (!user) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Order not found</Text>
+        <Text style={styles.errorText}>Please log in to file a complaint</Text>
         <Button
           title="Go Back"
           onPress={() => router.back()}
@@ -95,25 +98,36 @@ export default function FileComplaintScreen() {
         </TouchableOpacity>
       </View>
       
-      <View style={styles.orderInfoContainer}>
-        <Text style={styles.orderInfoTitle}>Order Information</Text>
-        <View style={styles.orderInfo}>
-          <Text style={styles.orderInfoLabel}>Order ID:</Text>
-          <Text style={styles.orderInfoValue}>{order.id}</Text>
+      {order && (
+        <View style={styles.orderInfoContainer}>
+          <Text style={styles.orderInfoTitle}>Order Information</Text>
+          <View style={styles.orderInfo}>
+            <Text style={styles.orderInfoLabel}>Order ID:</Text>
+            <Text style={styles.orderInfoValue}>{order.id}</Text>
+          </View>
+          <View style={styles.orderInfo}>
+            <Text style={styles.orderInfoLabel}>Dish:</Text>
+            <Text style={styles.orderInfoValue}>{order.listingSnapshot?.dishName || 'N/A'}</Text>
+          </View>
+          <View style={styles.orderInfo}>
+            <Text style={styles.orderInfoLabel}>Seller:</Text>
+            <Text style={styles.orderInfoValue}>{order.listingSnapshot?.sellerName || 'N/A'}</Text>
+          </View>
+          <View style={styles.orderInfo}>
+            <Text style={styles.orderInfoLabel}>Date:</Text>
+            <Text style={styles.orderInfoValue}>{new Date(order.createdAt).toLocaleDateString()}</Text>
+          </View>
         </View>
-        <View style={styles.orderInfo}>
-          <Text style={styles.orderInfoLabel}>Dish:</Text>
-          <Text style={styles.orderInfoValue}>{order.listingSnapshot.dishName}</Text>
+      )}
+      
+      {!order && (
+        <View style={styles.orderInfoContainer}>
+          <Text style={styles.orderInfoTitle}>General Complaint</Text>
+          <Text style={styles.generalComplaintText}>
+            You are filing a general complaint. Please provide details about your issue below.
+          </Text>
         </View>
-        <View style={styles.orderInfo}>
-          <Text style={styles.orderInfoLabel}>Seller:</Text>
-          <Text style={styles.orderInfoValue}>{order.listingSnapshot.sellerName}</Text>
-        </View>
-        <View style={styles.orderInfo}>
-          <Text style={styles.orderInfoLabel}>Date:</Text>
-          <Text style={styles.orderInfoValue}>{new Date(order.createdAt).toLocaleDateString()}</Text>
-        </View>
-      </View>
+      )}
       
       <View style={styles.formContainer}>
         <Text style={styles.formTitle}>Complaint Details</Text>
@@ -335,5 +349,10 @@ const styles = StyleSheet.create({
   backButton: {
     marginHorizontal: 16,
     marginTop: 16,
+  },
+  generalComplaintText: {
+    fontSize: 14,
+    color: colors.textLight,
+    lineHeight: 20,
   },
 });

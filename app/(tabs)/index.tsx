@@ -109,7 +109,7 @@ export default function HomeScreen() {
   };
 
   const handleRouteSettingsPress = () => {
-    router.push('/route-settings');
+    router.push('/(tabs)/route-settings');
   };
   
   return (
