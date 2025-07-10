@@ -357,27 +357,28 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
               </View>
             )}
             
-            <MapView
-              style={styles.map}
-              provider={PROVIDER_GOOGLE}
-              region={mapRegion}
-              onRegionChangeComplete={handleRegionChange}
-              onPress={handleMapPress}
-              onMapReady={() => setMapReady(true)}
-              showsUserLocation
-              showsMyLocationButton={false}
-              showsCompass
-              showsScale
-              showsBuildings
-              showsTraffic
-              showsIndoors
-              mapType="standard"
-              zoomEnabled
-              zoomControlEnabled
-              rotateEnabled
-              scrollEnabled
-              pitchEnabled
-            >
+            {Platform.OS !== 'web' && MapView && (
+              <MapView
+                style={styles.map}
+                provider={PROVIDER_GOOGLE}
+                region={mapRegion}
+                onRegionChangeComplete={handleRegionChange}
+                onPress={handleMapPress}
+                onMapReady={() => setMapReady(true)}
+                showsUserLocation
+                showsMyLocationButton={false}
+                showsCompass
+                showsScale
+                showsBuildings
+                showsTraffic
+                showsIndoors
+                mapType="standard"
+                zoomEnabled
+                zoomControlEnabled
+                rotateEnabled
+                scrollEnabled
+                pitchEnabled
+              >
               {/* Selected location marker */}
               <Marker
                 coordinate={{
@@ -442,29 +443,46 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
                   </View>
                 </Marker>
               ))}
-            </MapView>
+              </MapView>
+            )}
             
-            <View style={styles.mapControlsContainer}>
-              <TouchableOpacity 
-                style={styles.mapControlButton}
-                onPress={getCurrentLocation}
-              >
-                <Navigation size={24} color={colors.primary} />
-              </TouchableOpacity>
-              
-              {routePoints.length > 0 && (
-                <TouchableOpacity 
-                  style={styles.mapControlButton}
-                  onPress={fitToRoute}
-                >
-                  <Route size={24} color={colors.secondary} />
-                </TouchableOpacity>
-              )}
-            </View>
+            {Platform.OS === 'web' && (
+              <View style={styles.webMapFallback}>
+                <MapPin size={48} color={colors.textLight} />
+                <Text style={styles.webMapText}>
+                  Interactive map not available on web
+                </Text>
+                <Text style={styles.webMapSubtext}>
+                  Please use the search function above to find locations
+                </Text>
+              </View>
+            )}
             
-            <View style={styles.markerFixed}>
-              <MapPin size={32} color={colors.primary} />
-            </View>
+            {Platform.OS !== 'web' && (
+              <>
+                <View style={styles.mapControlsContainer}>
+                  <TouchableOpacity 
+                    style={styles.mapControlButton}
+                    onPress={getCurrentLocation}
+                  >
+                    <Navigation size={24} color={colors.primary} />
+                  </TouchableOpacity>
+                  
+                  {routePoints.length > 0 && (
+                    <TouchableOpacity 
+                      style={styles.mapControlButton}
+                      onPress={fitToRoute}
+                    >
+                      <Route size={24} color={colors.secondary} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+                
+                <View style={styles.markerFixed}>
+                  <MapPin size={32} color={colors.primary} />
+                </View>
+              </>
+            )}
           </View>
           
           <View style={styles.addressContainer}>
@@ -708,6 +726,26 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     flex: 2,
+  },
+  webMapFallback: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+  },
+  webMapText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  webMapSubtext: {
+    fontSize: 14,
+    color: colors.textLight,
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
 

@@ -8,10 +8,20 @@ import {
   TextInput,
   ActivityIndicator,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { X, Search, MapPin, Navigation, CheckCircle, Route } from 'lucide-react-native';
 import * as Location from 'expo-location';
-import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
+// Conditional import for react-native-maps
+let MapView: any, Marker: any, PROVIDER_GOOGLE: any, Polyline: any;
+
+if (Platform.OS !== 'web') {
+  const maps = require('react-native-maps');
+  MapView = maps.default;
+  Marker = maps.Marker;
+  PROVIDER_GOOGLE = maps.PROVIDER_GOOGLE;
+  Polyline = maps.Polyline;
+}
 import colors from '@/constants/colors';
 import Button from './Button';
 
@@ -344,114 +354,130 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
               </View>
             )}
             
-            <MapView
-              style={styles.map}
-              provider={PROVIDER_GOOGLE}
-              region={mapRegion}
-              onRegionChangeComplete={handleRegionChange}
-              onPress={handleMapPress}
-              onMapReady={() => setMapReady(true)}
-              showsUserLocation
-              showsMyLocationButton={false}
-              showsCompass
-              showsScale
-              showsBuildings
-              showsTraffic
-              showsIndoors
-              mapType="standard"
-              zoomEnabled
-              zoomControlEnabled
-              rotateEnabled
-              scrollEnabled
-              pitchEnabled
-            >
-              {/* Selected location marker */}
-              <Marker
-                coordinate={{
-                  latitude: location.latitude,
-                  longitude: location.longitude,
-                }}
-                title="Selected Location"
-                description={location.address}
-                pinColor={colors.primary}
-              />
-              
-              {/* Route points markers */}
-              {showRouteOverlay && routePoints.map((point, index) => (
-                <Marker
-                  key={`route-${index}`}
-                  coordinate={{
-                    latitude: point.latitude,
-                    longitude: point.longitude,
-                  }}
-                  title={point.name}
-                  description="Route point"
-                  pinColor={index === 0 ? colors.success : index === routePoints.length - 1 ? colors.secondary : colors.warning}
-                >
-                  <View style={[
-                    styles.routeMarker,
-                    index === 0 && styles.startMarker,
-                    index === routePoints.length - 1 && styles.endMarker
-                  ]}>
-                    <Text style={styles.routeMarkerText}>
-                      {index === 0 ? '🏠' : index === routePoints.length - 1 ? '🏢' : index}
-                    </Text>
-                  </View>
-                </Marker>
-              ))}
-              
-              {/* Route polyline */}
-              {showRouteOverlay && routePoints.length > 1 && (
-                <Polyline
-                  coordinates={routePoints.map(point => ({
-                    latitude: point.latitude,
-                    longitude: point.longitude,
-                  }))}
-                  strokeColor={colors.primary}
-                  strokeWidth={3}
-                />
-              )}
-              
-              {/* Dishes on route markers */}
-              {showRouteOverlay && dishesOnRoute.map((dish, index) => (
-                <Marker
-                  key={`dish-${index}`}
-                  coordinate={{
-                    latitude: dish.latitude,
-                    longitude: dish.longitude,
-                  }}
-                  title={dish.dishName}
-                  description={`By ${dish.sellerName} • Available until ${new Date(dish.availableUntil).toLocaleTimeString()}`}
-                  pinColor={colors.success}
-                >
-                  <View style={styles.dishMarker}>
-                    <Text style={styles.dishMarkerText}>🍽️</Text>
-                  </View>
-                </Marker>
-              ))}
-            </MapView>
-            
-            <View style={styles.mapControlsContainer}>
-              <TouchableOpacity 
-                style={styles.mapControlButton}
-                onPress={getCurrentLocation}
+            {Platform.OS !== 'web' ? (
+              <MapView
+                style={styles.map}
+                provider={PROVIDER_GOOGLE}
+                region={mapRegion}
+                onRegionChangeComplete={handleRegionChange}
+                onPress={handleMapPress}
+                onMapReady={() => setMapReady(true)}
+                showsUserLocation
+                showsMyLocationButton={false}
+                showsCompass
+                showsScale
+                showsBuildings
+                showsTraffic
+                showsIndoors
+                mapType="standard"
+                zoomEnabled
+                zoomControlEnabled
+                rotateEnabled
+                scrollEnabled
+                pitchEnabled
               >
-                <Navigation size={24} color={colors.primary} />
-              </TouchableOpacity>
-              
-              {routePoints.length > 0 && (
-                <TouchableOpacity 
-                  style={styles.mapControlButton}
-                  onPress={fitToRoute}
-                >
-                  <Route size={24} color={colors.secondary} />
-                </TouchableOpacity>
-              )}
-            </View>
+                {/* Selected location marker */}
+                <Marker
+                  coordinate={{
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                  }}
+                  title="Selected Location"
+                  description={location.address}
+                  pinColor={colors.primary}
+                />
+                
+                {/* Route points markers */}
+                {showRouteOverlay && routePoints.map((point, index) => (
+                  <Marker
+                    key={`route-${index}`}
+                    coordinate={{
+                      latitude: point.latitude,
+                      longitude: point.longitude,
+                    }}
+                    title={point.name}
+                    description="Route point"
+                    pinColor={index === 0 ? colors.success : index === routePoints.length - 1 ? colors.secondary : colors.warning}
+                  >
+                    <View style={[
+                      styles.routeMarker,
+                      index === 0 && styles.startMarker,
+                      index === routePoints.length - 1 && styles.endMarker
+                    ]}>
+                      <Text style={styles.routeMarkerText}>
+                        {index === 0 ? '🏠' : index === routePoints.length - 1 ? '🏢' : index}
+                      </Text>
+                    </View>
+                  </Marker>
+                ))}
+                
+                {/* Route polyline */}
+                {showRouteOverlay && routePoints.length > 1 && (
+                  <Polyline
+                    coordinates={routePoints.map(point => ({
+                      latitude: point.latitude,
+                      longitude: point.longitude,
+                    }))}
+                    strokeColor={colors.primary}
+                    strokeWidth={3}
+                  />
+                )}
+                
+                {/* Dishes on route markers */}
+                {showRouteOverlay && dishesOnRoute.map((dish, index) => (
+                  <Marker
+                    key={`dish-${index}`}
+                    coordinate={{
+                      latitude: dish.latitude,
+                      longitude: dish.longitude,
+                    }}
+                    title={dish.dishName}
+                    description={`By ${dish.sellerName} • Available until ${new Date(dish.availableUntil).toLocaleTimeString()}`}
+                    pinColor={colors.success}
+                  >
+                    <View style={styles.dishMarker}>
+                      <Text style={styles.dishMarkerText}>🍽️</Text>
+                    </View>
+                  </Marker>
+                ))}
+              </MapView>
+            ) : (
+              <View style={styles.webMapFallback}>
+                <MapPin size={48} color={colors.textLight} />
+                <Text style={styles.webMapText}>
+                  Interactive map not available on web
+                </Text>
+                <Text style={styles.webMapSubtext}>
+                  Please use the search function above to find locations
+                </Text>
+              </View>
+            )}
             
-            <View style={styles.markerFixed}>
-              <MapPin size={32} color={colors.primary} />
-            </View>
+            {Platform.OS !== 'web' && (
+              <>
+                <View style={styles.mapControlsContainer}>
+                  <TouchableOpacity 
+                    style={styles.mapControlButton}
+                    onPress={getCurrentLocation}
+                  >
+                    <Navigation size={24} color={colors.primary} />
+                  </TouchableOpacity>
+                  
+                  {routePoints.length > 0 && (
+                    <TouchableOpacity 
+                      style={styles.mapControlButton}
+                      onPress={fitToRoute}
+                    >
+                      <Route size={24} color={colors.secondary} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+                
+                <View style={styles.markerFixed}>
+                  <MapPin size={32} color={colors.primary} />
+                </View>
+              </>
+            )}
           </View>
           
           <View style={styles.addressContainer}>
@@ -695,6 +721,26 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     flex: 2,
+  },
+  webMapFallback: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+  },
+  webMapText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  webMapSubtext: {
+    fontSize: 14,
+    color: colors.textLight,
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
 
