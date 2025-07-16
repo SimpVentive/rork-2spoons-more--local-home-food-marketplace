@@ -24,7 +24,8 @@ import { useAuthStore } from '@/store/auth-store';
 import LocationPicker from '@/components/LocationPicker';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
-import { RoutePoint, User } from '@/types';
+import { RoutePoint } from '@/types';
+import type { User } from '@/types';
 
 export default function RouteSettingsScreen() {
   const { user, updateProfile } = useAuthStore();
@@ -36,6 +37,10 @@ export default function RouteSettingsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [locationPickerType, setLocationPickerType] = useState<'home' | 'office' | 'custom'>('home');
+  const [showRouteMap, setShowRouteMap] = useState(false);
+  const [selectedLocations, setSelectedLocations] = useState<RoutePoint[]>([]);
+  
+  const MAX_CUSTOM_LOCATIONS = 5;
   
   useEffect(() => {
     loadUserLocations();
@@ -101,9 +106,9 @@ export default function RouteSettingsScreen() {
     setIsLoading(true);
     
     try {
-      const updates: Partial<User> = {
+      const updates = {
         officeAddress: officeLocation?.address || '',
-        officeCoordinates: officeLocation ? {
+        officeLocation: officeLocation ? {
           latitude: officeLocation.latitude,
           longitude: officeLocation.longitude,
         } : undefined,
@@ -134,8 +139,31 @@ export default function RouteSettingsScreen() {
   };
   
   const openLocationPicker = (type: 'home' | 'office' | 'custom') => {
+    if (type === 'custom' && customLocations.length >= MAX_CUSTOM_LOCATIONS) {
+      Alert.alert(
+        'Location Limit Reached',
+        `You can only add up to ${MAX_CUSTOM_LOCATIONS} custom locations.`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
     setLocationPickerType(type);
     setShowLocationPicker(true);
+  };
+  
+  const handleViewRoute = () => {
+    if (!homeLocation || !officeLocation) {
+      Alert.alert(
+        'Missing Locations',
+        'Please set both home and office locations to view your route.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    const allLocations = [homeLocation, officeLocation, ...customLocations];
+    setSelectedLocations(allLocations);
+    setShowRouteMap(true);
   };
   
   return (
@@ -187,13 +215,20 @@ export default function RouteSettingsScreen() {
       
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Custom Locations</Text>
+          <Text style={styles.sectionTitle}>Custom Locations ({customLocations.length}/{MAX_CUSTOM_LOCATIONS})</Text>
           <TouchableOpacity 
-            style={styles.addButton}
+            style={[
+              styles.addButton,
+              customLocations.length >= MAX_CUSTOM_LOCATIONS && styles.addButtonDisabled
+            ]}
             onPress={() => openLocationPicker('custom')}
+            disabled={customLocations.length >= MAX_CUSTOM_LOCATIONS}
           >
-            <Plus size={16} color={colors.white} />
-            <Text style={styles.addButtonText}>Add</Text>
+            <Plus size={16} color={customLocations.length >= MAX_CUSTOM_LOCATIONS ? colors.textLight : colors.white} />
+            <Text style={[
+              styles.addButtonText,
+              customLocations.length >= MAX_CUSTOM_LOCATIONS && styles.addButtonTextDisabled
+            ]}>Add</Text>
           </TouchableOpacity>
         </View>
         
@@ -204,7 +239,7 @@ export default function RouteSettingsScreen() {
               No custom locations added yet
             </Text>
             <Text style={styles.emptyStateSubtext}>
-              Add frequently visited places to find food along those routes
+              Add up to {MAX_CUSTOM_LOCATIONS} frequently visited places to find food along those routes
             </Text>
           </View>
         ) : (
@@ -257,6 +292,16 @@ export default function RouteSettingsScreen() {
       </View>
       
       <View style={styles.actionContainer}>
+        {homeLocation && officeLocation && (
+          <Button
+            title="View Route on Map"
+            onPress={handleViewRoute}
+            variant="outline"
+            icon={<Navigation size={16} color={colors.primary} />}
+            style={styles.viewRouteButton}
+          />
+        )}
+        
         <Button
           title="Save Route Settings"
           onPress={handleSaveRoute}
@@ -275,6 +320,24 @@ export default function RouteSettingsScreen() {
           showRoute={false}
           routeStart={homeLocation}
           routeEnd={officeLocation}
+        />
+      )}
+      
+      {showRouteMap && (
+        <LocationPicker
+          visible={showRouteMap}
+          onLocationSelect={() => {}}
+          onClose={() => setShowRouteMap(false)}
+          title="Your Route with Selected Locations"
+          showRoute={true}
+          routeStart={homeLocation}
+          routeEnd={officeLocation}
+          routePoints={selectedLocations.map(loc => ({
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+            name: loc.name,
+          }))}
+          dishesOnRoute={[]} // This would be populated with actual dishes from the store
         />
       )}
     </ScrollView>
@@ -361,11 +424,17 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 16,
   },
+  addButtonDisabled: {
+    backgroundColor: colors.border,
+  },
   addButtonText: {
     color: colors.white,
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 4,
+  },
+  addButtonTextDisabled: {
+    color: colors.textLight,
   },
   removeButton: {
     padding: 8,
@@ -422,7 +491,10 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
+  viewRouteButton: {
+    marginBottom: 12,
+  },
   saveButton: {
-    marginTop: 16,
+    marginTop: 8,
   },
 });

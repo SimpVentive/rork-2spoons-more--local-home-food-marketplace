@@ -10,18 +10,16 @@ import {
   User, 
   PieChart, 
   PlusCircle,
-  MoreHorizontal,
+  Menu,
   Route,
   RefreshCw,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
 import { Platform, StyleSheet, View, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout(): React.ReactElement {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [isMounted, setIsMounted] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [authState, setAuthState] = useState<{
@@ -63,6 +61,12 @@ export default function TabLayout(): React.ReactElement {
           return;
         }
         
+        // If user is admin, redirect to admin panel
+        if (authState.user?.isAdmin) {
+          router.replace('/(admin)');
+          return;
+        }
+        
         if (!authState.userPreference) {
           router.replace('/user-preference');
           return;
@@ -88,8 +92,8 @@ export default function TabLayout(): React.ReactElement {
     );
   }
 
-  // Don't render tabs if not authenticated or no user preference
-  if (!authState.isAuthenticated || !authState.userPreference) {
+  // Don't render tabs if not authenticated, no user preference, or user is admin
+  if (!authState.isAuthenticated || !authState.userPreference || authState.user?.isAdmin) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -101,9 +105,7 @@ export default function TabLayout(): React.ReactElement {
   const isSeller = authState.userPreference?.type === 'seller' || authState.user?.isChef;
 
   // Calculate tab bar height with proper safe area handling for Android
-  const tabBarHeight = Platform.OS === 'ios' 
-    ? 80 + insets.bottom 
-    : 80 + Math.max(insets.bottom, 20); // Increased minimum padding for Android
+  const tabBarHeight = Platform.OS === 'ios' ? 80 : 70;
 
   const handleSwitchRole = async () => {
     try {
@@ -122,22 +124,8 @@ export default function TabLayout(): React.ReactElement {
           styles.tabBar,
           {
             height: tabBarHeight,
-            paddingBottom: Platform.OS === 'ios' ? insets.bottom : Math.max(insets.bottom, 20),
-            paddingTop: 12,
-            // Fix Android overlap issue
-            ...(Platform.OS === 'android' && {
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              borderTopWidth: 2,
-              borderTopColor: colors.border,
-              elevation: 20,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: -2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 3,
-            }),
+            paddingTop: 8,
+            paddingBottom: Platform.OS === 'ios' ? 20 : 8,
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,
@@ -160,13 +148,7 @@ export default function TabLayout(): React.ReactElement {
             </Text>
           </TouchableOpacity>
         ),
-        tabBarItemStyle: [
-          styles.tabBarItem,
-          {
-            height: Platform.OS === 'ios' ? 60 : 56,
-            paddingBottom: Platform.OS === 'android' ? 8 : 0,
-          }
-        ],
+        tabBarItemStyle: styles.tabBarItem,
         tabBarHideOnKeyboard: true,
         tabBarAllowFontScaling: false,
       }}
@@ -241,19 +223,19 @@ export default function TabLayout(): React.ReactElement {
         </>
       )}
       
-      {/* For Buyers: Explore (left), Route Settings, Following, Notifications, More (right) */}
+      {/* For Buyers: More (left), Route Settings, Following, Notifications, Explore (right) */}
       {!isSeller && (
         <>
           <Tabs.Screen
-            name="index"
+            name="more"
             options={{
-              title: 'Explore',
+              title: 'More',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Search size={24} color={color} />
+                  <Menu size={22} color={color} />
                 </View>
               ),
-              tabBarLabel: 'Explore',
+              tabBarLabel: 'More',
             }}
           />
           
@@ -263,7 +245,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'Route Settings',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Route size={24} color={color} />
+                  <Route size={22} color={color} />
                 </View>
               ),
               tabBarLabel: 'Routes',
@@ -276,7 +258,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'Following',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Users size={24} color={color} />
+                  <Users size={22} color={color} />
                 </View>
               ),
               tabBarLabel: 'Following',
@@ -289,7 +271,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'Notifications',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Bell size={24} color={color} />
+                  <Bell size={22} color={color} />
                 </View>
               ),
               tabBarLabel: 'Alerts',
@@ -297,15 +279,15 @@ export default function TabLayout(): React.ReactElement {
           />
           
           <Tabs.Screen
-            name="more"
+            name="index"
             options={{
-              title: 'More',
+              title: 'Explore',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <MoreHorizontal size={24} color={color} />
+                  <Search size={22} color={color} />
                 </View>
               ),
-              tabBarLabel: 'More',
+              tabBarLabel: 'Explore',
             }}
           />
         </>
@@ -371,11 +353,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     backgroundColor: colors.white,
     paddingHorizontal: 4,
-    // Ensure proper positioning on Android
-    ...(Platform.OS === 'android' && {
-      marginBottom: 0,
-      paddingBottom: 20,
-    }),
   },
   tabBarLabel: {
     fontSize: Platform.OS === 'android' ? 11 : 10,
@@ -390,13 +367,14 @@ const styles = StyleSheet.create({
     minWidth: 60,
     borderRadius: 12,
     marginHorizontal: 2,
+    height: 50,
   },
   iconContainer: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 16,
   },
   focusedIconContainer: {
     backgroundColor: `${colors.primary}15`,
