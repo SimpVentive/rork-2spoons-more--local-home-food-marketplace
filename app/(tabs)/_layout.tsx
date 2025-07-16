@@ -93,8 +93,18 @@ export default function TabLayout(): React.ReactElement {
     );
   }
 
-  // Don't render tabs if not authenticated, no user preference, or user is admin
-  if (!authState.isAuthenticated || !authState.userPreference || authState.user?.isAdmin) {
+  // Don't render tabs if not authenticated or no user preference
+  // Admin users should be redirected in the useEffect above
+  if (!authState.isAuthenticated || !authState.userPreference) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+  
+  // Additional safety check for admin users
+  if (authState.user?.isAdmin) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
