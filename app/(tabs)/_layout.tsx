@@ -10,7 +10,6 @@ import {
   User, 
   PieChart, 
   PlusCircle,
-  Menu,
   Route,
   RefreshCw,
   MoreHorizontal,
@@ -39,15 +38,23 @@ export default function TabLayout(): React.ReactElement {
   useEffect(() => {
     if (!isMounted) return;
     
-    try {
-      const { isAuthenticated, userPreference, user } = useAuthStore.getState();
-      setAuthState({ isAuthenticated, userPreference, user });
-      setHasCheckedAuth(true);
-    } catch (error) {
-      console.error('Error getting auth state:', error);
-      setAuthState({ isAuthenticated: false, userPreference: null, user: null });
-      setHasCheckedAuth(true);
-    }
+    const initializeAuth = async () => {
+      try {
+        // Initialize the auth store first
+        await useAuthStore.getState().initialize();
+        
+        // Then get the state
+        const { isAuthenticated, userPreference, user } = useAuthStore.getState();
+        setAuthState({ isAuthenticated, userPreference, user });
+        setHasCheckedAuth(true);
+      } catch (error) {
+        console.error('Error getting auth state:', error);
+        setAuthState({ isAuthenticated: false, userPreference: null, user: null });
+        setHasCheckedAuth(true);
+      }
+    };
+    
+    initializeAuth();
   }, [isMounted]);
 
   // Check authentication and redirect if needed, but only after mounting and getting auth state
@@ -62,7 +69,7 @@ export default function TabLayout(): React.ReactElement {
           return;
         }
         
-        // If user is admin, redirect to admin panel
+        // IMPORTANT: Admin users should NEVER see the tabs - redirect them immediately
         if (authState.user?.isAdmin === true) {
           router.replace('/(admin)');
           return;
@@ -79,7 +86,7 @@ export default function TabLayout(): React.ReactElement {
     };
 
     // Use setTimeout to ensure navigation happens after render
-    const timeoutId = setTimeout(checkAuth, 100);
+    const timeoutId = setTimeout(checkAuth, 50);
     
     return () => clearTimeout(timeoutId);
   }, [isMounted, authState, hasCheckedAuth, router]);
@@ -89,16 +96,18 @@ export default function TabLayout(): React.ReactElement {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 16, color: colors.textLight }}>Initializing...</Text>
       </View>
     );
   }
 
   // Don't render tabs if not authenticated or no user preference
   // Admin users should be redirected in the useEffect above
-  if (!authState.isAuthenticated || !authState.userPreference) {
+  if (!authState.isAuthenticated) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 16, color: colors.textLight }}>Authenticating...</Text>
       </View>
     );
   }
@@ -108,6 +117,17 @@ export default function TabLayout(): React.ReactElement {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 16, color: colors.textLight }}>Redirecting to admin...</Text>
+      </View>
+    );
+  }
+  
+  // If no user preference, show loading (will redirect in useEffect)
+  if (!authState.userPreference) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 16, color: colors.textLight }}>Setting up preferences...</Text>
       </View>
     );
   }
@@ -243,10 +263,10 @@ export default function TabLayout(): React.ReactElement {
               title: 'Explore',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Search size={22} color={color} />
+                  <Home size={22} color={color} />
                 </View>
               ),
-              tabBarLabel: 'Explore',
+              tabBarLabel: 'Home',
             }}
           />
           
@@ -363,29 +383,34 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     borderTopWidth: 1,
     backgroundColor: colors.white,
-    paddingHorizontal: 4,
+    paddingHorizontal: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 8,
   },
   tabBarLabel: {
     fontSize: Platform.OS === 'android' ? 11 : 10,
-    marginTop: 2,
+    marginTop: 4,
     fontWeight: '500',
   },
   tabBarItem: {
-    paddingVertical: 4,
+    paddingVertical: 6,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 60,
     borderRadius: 12,
-    marginHorizontal: 2,
-    height: 50,
+    marginHorizontal: 1,
+    height: 52,
   },
   iconContainer: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 18,
   },
   focusedIconContainer: {
     backgroundColor: `${colors.primary}15`,

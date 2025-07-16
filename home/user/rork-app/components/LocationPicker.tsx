@@ -35,19 +35,25 @@ interface LocationPickerProps {
 
 const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElement => {
   if (Platform.OS === 'web') {
-    try {
-      // Use web-specific component
-      const LocationPickerWeb = require('./LocationPickerNative.web').default;
-      return <LocationPickerWeb {...props} />;
-    } catch (error) {
-      console.warn('Web LocationPicker not available, using fallback');
-      // Simple fallback for web
-      const { View, Text, Modal, TouchableOpacity, StyleSheet } = require('react-native');
-      const colors = require('@/constants/colors').default;
-      const Button = require('./Button').default;
-      
-      return (
-        <Modal visible={props.visible} transparent onRequestClose={props.onClose}>
+    // Simple fallback for web to avoid react-native-maps issues
+    const { View, Text, Modal, TouchableOpacity, StyleSheet, TextInput } = require('react-native');
+    const { MapPin, X } = require('lucide-react-native');
+    const colors = require('@/constants/colors').default;
+    const Button = require('./Button').default;
+    const [address, setAddress] = React.useState('');
+    
+    const handleSelect = () => {
+      if (address.trim()) {
+        props.onLocationSelect({
+          latitude: 17.4123, // Default coordinates for demo
+          longitude: 78.2679,
+          address: address.trim(),
+        });
+      }
+    };
+    
+    return (
+      <Modal visible={props.visible} transparent onRequestClose={props.onClose}>
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
             <View style={{ backgroundColor: colors.white, padding: 20, borderRadius: 12, margin: 20, maxWidth: 400 }}>
               <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 16, textAlign: 'center' }}>

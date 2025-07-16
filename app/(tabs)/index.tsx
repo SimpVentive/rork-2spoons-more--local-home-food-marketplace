@@ -29,7 +29,7 @@ import colors from '@/constants/colors';
 import { mockUsers } from '@/mocks/data';
 
 export default function HomeScreen() {
-  const { user } = useAuthStore();
+  const { user, isInitialized } = useAuthStore();
   const { 
     listings, 
     filteredListings, 
@@ -48,6 +48,15 @@ export default function HomeScreen() {
   const [recentReviews, setRecentReviews] = useState<Review[]>([]);
   
   const router = useRouter();
+  
+  // Show loading if auth is not initialized
+  if (!isInitialized) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ fontSize: 16, color: colors.text }}>Loading...</Text>
+      </View>
+    );
+  }
   
   useEffect(() => {
     fetchListings();

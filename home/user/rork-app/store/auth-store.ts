@@ -50,13 +50,15 @@ export const useAuthStore = create<AuthState>()(
           // For development: if no user is authenticated, set a default user (but not admin)
           if (!isAuthenticated || !user) {
             const defaultUser = mockUsers.find(u => !u.isAdmin) || mockUsers[0]; // Use first non-admin user as default
-            set({
-              user: defaultUser,
-              isAuthenticated: true,
-              userPreference: { type: 'buyer' }, // Force buyer for default user
-              token: 'dev-token',
-              isAdmin: defaultUser.isAdmin || false,
-            });
+            if (defaultUser) {
+              set({
+                user: defaultUser,
+                isAuthenticated: true,
+                userPreference: { type: 'buyer' }, // Force buyer for default user
+                token: 'dev-token',
+                isAdmin: false, // Never set admin for default user
+              });
+            }
           }
           
           set({ isInitialized: true });
@@ -579,7 +581,10 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state) => {
         // Initialize the store after rehydration
         if (state) {
-          state.initialize();
+          // Use setTimeout to ensure initialization happens after rehydration is complete
+          setTimeout(() => {
+            state.initialize();
+          }, 100);
         }
       },
     }
