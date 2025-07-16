@@ -36,13 +36,30 @@ export default function AdminLoginScreen() {
       setIsLoading(true);
       setError('');
       
+      console.log('Starting admin login for:', email);
+      
       const success = await adminLogin(email, password);
       
       if (!success) {
         setError('Invalid admin credentials. Try using admin@example.com');
+        console.log('Admin login failed for:', email);
       } else {
-        // If login is successful, manually navigate to admin dashboard
-        router.replace('/(admin)');
+        console.log('Admin login successful');
+        
+        // If login is successful, use setTimeout to ensure navigation happens after state update
+        setTimeout(() => {
+          const { isAuthenticated, isAdmin, user } = useAuthStore.getState();
+          
+          console.log('Post-admin-login state:', { isAuthenticated, isAdmin, userName: user?.name });
+          
+          if (isAuthenticated && isAdmin) {
+            console.log('Redirecting to admin dashboard');
+            router.replace('/(admin)');
+          } else {
+            console.log('Admin authentication failed');
+            setError('Admin authentication failed. Please try again.');
+          }
+        }, 100);
       }
     } catch (error) {
       console.log('Admin login error:', error);

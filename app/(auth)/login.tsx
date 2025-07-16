@@ -25,6 +25,11 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const login = useAuthStore(state => state.login);
   const router = useRouter();
+  
+  // Debug: Log component mount
+  React.useEffect(() => {
+    console.log('LoginScreen mounted');
+  }, []);
 
   const handleLogin = async () => {
     if (!email) {
@@ -36,22 +41,38 @@ export default function LoginScreen() {
       setIsLoading(true);
       setError('');
       
+      console.log('Starting login process for:', email);
+      
       // Call login function from auth store
       const success = await login(email, password);
       
       if (!success) {
         setError('Invalid email or password. Try using john@example.com');
+        console.log('Login failed for:', email);
       } else {
+        console.log('Login successful, checking user state...');
+        
         // If login is successful, use setTimeout to ensure navigation happens after state update
         setTimeout(() => {
-          const { isAuthenticated, userPreference } = useAuthStore.getState();
+          const { isAuthenticated, userPreference, user, isAdmin } = useAuthStore.getState();
+          
+          console.log('Post-login state:', { isAuthenticated, userPreference, isAdmin, userName: user?.name });
           
           if (isAuthenticated) {
-            if (!userPreference) {
+            // Admin users should go to admin panel
+            if (isAdmin) {
+              console.log('Redirecting admin user to admin panel');
+              router.replace('/(admin)');
+            } else if (!userPreference) {
+              console.log('Redirecting to user preference selection');
               router.replace('/user-preference');
             } else {
+              console.log('Redirecting to main tabs');
               router.replace('/(tabs)');
             }
+          } else {
+            console.log('User not authenticated after login');
+            setError('Authentication failed. Please try again.');
           }
         }, 100);
       }
@@ -160,6 +181,7 @@ export default function LoginScreen() {
             <Text style={styles.demoTitle}>Demo Credentials:</Text>
             <Text style={styles.demoText}>User: john@example.com (any password)</Text>
             <Text style={styles.demoText}>Admin: admin@example.com (any password)</Text>
+            <Text style={styles.demoText}>Chef: jane@example.com (any password)</Text>
           </View>
         </View>
       </ScrollView>

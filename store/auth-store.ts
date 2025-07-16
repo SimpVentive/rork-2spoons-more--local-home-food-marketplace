@@ -47,8 +47,11 @@ export const useAuthStore = create<AuthState>()(
           // This will be called after the store is rehydrated from AsyncStorage
           const { isAuthenticated, user } = get();
           
+          console.log('Initializing auth store, current state:', { isAuthenticated, user: user?.email });
+          
           // Force users to login every time - no auto-authentication
           if (isAuthenticated) {
+            console.log('Clearing authentication state to force fresh login');
             set({
               user: null,
               isAuthenticated: false,
@@ -59,6 +62,7 @@ export const useAuthStore = create<AuthState>()(
           }
           
           set({ isInitialized: true });
+          console.log('Auth store initialized successfully');
         } catch (error) {
           console.error('Auth store initialization error:', error);
           set({ isInitialized: true });
@@ -67,6 +71,8 @@ export const useAuthStore = create<AuthState>()(
       
       login: async (email: string, password: string) => {
         try {
+          console.log('Attempting login for:', email);
+          
           // Simulate API call
           await new Promise(resolve => setTimeout(resolve, 1000));
           
@@ -78,6 +84,8 @@ export const useAuthStore = create<AuthState>()(
             console.log("Available users:", mockUsers.map(u => u.email));
             return false;
           }
+          
+          console.log('User found:', user.name, 'isAdmin:', user.isAdmin);
           
           // In a real app, we would verify the password on the server
           // For demo purposes, we'll just assume the password is correct
@@ -91,6 +99,7 @@ export const useAuthStore = create<AuthState>()(
             userPreference: user.isChef ? { type: 'seller' } : { type: 'buyer' }
           });
           
+          console.log('Login successful, user preference set to:', user.isChef ? 'seller' : 'buyer');
           return true;
         } catch (error) {
           console.error('Login error:', error);
@@ -576,13 +585,21 @@ export const useAuthStore = create<AuthState>()(
       name: 'auth-storage',
       storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => (state) => {
-        // Initialize the store after rehydration
-        if (state) {
-          // Use setTimeout to ensure initialization happens after rehydration is complete
-          setTimeout(() => {
-            state.initialize();
-          }, 100);
-        }
+        console.log('Auth store rehydration started');
+        return (state, error) => {
+          if (error) {
+            console.error('Auth store rehydration error:', error);
+          } else {
+            console.log('Auth store rehydration completed, initializing...');
+            // Initialize the store after rehydration
+            if (state) {
+              // Use setTimeout to ensure initialization happens after rehydration is complete
+              setTimeout(() => {
+                state.initialize();
+              }, 100);
+            }
+          }
+        };
       },
     }
   )
