@@ -12,7 +12,7 @@ import {
   PlusCircle,
   Route,
   RefreshCw,
-  MoreHorizontal,
+  Menu,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
@@ -136,7 +136,7 @@ export default function TabLayout(): React.ReactElement {
   const isSeller = authState.userPreference?.type === 'seller' || authState.user?.isChef;
 
   // Calculate tab bar height with proper safe area handling for Android
-  const tabBarHeight = Platform.OS === 'ios' ? 80 : 70;
+  const tabBarHeight = Platform.OS === 'ios' ? 85 : 75;
 
   const handleSwitchRole = async () => {
     try {
@@ -155,8 +155,8 @@ export default function TabLayout(): React.ReactElement {
           styles.tabBar,
           {
             height: tabBarHeight,
-            paddingTop: 8,
-            paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+            paddingTop: 10,
+            paddingBottom: Platform.OS === 'ios' ? 25 : 12,
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,
@@ -245,7 +245,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'More',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <MoreHorizontal size={24} color={color} />
+                  <Menu size={24} color={color} />
                 </View>
               ),
               tabBarLabel: 'More',
@@ -315,7 +315,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'More',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <MoreHorizontal size={22} color={color} />
+                  <Menu size={22} color={color} />
                 </View>
               ),
               tabBarLabel: 'More',
@@ -391,26 +391,26 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   tabBarLabel: {
-    fontSize: Platform.OS === 'android' ? 11 : 10,
-    marginTop: 4,
-    fontWeight: '500',
+    fontSize: Platform.OS === 'android' ? 12 : 11,
+    marginTop: 2,
+    fontWeight: '600',
   },
   tabBarItem: {
-    paddingVertical: 6,
+    paddingVertical: 8,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    minWidth: 60,
+    minWidth: 65,
     borderRadius: 12,
-    marginHorizontal: 1,
-    height: 52,
+    marginHorizontal: 2,
+    height: 56,
   },
   iconContainer: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 20,
   },
   focusedIconContainer: {
     backgroundColor: `${colors.primary}15`,
