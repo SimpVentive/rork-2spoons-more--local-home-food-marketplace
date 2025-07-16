@@ -12,7 +12,7 @@ import {
   PlusCircle,
   Route,
   RefreshCw,
-  Menu,
+  MoreHorizontal,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
@@ -136,7 +136,7 @@ export default function TabLayout(): React.ReactElement {
   const isSeller = authState.userPreference?.type === 'seller' || authState.user?.isChef;
 
   // Calculate tab bar height with proper safe area handling for Android
-  const tabBarHeight = Platform.OS === 'ios' ? 85 : 75;
+  const tabBarHeight = Platform.OS === 'ios' ? 85 : 80;
 
   const handleSwitchRole = async () => {
     try {
@@ -155,8 +155,9 @@ export default function TabLayout(): React.ReactElement {
           styles.tabBar,
           {
             height: tabBarHeight,
-            paddingTop: 10,
-            paddingBottom: Platform.OS === 'ios' ? 25 : 12,
+            paddingTop: Platform.OS === 'ios' ? 8 : 6,
+            paddingBottom: Platform.OS === 'ios' ? 25 : 18,
+            paddingHorizontal: 6,
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,
@@ -193,7 +194,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'Profile',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <User size={24} color={color} />
+                  <User size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'Profile',
@@ -206,7 +207,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'My Orders',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <ShoppingBag size={24} color={color} />
+                  <ShoppingBag size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'Orders',
@@ -219,7 +220,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'Wallet',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Wallet size={24} color={color} />
+                  <Wallet size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'Wallet',
@@ -232,7 +233,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'Followers',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Users size={24} color={color} />
+                  <Users size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'Followers',
@@ -245,7 +246,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'More',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Menu size={24} color={color} />
+                  <MoreHorizontal size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'More',
@@ -263,7 +264,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'Explore',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Home size={22} color={color} />
+                  <Home size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'Home',
@@ -276,7 +277,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'Route Settings',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Route size={22} color={color} />
+                  <Route size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'Routes',
@@ -289,7 +290,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'Following',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Users size={22} color={color} />
+                  <Users size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'Following',
@@ -302,7 +303,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'Notifications',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Bell size={22} color={color} />
+                  <Bell size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'Alerts',
@@ -315,7 +316,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'More',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Menu size={22} color={color} />
+                  <MoreHorizontal size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'More',
@@ -383,34 +384,34 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     borderTopWidth: 1,
     backgroundColor: colors.white,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 12,
   },
   tabBarLabel: {
-    fontSize: Platform.OS === 'android' ? 12 : 11,
-    marginTop: 2,
+    fontSize: Platform.OS === 'android' ? 11 : 10,
+    marginTop: Platform.OS === 'android' ? 4 : 2,
     fontWeight: '600',
   },
   tabBarItem: {
-    paddingVertical: 8,
+    paddingVertical: Platform.OS === 'android' ? 4 : 6,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    minWidth: 65,
-    borderRadius: 12,
-    marginHorizontal: 2,
-    height: 56,
+    minWidth: 55,
+    borderRadius: 8,
+    marginHorizontal: 1,
+    height: Platform.OS === 'android' ? 48 : 50,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
+    width: Platform.OS === 'android' ? 32 : 36,
+    height: Platform.OS === 'android' ? 32 : 36,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 20,
+    borderRadius: Platform.OS === 'android' ? 16 : 18,
   },
   focusedIconContainer: {
     backgroundColor: `${colors.primary}15`,
