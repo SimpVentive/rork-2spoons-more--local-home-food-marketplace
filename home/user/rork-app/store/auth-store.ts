@@ -575,9 +575,9 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state: AuthState | undefined, error: any) => {
         // Initialize the store after rehydration
-        if (state) {
+        if (state && !error) {
           // Use setTimeout to ensure initialization happens after rehydration is complete
           setTimeout(() => {
             state.initialize();

@@ -29,7 +29,7 @@ import colors from '@/constants/colors';
 import { mockUsers } from '@/mocks/data';
 
 export default function HomeScreen() {
-  const { user, isInitialized } = useAuthStore();
+  const { user, isInitialized, isAuthenticated } = useAuthStore();
   const { 
     listings, 
     filteredListings, 
@@ -54,6 +54,22 @@ export default function HomeScreen() {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <Text style={{ fontSize: 16, color: colors.text }}>Loading...</Text>
+      </View>
+    );
+  }
+  
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (isInitialized && !isAuthenticated) {
+      router.replace('/(auth)');
+    }
+  }, [isInitialized, isAuthenticated, router]);
+  
+  // Don't render content if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ fontSize: 16, color: colors.text }}>Redirecting to login...</Text>
       </View>
     );
   }
