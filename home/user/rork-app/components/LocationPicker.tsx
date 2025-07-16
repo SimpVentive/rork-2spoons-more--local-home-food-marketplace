@@ -80,7 +80,6 @@ const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElemen
           </View>
         </Modal>
       );
-    }
   }
   
   // Use native component
