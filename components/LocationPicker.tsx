@@ -13,11 +13,7 @@ interface LocationPickerProps {
     longitude: number;
     address: string;
   }) => void;
-  onSelectLocation?: (location: {
-    latitude: number;
-    longitude: number;
-    address: string;
-  }) => void;
+
   onClose: () => void;
   title: string;
   showRoute: boolean;

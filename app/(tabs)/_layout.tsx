@@ -63,7 +63,7 @@ export default function TabLayout(): React.ReactElement {
         }
         
         // If user is admin, redirect to admin panel
-        if (authState.user?.isAdmin) {
+        if (authState.user?.isAdmin === true) {
           router.replace('/(admin)');
           return;
         }
@@ -104,7 +104,7 @@ export default function TabLayout(): React.ReactElement {
   }
   
   // Additional safety check for admin users
-  if (authState.user?.isAdmin) {
+  if (authState.user?.isAdmin === true) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -234,19 +234,19 @@ export default function TabLayout(): React.ReactElement {
         </>
       )}
       
-      {/* For Buyers: More (left), Route Settings, Following, Notifications, Explore (right) */}
+      {/* For Buyers: Index (left), Route Settings, Following, Notifications, More (right) */}
       {!isSeller && (
         <>
           <Tabs.Screen
-            name="more"
+            name="index"
             options={{
-              title: 'More',
+              title: 'Explore',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Menu size={22} color={color} />
+                  <Search size={22} color={color} />
                 </View>
               ),
-              tabBarLabel: 'More',
+              tabBarLabel: 'Explore',
             }}
           />
           
@@ -290,15 +290,15 @@ export default function TabLayout(): React.ReactElement {
           />
           
           <Tabs.Screen
-            name="index"
+            name="more"
             options={{
-              title: 'Explore',
+              title: 'More',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Search size={22} color={color} />
+                  <MoreHorizontal size={22} color={color} />
                 </View>
               ),
-              tabBarLabel: 'Explore',
+              tabBarLabel: 'More',
             }}
           />
         </>

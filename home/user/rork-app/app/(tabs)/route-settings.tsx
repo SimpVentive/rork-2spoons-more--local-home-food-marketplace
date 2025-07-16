@@ -25,7 +25,7 @@ import LocationPicker from '@/components/LocationPicker';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
 import { RoutePoint } from '@/types';
-// import type { User } from '@/types';
+import type { User } from '@/types';
 
 export default function RouteSettingsScreen() {
   const { user, updateProfile } = useAuthStore();
@@ -40,7 +40,7 @@ export default function RouteSettingsScreen() {
   const [showRouteMap, setShowRouteMap] = useState(false);
   const [selectedLocations, setSelectedLocations] = useState<RoutePoint[]>([]);
   
-  const MAX_CUSTOM_LOCATIONS = 5;
+  const MAX_CUSTOM_LOCATIONS = 3; // Total of 5 locations including home and office
   
   useEffect(() => {
     loadUserLocations();
@@ -142,7 +142,7 @@ export default function RouteSettingsScreen() {
     if (type === 'custom' && customLocations.length >= MAX_CUSTOM_LOCATIONS) {
       Alert.alert(
         'Location Limit Reached',
-        `You can only add up to ${MAX_CUSTOM_LOCATIONS} custom locations.`,
+        `You can only add up to ${MAX_CUSTOM_LOCATIONS} custom locations (total 5 including home and office).`,
         [{ text: 'OK' }]
       );
       return;
@@ -239,7 +239,7 @@ export default function RouteSettingsScreen() {
               No custom locations added yet
             </Text>
             <Text style={styles.emptyStateSubtext}>
-              Add up to {MAX_CUSTOM_LOCATIONS} frequently visited places to find food along those routes
+              Add up to {MAX_CUSTOM_LOCATIONS} frequently visited places to find food along those routes (total 5 locations including home and office)
             </Text>
           </View>
         ) : (
