@@ -12,7 +12,8 @@ import {
   PlusCircle,
   Route,
   RefreshCw,
-  MoreHorizontal,
+  Menu,
+  Heart,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
@@ -158,6 +159,8 @@ export default function TabLayout(): React.ReactElement {
             paddingTop: Platform.OS === 'ios' ? 8 : 6,
             paddingBottom: Platform.OS === 'ios' ? 25 : 18,
             paddingHorizontal: 6,
+            zIndex: 1000,
+            elevation: 20,
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,
@@ -246,7 +249,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'More',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <MoreHorizontal size={Platform.OS === 'android' ? 20 : 22} color={color} />
+                  <Menu size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'More',
@@ -255,7 +258,7 @@ export default function TabLayout(): React.ReactElement {
         </>
       )}
       
-      {/* For Buyers: Index (left), Route Settings, Following, Notifications, More (right) */}
+      {/* For Buyers: Home, Search, Following, Profile */}
       {!isSeller && (
         <>
           <Tabs.Screen
@@ -272,15 +275,15 @@ export default function TabLayout(): React.ReactElement {
           />
           
           <Tabs.Screen
-            name="route-settings"
+            name="search"
             options={{
-              title: 'Route Settings',
+              title: 'Search',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Route size={Platform.OS === 'android' ? 20 : 22} color={color} />
+                  <Search size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
-              tabBarLabel: 'Routes',
+              tabBarLabel: 'Search',
             }}
           />
           
@@ -290,7 +293,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'Following',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Users size={Platform.OS === 'android' ? 20 : 22} color={color} />
+                  <Heart size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'Following',
@@ -298,28 +301,15 @@ export default function TabLayout(): React.ReactElement {
           />
           
           <Tabs.Screen
-            name="notifications"
+            name="profile"
             options={{
-              title: 'Notifications',
+              title: 'Profile',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Bell size={Platform.OS === 'android' ? 20 : 22} color={color} />
+                  <User size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
-              tabBarLabel: 'Alerts',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="more"
-            options={{
-              title: 'More',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <MoreHorizontal size={Platform.OS === 'android' ? 20 : 22} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'More',
+              tabBarLabel: 'Profile',
             }}
           />
         </>
@@ -327,9 +317,23 @@ export default function TabLayout(): React.ReactElement {
       
       {/* Hidden tabs that will be accessible from the more screen */}
       <Tabs.Screen
-        name="search"
+        name="route-settings"
         options={{
-          title: 'Search',
+          title: 'Route Settings',
+          tabBarButton: () => null,
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Notifications',
+          tabBarButton: () => null,
+        }}
+      />
+      <Tabs.Screen
+        name="more"
+        options={{
+          title: 'More',
           tabBarButton: () => null,
         }}
       />
@@ -348,26 +352,24 @@ export default function TabLayout(): React.ReactElement {
         }}
       />
       
-      {/* For sellers, hide the index tab */}
+      {/* For sellers, hide the index and search tabs */}
       {isSeller && (
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'Home',
-            tabBarButton: () => null,
-          }}
-        />
-      )}
-      
-      {/* For buyers, hide the profile tab */}
-      {!isSeller && (
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: 'Profile',
-            tabBarButton: () => null,
-          }}
-        />
+        <>
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: 'Home',
+              tabBarButton: () => null,
+            }}
+          />
+          <Tabs.Screen
+            name="search"
+            options={{
+              title: 'Search',
+              tabBarButton: () => null,
+            }}
+          />
+        </>
       )}
     </Tabs>
   );

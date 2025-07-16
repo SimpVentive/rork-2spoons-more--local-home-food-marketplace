@@ -47,18 +47,15 @@ export const useAuthStore = create<AuthState>()(
           // This will be called after the store is rehydrated from AsyncStorage
           const { isAuthenticated, user } = get();
           
-          // For development: if no user is authenticated, set a default user (but not admin)
-          if (!isAuthenticated || !user) {
-            const defaultUser = mockUsers.find(u => !u.isAdmin) || mockUsers[0]; // Use first non-admin user as default
-            if (defaultUser) {
-              set({
-                user: defaultUser,
-                isAuthenticated: true,
-                userPreference: { type: 'buyer' }, // Force buyer for default user
-                token: 'dev-token',
-                isAdmin: false, // Never set admin for default user
-              });
-            }
+          // Force users to login every time - no auto-authentication
+          if (isAuthenticated) {
+            set({
+              user: null,
+              isAuthenticated: false,
+              userPreference: null,
+              token: null,
+              isAdmin: false,
+            });
           }
           
           set({ isInitialized: true });

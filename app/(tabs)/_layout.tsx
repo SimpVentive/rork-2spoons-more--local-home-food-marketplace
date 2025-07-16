@@ -12,7 +12,8 @@ import {
   PlusCircle,
   Route,
   RefreshCw,
-  MoreHorizontal,
+  Menu,
+  Heart,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
@@ -158,6 +159,8 @@ export default function TabLayout(): React.ReactElement {
             paddingTop: Platform.OS === 'ios' ? 8 : 6,
             paddingBottom: Platform.OS === 'ios' ? 25 : 18,
             paddingHorizontal: 6,
+            zIndex: 1000,
+            elevation: 20,
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,
@@ -277,10 +280,10 @@ export default function TabLayout(): React.ReactElement {
               title: 'Route Settings',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Route size={Platform.OS === 'android' ? 20 : 22} color={color} />
+                  <Search size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
-              tabBarLabel: 'Routes',
+              tabBarLabel: 'Search',
             }}
           />
           
@@ -290,7 +293,7 @@ export default function TabLayout(): React.ReactElement {
               title: 'Following',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Users size={Platform.OS === 'android' ? 20 : 22} color={color} />
+                  <Heart size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'Following',

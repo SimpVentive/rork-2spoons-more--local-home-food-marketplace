@@ -132,6 +132,7 @@ export default function HomeScreen() {
   return (
     <ScrollView 
       style={styles.container}
+      contentContainerStyle={styles.scrollContent}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
@@ -563,5 +564,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textLight,
     textAlign: 'center',
+  },
+  scrollContent: {
+    paddingBottom: 120, // Add padding to avoid tab bar overlap
   },
 });
