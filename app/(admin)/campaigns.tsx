@@ -8,7 +8,8 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
-  Modal
+  Modal,
+  ScrollView
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { 

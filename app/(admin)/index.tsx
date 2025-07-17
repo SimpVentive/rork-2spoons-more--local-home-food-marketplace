@@ -45,9 +45,10 @@ import colors from '@/constants/colors';
 import { mockAdminDashboardData } from '@/mocks/data';
 import { Image } from 'expo-image';
 import { Order, FoodListing, Complaint, TopChef } from '@/types';
+import Button from '@/components/Button';
 
 export default function AdminDashboard() {
-  const { user } = useAuthStore();
+  const { user,logout } = useAuthStore();
   const { listings, fetchListings } = useListingsStore();
   const { orders, fetchOrders } = useOrdersStore();
   const { complaints } = useComplaintsStore();
@@ -121,7 +122,10 @@ export default function AdminDashboard() {
       setIsLoading(false);
     }
   };
-  
+  const handleLogout = () => {
+    logout();
+    router.replace('/(auth)');
+  };
   const loadStats = () => {
     // Calculate stats from store data
     const pendingApprovals = listings.filter(listing => !listing.isApproved).length;
@@ -876,6 +880,13 @@ export default function AdminDashboard() {
             </View>
           </View>
         </View>
+        <Button
+        title="Logout"
+        onPress={handleLogout}
+        variant="outline"
+        style={styles.logoutButton}
+        textStyle={styles.logoutButtonText}
+      />
       </View>
     </ScrollView>
   );
@@ -1235,5 +1246,13 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     textAlign: 'center',
     padding: 16,
+  },
+  logoutButton: {
+    marginHorizontal: 16,
+    marginTop: 32,
+    borderColor: colors.error,
+  },
+  logoutButtonText: {
+    color: colors.error,
   },
 });

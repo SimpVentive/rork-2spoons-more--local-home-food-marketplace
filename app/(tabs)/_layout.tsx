@@ -227,7 +227,7 @@ export default function TabLayout(): React.ReactElement {
           />
           
           <Tabs.Screen
-            name="more"
+            name="More"
             options={{
               title: 'More',
               tabBarIcon: ({ color, focused }) => (
@@ -245,7 +245,7 @@ export default function TabLayout(): React.ReactElement {
       {!isSeller && (
         <>
           <Tabs.Screen
-            name="index"
+            name="Index"
             options={{
               title: 'Explore',
               tabBarIcon: ({ color, focused }) => (
@@ -337,7 +337,7 @@ export default function TabLayout(): React.ReactElement {
       {/* For sellers, hide the index tab */}
       {isSeller && (
         <Tabs.Screen
-          name="index"
+          name="Index"
           options={{
             title: 'Home',
             tabBarButton: () => null,
