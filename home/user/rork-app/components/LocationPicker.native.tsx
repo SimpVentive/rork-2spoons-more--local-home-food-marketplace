@@ -101,40 +101,127 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
     }
     
     setIsLoading(true);
-    const { status } = await Location.requestForegroundPermissionsAsync();
     
-    if (status === 'granted') {
-      try {
-        const currentLocation = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Highest,
-        });
-        const { latitude, longitude } = currentLocation.coords;
-        
-        // Get address from coordinates
-        const addressResponse = await Location.reverseGeocodeAsync({
-          latitude,
-          longitude,
-        });
-        
-        if (addressResponse && addressResponse.length > 0) {
-          const address = formatAddress(addressResponse[0]);
+    try {
+      // First check current permission status
+      const { status: currentStatus } = await Location.getForegroundPermissionsAsync();
+      
+      let permissionStatus = currentStatus;
+      
+      // If not granted, request permission
+      if (currentStatus !== 'granted') {
+        const { status: requestedStatus } = await Location.requestForegroundPermissionsAsync();
+        permissionStatus = requestedStatus;
+      }
+      
+      if (permissionStatus === 'granted') {
+        try {
+          const currentLocation = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+            timeout: 10000,
+          });
+          const { latitude, longitude } = currentLocation.coords;
           
+          // Get address from coordinates with error handling
+          try {
+            const addressResponse = await Location.reverseGeocodeAsync({
+              latitude,
+              longitude,
+            });
+            
+            if (addressResponse && addressResponse.length > 0) {
+              const address = formatAddress(addressResponse[0]);
+              
+              setLocation({
+                latitude,
+                longitude,
+                address,
+              });
+              
+              setMapRegion({
+                latitude,
+                longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              });
+            } else {
+              // Set location without address if reverse geocoding fails
+              setLocation({
+                latitude,
+                longitude,
+                address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+              });
+              
+              setMapRegion({
+                latitude,
+                longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              });
+            }
+          } catch (geocodeError) {
+            console.warn('Reverse geocoding failed:', geocodeError);
+            // Still set the location with coordinates
+            setLocation({
+              latitude,
+              longitude,
+              address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+            });
+            
+            setMapRegion({
+              latitude,
+              longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            });
+          }
+        } catch (locationError) {
+          console.warn('Error getting current location:', locationError);
+          // Use default location if current location fails
           setLocation({
-            latitude,
-            longitude,
-            address,
+            latitude: 17.4123,
+            longitude: 78.2679,
+            address: 'Default Location (Hyderabad)',
           });
           
           setMapRegion({
-            latitude,
-            longitude,
+            latitude: 17.4123,
+            longitude: 78.2679,
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
           });
         }
-      } catch (error) {
-        console.error('Error getting location:', error);
+      } else {
+        console.warn('Location permission not granted:', permissionStatus);
+        // Use default location if permission not granted
+        setLocation({
+          latitude: 17.4123,
+          longitude: 78.2679,
+          address: 'Default Location (Permission Required)',
+        });
+        
+        setMapRegion({
+          latitude: 17.4123,
+          longitude: 78.2679,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        });
       }
+    } catch (error) {
+      console.error('Error in location permission handling:', error);
+      // Fallback to default location
+      setLocation({
+        latitude: 17.4123,
+        longitude: 78.2679,
+        address: 'Default Location (Error)',
+      });
+      
+      setMapRegion({
+        latitude: 17.4123,
+        longitude: 78.2679,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
     }
     
     setIsLoading(false);
@@ -171,9 +258,22 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
           longitude: coordinate.longitude,
           address,
         });
+      } else {
+        // Set location with coordinates if address lookup fails
+        setLocation({
+          latitude: coordinate.latitude,
+          longitude: coordinate.longitude,
+          address: `${coordinate.latitude.toFixed(6)}, ${coordinate.longitude.toFixed(6)}`,
+        });
       }
     } catch (error) {
-      console.error('Error getting address:', error);
+      console.warn('Error getting address:', error);
+      // Still set the location with coordinates
+      setLocation({
+        latitude: coordinate.latitude,
+        longitude: coordinate.longitude,
+        address: `${coordinate.latitude.toFixed(6)}, ${coordinate.longitude.toFixed(6)}`,
+      });
     }
     
     setIsLoading(false);
@@ -190,16 +290,25 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
       if (results.length > 0) {
         const searchResults = await Promise.all(
           results.map(async (result) => {
-            const addressResponse = await Location.reverseGeocodeAsync({
-              latitude: result.latitude,
-              longitude: result.longitude,
-            });
-            
-            return {
-              latitude: result.latitude,
-              longitude: result.longitude,
-              address: addressResponse[0] ? formatAddress(addressResponse[0]) : 'Unknown location',
-            };
+            try {
+              const addressResponse = await Location.reverseGeocodeAsync({
+                latitude: result.latitude,
+                longitude: result.longitude,
+              });
+              
+              return {
+                latitude: result.latitude,
+                longitude: result.longitude,
+                address: addressResponse[0] ? formatAddress(addressResponse[0]) : `${result.latitude.toFixed(6)}, ${result.longitude.toFixed(6)}`,
+              };
+            } catch (geocodeError) {
+              console.warn('Reverse geocoding failed for search result:', geocodeError);
+              return {
+                latitude: result.latitude,
+                longitude: result.longitude,
+                address: `${result.latitude.toFixed(6)}, ${result.longitude.toFixed(6)}`,
+              };
+            }
           })
         );
         
@@ -209,6 +318,7 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
       }
     } catch (error) {
       console.error('Error searching location:', error);
+      alert('Error searching for location. Please try again.');
       setSearchResults([]);
     }
     
@@ -235,39 +345,88 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
   const getCurrentLocation = async () => {
     setIsLoading(true);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      // Check current permission status first
+      const { status: currentStatus } = await Location.getForegroundPermissionsAsync();
       
-      if (status === 'granted') {
-        const currentLocation = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Highest,
-        });
-        const { latitude, longitude } = currentLocation.coords;
-        
-        // Get address from coordinates
-        const addressResponse = await Location.reverseGeocodeAsync({
-          latitude,
-          longitude,
-        });
-        
-        if (addressResponse && addressResponse.length > 0) {
-          const address = formatAddress(addressResponse[0]);
-          
-          setLocation({
-            latitude,
-            longitude,
-            address,
+      let permissionStatus = currentStatus;
+      
+      // If not granted, request permission
+      if (currentStatus !== 'granted') {
+        const { status: requestedStatus } = await Location.requestForegroundPermissionsAsync();
+        permissionStatus = requestedStatus;
+      }
+      
+      if (permissionStatus === 'granted') {
+        try {
+          const currentLocation = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+            timeout: 10000,
           });
+          const { latitude, longitude } = currentLocation.coords;
           
-          setMapRegion({
-            latitude,
-            longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          });
+          // Get address from coordinates with error handling
+          try {
+            const addressResponse = await Location.reverseGeocodeAsync({
+              latitude,
+              longitude,
+            });
+            
+            if (addressResponse && addressResponse.length > 0) {
+              const address = formatAddress(addressResponse[0]);
+              
+              setLocation({
+                latitude,
+                longitude,
+                address,
+              });
+              
+              setMapRegion({
+                latitude,
+                longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              });
+            } else {
+              // Set location without address if reverse geocoding fails
+              setLocation({
+                latitude,
+                longitude,
+                address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+              });
+              
+              setMapRegion({
+                latitude,
+                longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              });
+            }
+          } catch (geocodeError) {
+            console.warn('Reverse geocoding failed:', geocodeError);
+            // Still set the location with coordinates
+            setLocation({
+              latitude,
+              longitude,
+              address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+            });
+            
+            setMapRegion({
+              latitude,
+              longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            });
+          }
+        } catch (locationError) {
+          console.warn('Error getting current location:', locationError);
+          alert('Unable to get current location. Please check your location settings.');
         }
+      } else {
+        alert('Location permission is required to get your current location.');
       }
     } catch (error) {
       console.error('Error getting current location:', error);
+      alert('Error accessing location services.');
     } finally {
       setIsLoading(false);
     }

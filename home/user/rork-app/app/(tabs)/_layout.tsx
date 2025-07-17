@@ -14,7 +14,6 @@ import {
   RefreshCw,
   Menu,
   Heart,
-  MoreHorizontal,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
@@ -42,22 +41,11 @@ export default function TabLayout(): React.ReactElement {
     
     const initializeAuth = async () => {
       try {
-        console.log('TabLayout: Initializing auth...');
-        
         // Initialize the auth store first
         await useAuthStore.getState().initialize();
         
         // Then get the state
-        const { isAuthenticated, userPreference, user, isInitialized } = useAuthStore.getState();
-        
-        console.log('TabLayout: Auth state after init:', { 
-          isAuthenticated, 
-          userPreference, 
-          isInitialized,
-          userName: user?.name,
-          isAdmin: user?.isAdmin 
-        });
-        
+        const { isAuthenticated, userPreference, user } = useAuthStore.getState();
         setAuthState({ isAuthenticated, userPreference, user });
         setHasCheckedAuth(true);
       } catch (error) {
@@ -74,35 +62,24 @@ export default function TabLayout(): React.ReactElement {
   useEffect(() => {
     if (!isMounted || !authState || !hasCheckedAuth) return;
     
-    console.log('TabLayout: Checking auth for navigation...', {
-      isAuthenticated: authState.isAuthenticated,
-      isAdmin: authState.user?.isAdmin,
-      userPreference: authState.userPreference
-    });
-    
     // Add a small delay to ensure everything is properly initialized
     const checkAuth = async () => {
       try {
         if (!authState.isAuthenticated) {
-          console.log('TabLayout: User not authenticated, redirecting to auth');
           router.replace('/(auth)');
           return;
         }
         
         // IMPORTANT: Admin users should NEVER see the tabs - redirect them immediately
         if (authState.user?.isAdmin === true) {
-          console.log('TabLayout: Admin user detected, redirecting to admin panel');
           router.replace('/(admin)');
           return;
         }
         
         if (!authState.userPreference) {
-          console.log('TabLayout: No user preference, redirecting to preference selection');
           router.replace('/user-preference');
           return;
         }
-        
-        console.log('TabLayout: User authenticated and ready for tabs');
       } catch (error) {
         console.error('Navigation error:', error);
         // Don't redirect on error, let user stay in tabs
@@ -267,12 +244,12 @@ export default function TabLayout(): React.ReactElement {
           />
           
           <Tabs.Screen
-            name="More"
+            name="more"
             options={{
               title: 'More',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <MoreHorizontal size={Platform.OS === 'android' ? 20 : 22} color={color} />
+                  <Menu size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
               tabBarLabel: 'More',
@@ -281,11 +258,11 @@ export default function TabLayout(): React.ReactElement {
         </>
       )}
       
-      {/* For Buyers: Index (left), Route Settings, Following, Notifications, More (right) */}
+      {/* For Buyers: Home, Search, Following, Profile */}
       {!isSeller && (
         <>
           <Tabs.Screen
-            name="Index"
+            name="index"
             options={{
               title: 'Explore',
               tabBarIcon: ({ color, focused }) => (
@@ -298,9 +275,9 @@ export default function TabLayout(): React.ReactElement {
           />
           
           <Tabs.Screen
-            name="route-settings"
+            name="search"
             options={{
-              title: 'Route Settings',
+              title: 'Search',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
                   <Search size={Platform.OS === 'android' ? 20 : 22} color={color} />
@@ -324,28 +301,15 @@ export default function TabLayout(): React.ReactElement {
           />
           
           <Tabs.Screen
-            name="notifications"
+            name="profile"
             options={{
-              title: 'Notifications',
+              title: 'Profile',
               tabBarIcon: ({ color, focused }) => (
                 <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Bell size={Platform.OS === 'android' ? 20 : 22} color={color} />
+                  <User size={Platform.OS === 'android' ? 20 : 22} color={color} />
                 </View>
               ),
-              tabBarLabel: 'Alerts',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="more"
-            options={{
-              title: 'More',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <MoreHorizontal size={Platform.OS === 'android' ? 20 : 22} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'More',
+              tabBarLabel: 'Profile',
             }}
           />
         </>
@@ -353,9 +317,23 @@ export default function TabLayout(): React.ReactElement {
       
       {/* Hidden tabs that will be accessible from the more screen */}
       <Tabs.Screen
-        name="search"
+        name="route-settings"
         options={{
-          title: 'Search',
+          title: 'Route Settings',
+          tabBarButton: () => null,
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Notifications',
+          tabBarButton: () => null,
+        }}
+      />
+      <Tabs.Screen
+        name="more"
+        options={{
+          title: 'More',
           tabBarButton: () => null,
         }}
       />
@@ -374,26 +352,24 @@ export default function TabLayout(): React.ReactElement {
         }}
       />
       
-      {/* For sellers, hide the index tab */}
+      {/* For sellers, hide the index and search tabs */}
       {isSeller && (
-        <Tabs.Screen
-          name="Index"
-          options={{
-            title: 'Home',
-            tabBarButton: () => null,
-          }}
-        />
-      )}
-      
-      {/* For buyers, hide the profile tab */}
-      {!isSeller && (
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: 'Profile',
-            tabBarButton: () => null,
-          }}
-        />
+        <>
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: 'Home',
+              tabBarButton: () => null,
+            }}
+          />
+          <Tabs.Screen
+            name="search"
+            options={{
+              title: 'Search',
+              tabBarButton: () => null,
+            }}
+          />
+        </>
       )}
     </Tabs>
   );
