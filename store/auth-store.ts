@@ -50,7 +50,7 @@ export const useAuthStore = create<AuthState>()(
           console.log('Initializing auth store, current state:', { isAuthenticated, user: user?.email });
           
           // Force users to login every time - no auto-authentication
-          if (isAuthenticated) {
+          if (!isAuthenticated) {
             console.log('Clearing authentication state to force fresh login');
             set({
               user: null,

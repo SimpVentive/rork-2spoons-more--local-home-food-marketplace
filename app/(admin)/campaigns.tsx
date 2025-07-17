@@ -750,7 +750,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
   },
   filterButtonActive: {
-    backgroundColor: colors.adminAccent,
+      backgroundColor: colors.primary,
   },
   filterButtonText: {
     fontSize: 14,
@@ -764,7 +764,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.adminAccent,
+    backgroundColor: colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -964,7 +964,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
   },
   optionButtonActive: {
-    backgroundColor: colors.adminAccent,
+    backgroundColor: colors.primary,
   },
   optionButtonText: {
     fontSize: 14,
@@ -985,6 +985,6 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   modalCreateButton: {
-    backgroundColor: colors.adminAccent,
+    backgroundColor: colors.primary,
   },
 });

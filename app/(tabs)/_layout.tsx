@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs, useRouter } from 'expo-router';
 import { 
   Home, 
+  History,
+  Settings,
   Search, 
   ShoppingBag, 
   Users, 
@@ -18,7 +21,7 @@ import {
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
-import { Platform, StyleSheet, View, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import { Platform, StyleSheet, View, ActivityIndicator, TouchableOpacity, Text,Alert } from 'react-native';
 
 export default function TabLayout(): React.ReactElement {
   const router = useRouter();
@@ -29,7 +32,7 @@ export default function TabLayout(): React.ReactElement {
     userPreference: any;
     user: any;
   } | null>(null);
-  const { switchRole } = useAuthStore();
+  const { user, switchRole } = useAuthStore();
   
   // Wait for component to mount
   useEffect(() => {
@@ -157,19 +160,102 @@ export default function TabLayout(): React.ReactElement {
   }
 
   // Determine if user is a seller/chef based on userPreference
-  const isSeller = authState.userPreference?.type === 'seller' || authState.user?.isChef;
+  let isSeller = user?.isChef;
 
   // Calculate tab bar height with proper safe area handling for Android
   const tabBarHeight = Platform.OS === 'ios' ? 85 : 80;
 
-  const handleSwitchRole = async () => {
-    try {
-      await switchRole();
-    } catch (error) {
-      console.error('Error switching role:', error);
-    }
+  const handleSwitchRolelay = async () => {
+      try {
+        await switchRole();
+        console.log(user?.isChef);
+        isSeller = user?.isChef;
+      } catch (error) {
+        Alert.alert('Error', 'Failed to switch role. Please try again.');
+      }
   };
-
+  console.log(isSeller)
+  const screens = [
+    
+    
+    {
+      name: 'index',
+      title: 'Home',
+      icon: (color) => <Home size={24} color={color} />, 
+      show: user?.isChef,
+      tabbutton: true,
+    },
+	{
+      name: 'orders',
+      title: 'My Orders',
+      icon: (color) => <ShoppingBag size={24} color={color} />, 
+      show: user?.isChef,
+      tabbutton: true,
+    },
+	{
+      name: 'finances',
+      title: 'Wallet',
+      icon: (color) => <Wallet size={24} color={color} />, 
+      show: user?.isChef,
+      tabbutton: true,
+    },	
+	{
+      name: 'index',
+      title: 'Explore',
+      icon: (color) => <Home size={24} color={color} />, 
+      show: !user?.isChef,
+      tabbutton: true,
+    },
+    {
+      name: 'route-settings',
+      title: 'Route Settings',
+      icon: (color) => <Settings size={24} color={color} />, 
+      show: !user?.isChef,
+      tabbutton: true,
+    },
+	{
+      name: 'following',
+      title: 'Followers',
+      icon: (color) => <Users size={24} color={color} />, 
+      show: true,
+      tabbutton: true,
+    },
+    {
+      name: 'notifications',
+      title: 'Notifications',
+      icon: (color) => <Bell size={24} color={color} />, 
+      show: !user?.isChef,
+      tabbutton: true,
+    },
+    {
+      name: 'more',
+      title: 'More',
+      icon: (color) => <MoreHorizontal size={24} color={color} />, 
+      show: true,
+      tabbutton: true,
+    },
+    {
+        name: 'search',
+        title: 'Search',
+        icon: null, 
+        show: true,
+        tabbutton: false,
+      },
+    {
+        name: 'analytics',
+        title: 'Analytics',
+        icon: null, 
+        show: true,
+        tabbutton: false,
+      },
+    {
+        name: 'create',
+        title: 'Create',
+        icon: null, 
+        show: true,
+        tabbutton: false,
+      },
+  ];
   return (
     <Tabs
       screenOptions={{
@@ -198,11 +284,11 @@ export default function TabLayout(): React.ReactElement {
         headerRight: () => (
           <TouchableOpacity 
             style={styles.switchButton}
-            onPress={handleSwitchRole}
+            onPress={handleSwitchRolelay}
           >
             <RefreshCw size={16} color={colors.primary} />
             <Text style={styles.switchButtonText}>
-              {isSeller ? 'Buyer' : 'Seller'}
+              {user?.isChef ? 'Buyer' : 'Seller'}
             </Text>
           </TouchableOpacity>
         ),
@@ -211,190 +297,39 @@ export default function TabLayout(): React.ReactElement {
         tabBarAllowFontScaling: false,
       }}
     >
-      {/* For Sellers: Profile (landing), Orders, Wallet, Followers, More */}
-      {isSeller && (
-        <>
-          <Tabs.Screen
-            name="profile"
-            options={{
-              title: 'Profile',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <User size={Platform.OS === 'android' ? 20 : 22} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'Profile',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="orders"
-            options={{
-              title: 'My Orders',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <ShoppingBag size={Platform.OS === 'android' ? 20 : 22} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'Orders',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="finances"
-            options={{
-              title: 'Wallet',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Wallet size={Platform.OS === 'android' ? 20 : 22} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'Wallet',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="following"
-            options={{
-              title: 'Followers',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Users size={Platform.OS === 'android' ? 20 : 22} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'Followers',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="More"
-            options={{
-              title: 'More',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <MoreHorizontal size={Platform.OS === 'android' ? 20 : 22} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'More',
-            }}
-          />
-        </>
-      )}
       
-      {/* For Buyers: Index (left), Route Settings, Following, Notifications, More (right) */}
-      {!isSeller && (
-        <>
-          <Tabs.Screen
-            name="Index"
-            options={{
-              title: 'Explore',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Home size={Platform.OS === 'android' ? 20 : 22} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'Home',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="route-settings"
-            options={{
-              title: 'Route Settings',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Search size={Platform.OS === 'android' ? 20 : 22} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'Search',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="following"
-            options={{
-              title: 'Following',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Heart size={Platform.OS === 'android' ? 20 : 22} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'Following',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="notifications"
-            options={{
-              title: 'Notifications',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <Bell size={Platform.OS === 'android' ? 20 : 22} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'Alerts',
-            }}
-          />
-          
-          <Tabs.Screen
-            name="more"
-            options={{
-              title: 'More',
-              tabBarIcon: ({ color, focused }) => (
-                <View style={[styles.iconContainer, focused && styles.focusedIconContainer]}>
-                  <MoreHorizontal size={Platform.OS === 'android' ? 20 : 22} color={color} />
-                </View>
-              ),
-              tabBarLabel: 'More',
-            }}
-          />
-        </>
-      )}
+      {screens.filter(screen => screen.show).map(screen => {
+        if (screen.show) {
+        if (screen.tabbutton) {          
+          return (
+            <Tabs.Screen
+              key={screen.name}
+              name={screen.name}
+              options={{
+                title: screen.title,
+                tabBarIcon: ({ color }) => screen.icon ? screen.icon(color) : null,
+              }}
+            />
+          );
+        } else {
+          return (
+            <Tabs.Screen
+              key={screen.name}
+              name={screen.name}
+              options={{
+                title: screen.title,
+                tabBarButton: () => null,
+              }}
+            />
+          );
+        }
+        }
+        else{
+          return null
+        }
+      })}
       
-      {/* Hidden tabs that will be accessible from the more screen */}
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: 'Search',
-          tabBarButton: () => null,
-        }}
-      />
-      <Tabs.Screen
-        name="analytics"
-        options={{
-          title: 'Analytics',
-          tabBarButton: () => null,
-        }}
-      />
-      <Tabs.Screen
-        name="create"
-        options={{
-          title: 'Create',
-          tabBarButton: () => null,
-        }}
-      />
       
-      {/* For sellers, hide the index tab */}
-      {isSeller && (
-        <Tabs.Screen
-          name="Index"
-          options={{
-            title: 'Home',
-            tabBarButton: () => null,
-          }}
-        />
-      )}
-      
-      {/* For buyers, hide the profile tab */}
-      {!isSeller && (
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: 'Profile',
-            tabBarButton: () => null,
-          }}
-        />
-      )}
     </Tabs>
   );
 }

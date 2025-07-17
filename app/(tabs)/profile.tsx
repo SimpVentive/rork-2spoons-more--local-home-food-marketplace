@@ -118,11 +118,6 @@ export default function ProfileScreen() {
   const handleSwitchRole = async () => {
     try {
       await switchRole();
-      Alert.alert(
-        'Role Switched',
-        `You are now a ${user?.isChef ? 'buyer' : 'seller'}.`,
-        [{ text: 'OK' }]
-      );
     } catch (error) {
       Alert.alert('Error', 'Failed to switch role. Please try again.');
     }
@@ -278,13 +273,14 @@ export default function ProfileScreen() {
               </View>
             )}
           </View>
-          
+          {user.isAdmin && (
           <TouchableOpacity 
             style={styles.settingsButton}
             onPress={() => router.push('/settings')}
           >
             <Settings size={24} color={colors.text} />
           </TouchableOpacity>
+          )}
         </View>
         
         <Text style={styles.bio} numberOfLines={3}>

@@ -46,34 +46,35 @@ export default function MoreScreen() {
   const router = useRouter();
   
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
+  Alert.alert(
+    'Logout',
+    'Are you sure you want to logout?',
+    [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Logout',
+        onPress: async () => {
+          try {
+            await logout();
+            setTimeout(() => {
+              router.replace('/(auth)');
+            }, 100); 
+          } catch (error) {
+            console.error('Logout error:', error);
+          }
         },
-        {
-          text: 'Logout',
-          onPress: () => {
-            logout();
-            router.replace('/(auth)');
-          },
-          style: 'destructive',
-        },
-      ]
-    );
-  };
+        style: 'destructive',
+      },
+    ]
+  );
+};
 
   const handleSwitchRole = async () => {
     try {
       await switchRole();
-      Alert.alert(
-        'Role Switched',
-        `You are now a ${user?.isChef ? 'buyer' : 'seller'}.`,
-        [{ text: 'OK' }]
-      );
     } catch (error) {
       Alert.alert('Error', 'Failed to switch role. Please try again.');
     }
