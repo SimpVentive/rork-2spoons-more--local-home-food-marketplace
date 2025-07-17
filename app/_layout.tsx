@@ -82,6 +82,7 @@ export default function RootLayout() {
             animation: Platform.OS === 'android' ? 'slide_from_right' : 'default',
           }}
         >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="(admin)" options={{ headerShown: false }} />

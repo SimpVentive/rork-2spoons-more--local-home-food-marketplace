@@ -31,6 +31,7 @@ import EmptyState from '@/components/EmptyState';
 import { FilterModal } from '@/components/FilterModal';
 import { NotifyMeModal } from '@/components/NotifyMeModal';
 import { RouteSearchModal } from '@/components/RouteSearchModal';
+import { FloatingFilterButton } from '@/components/FloatingFilterButton';
 import colors from '@/constants/colors';
 import { FoodListing, FilterOptions, RouteSearchParams } from '@/types';
 
@@ -417,6 +418,8 @@ export default function SearchScreen() {
         onClose={() => setRouteSearchModalVisible(false)}
         onApply={handleRouteSearchApply}
       />
+      
+      <FloatingFilterButton onPress={() => setFilterModalVisible(true)} />
     </View>
   );
 }
