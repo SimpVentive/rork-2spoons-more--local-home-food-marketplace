@@ -24,6 +24,8 @@ import { useListingsStore } from '@/store/listings-store';
 import { useReviewsStore } from '@/store/reviews-store';
 import { FoodCard } from '@/components/FoodCard';
 import { NotifyMeModal } from '@/components/NotifyMeModal';
+import { FloatingFilterButton } from '@/components/FloatingFilterButton';
+import { FilterModal } from '@/components/FilterModal';
 import { FoodListing, User, Review } from '@/types';
 import colors from '@/constants/colors';
 import { mockUsers } from '@/mocks/data';
@@ -43,6 +45,7 @@ export default function HomeScreen() {
   
   const [refreshing, setRefreshing] = useState(false);
   const [notifyModalVisible, setNotifyModalVisible] = useState(false);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [topSellingItems, setTopSellingItems] = useState<FoodListing[]>([]);
   const [topChefs, setTopChefs] = useState<User[]>([]);
   const [recentReviews, setRecentReviews] = useState<Review[]>([]);
@@ -582,6 +585,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   scrollContent: {
-    paddingBottom: 120, // Add padding to avoid tab bar overlap
+    paddingBottom: Platform.OS === 'ios' ? 120 : 100, // Add padding to avoid tab bar overlap
   },
 });

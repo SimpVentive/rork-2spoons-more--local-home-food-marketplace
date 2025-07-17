@@ -161,6 +161,10 @@ export default function TabLayout(): React.ReactElement {
             paddingHorizontal: 6,
             zIndex: 1000,
             elevation: 20,
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,
