@@ -23,7 +23,7 @@ if (Platform.OS !== 'web') {
   Polyline = maps.Polyline;
 }
 import colors from '@/constants/colors';
-import Button from './Button';
+import Button from '@/components/Button';
 
 interface LocationPickerProps {
   visible: boolean;
@@ -118,7 +118,7 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
         try {
           const currentLocation = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Balanced,
-            timeout: 10000,
+
           });
           const { latitude, longitude } = currentLocation.coords;
           
@@ -360,7 +360,7 @@ const LocationPickerNative: React.FC<LocationPickerProps> = ({
         try {
           const currentLocation = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Balanced,
-            timeout: 10000,
+
           });
           const { latitude, longitude } = currentLocation.coords;
           
