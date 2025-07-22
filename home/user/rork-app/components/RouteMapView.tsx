@@ -105,7 +105,7 @@ export default function RouteMapView(props: RouteMapViewProps) {
       </View>
     );
   } else {
-    const RouteMapViewNative = require('./RouteMapView.native').default;
+    const RouteMapViewNative = require('./RouteMapViewNative').default;
     return <RouteMapViewNative {...props} />;
   }
 }
