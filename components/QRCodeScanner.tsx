@@ -52,10 +52,14 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
 
       // Check permission status
       if (!permission) {
-        console.log("Permission object not ready");
-        setError("Camera permission not available");
-        setIsLoading(false);
-        return;
+        console.log("Permission object not ready, waiting...");
+        // Wait a bit and try again
+        await new Promise(resolve => setTimeout(resolve, 500));
+        if (!permission) {
+          setError("Camera permission not available. Please restart the app.");
+          setIsLoading(false);
+          return;
+        }
       }
 
       if (!permission.granted) {
@@ -64,14 +68,16 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
         console.log("Permission result:", result);
         
         if (!result.granted) {
-          setError("Camera permission denied");
+          setError("Camera permission denied. Please enable camera access in your device settings.");
           setIsLoading(false);
           return;
         }
       }
 
-      // Small delay for Android to ensure camera is ready
+      // Longer delay for Android to ensure camera is ready
       if (Platform.OS === 'android') {
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } else {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
@@ -80,13 +86,14 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
       console.log("Camera initialized successfully");
     } catch (error) {
       console.error("Error initializing camera:", error);
-      setError("Failed to initialize camera");
+      setError(`Failed to initialize camera: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setIsLoading(false);
     }
   };
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     if (scanned || !data || !cameraReady) {
+      console.log("Scan ignored:", { scanned, hasData: !!data, cameraReady });
       return;
     }
     
@@ -96,7 +103,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
     // Add haptic feedback on mobile
     if (Platform.OS !== 'web') {
       try {
-        const { Haptics } = require('expo-haptics');
+        const Haptics = require('expo-haptics');
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
         console.log("Haptics not available:", error);
@@ -108,10 +115,8 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
       clearTimeout(scanTimeoutRef.current);
     }
     
-    // Process the scan with a small delay
-    scanTimeoutRef.current = setTimeout(() => {
-      onScan(data);
-    }, 100);
+    // Process the scan immediately
+    onScan(data);
   };
 
   const handleClose = () => {
@@ -221,7 +226,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
         barcodeScannerSettings={{
           barcodeTypes: ['qr'],
         }}
-        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        onBarcodeScanned={handleBarCodeScanned}
         onCameraReady={() => {
           console.log("Camera ready callback triggered");
           setCameraReady(true);
@@ -283,7 +288,10 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScan, onClose }) => {
                   Platform: {Platform.OS} | Ready: {cameraReady ? 'Yes' : 'No'} | Scanned: {scanned ? 'Yes' : 'No'}
                 </Text>
                 <Text style={styles.debugText}>
-                  Permission: {permission?.granted ? 'Granted' : 'Denied'}
+                  Permission: {permission?.granted ? 'Granted' : 'Denied'} | Loading: {isLoading ? 'Yes' : 'No'}
+                </Text>
+                <Text style={styles.debugText}>
+                  Error: {error || 'None'}
                 </Text>
               </View>
             )}

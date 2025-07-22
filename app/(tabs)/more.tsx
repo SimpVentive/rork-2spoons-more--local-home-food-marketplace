@@ -37,6 +37,7 @@ import {
   Gift,
   Home,
   RefreshCw,
+  QrCode,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
@@ -221,6 +222,14 @@ export default function MoreScreen() {
       {/* Quick Access Section */}
       <View style={styles.menuSection}>
         <Text style={styles.menuSectionTitle}>Quick Access</Text>
+        
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => router.push('/scan')}
+        >
+          <QrCode size={22} color={colors.primary} />
+          <Text style={styles.menuItemText}>Scan QR Code</Text>
+        </TouchableOpacity>
         
         <TouchableOpacity 
           style={styles.menuItem}
