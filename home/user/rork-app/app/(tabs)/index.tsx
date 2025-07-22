@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -6,8 +6,12 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  RefreshControl,
+  ImageBackground,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { NotifyMeModal } from '../../components/NotifyMeModal';
 import { 
   MapPin, 
   Bell, 
@@ -35,6 +39,58 @@ const colors = {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [notifyModalVisible, setNotifyModalVisible] = useState<boolean>(false);
+  
+  // Mock user data
+  const user = {
+    name: 'John Doe',
+    address: 'Mumbai, Maharashtra',
+    profileImage: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167',
+    officeAddress: null,
+  };
+  
+  // Mock data
+  const topSellingItems = [
+    {
+      id: '1',
+      dishName: 'Butter Chicken',
+      price: 250,
+      image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398',
+      rating: 4.8,
+      isVegetarian: false,
+    },
+    {
+      id: '2',
+      dishName: 'Paneer Tikka',
+      price: 180,
+      image: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8',
+      rating: 4.6,
+      isVegetarian: true,
+    },
+  ];
+  
+  const topChefs = [
+    {
+      id: '1',
+      name: 'Priya Sharma',
+      profileImage: 'https://images.unsplash.com/photo-1494790108755-2616c9c0e8e0',
+      rating: 4.9,
+      cuisineTypes: ['North Indian', 'Punjabi'],
+    },
+    {
+      id: '2',
+      name: 'Rajesh Kumar',
+      profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
+      rating: 4.7,
+      cuisineTypes: ['South Indian', 'Tamil'],
+    },
+  ];
+  
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1000);
+  };
   
   const handleExploreNowPress = () => {
     router.push('/(tabs)/search');
@@ -42,6 +98,14 @@ export default function HomeScreen() {
 
   const handleRouteSettingsPress = () => {
     router.push('/(tabs)/route-settings');
+  };
+  
+  const handleListingPress = (item: any) => {
+    router.push(`/listing/${item.id}`);
+  };
+  
+  const handleChefPress = (chefId: string) => {
+    router.push(`/profile/${chefId}`);
   };
   
   return (
