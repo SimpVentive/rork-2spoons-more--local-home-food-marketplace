@@ -4,7 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { TouchableOpacity, View, ActivityIndicator, Platform } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import colors from '@/constants/colors';
+import colors from '../constants/colors';
 import { ErrorBoundary } from './error-boundary';
 
 export default function RootLayout() {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, View, Text, StyleSheet } from 'react-native';
+import { Platform, View, Text } from 'react-native';
 import { MapPin, Route } from 'lucide-react-native';
 import colors from '@/constants/colors';
 
