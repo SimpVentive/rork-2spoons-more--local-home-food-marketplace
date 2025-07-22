@@ -584,7 +584,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      onRehydrateStorage: () => (state) => {
+      onRehydrateStorage: () => (state: AuthState | undefined) => {
         console.log('Auth store rehydration started');
         return (state: AuthState | undefined, error: Error | undefined) => {
           if (error) {
