@@ -1,16 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
-  RefreshControl,
   TouchableOpacity,
   ScrollView,
   Platform,
-  ImageBackground,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Image } from 'expo-image';
 import { 
   MapPin, 
   Bell, 
@@ -19,133 +16,32 @@ import {
   Star,
   Route,
 } from 'lucide-react-native';
-import { useAuthStore } from '@/store/auth-store';
-import { useListingsStore } from '@/store/listings-store';
-import { useReviewsStore } from '@/store/reviews-store';
-import { FoodCard } from '@/components/FoodCard';
-import { NotifyMeModal } from '@/components/NotifyMeModal';
-import { FloatingFilterButton } from '@/components/FloatingFilterButton';
-import { FilterModal } from '@/components/FilterModal';
-import { FoodListing, User, Review } from '@/types';
-import colors from '@/constants/colors';
-import { mockUsers } from '@/mocks/data';
+
+const colors = {
+  primary: '#FF6B35',
+  secondary: '#4ECDC4',
+  background: '#F8F9FA',
+  white: '#FFFFFF',
+  text: '#2C3E50',
+  textLight: '#7F8C8D',
+  border: '#E9ECEF',
+  card: '#FFFFFF',
+  error: '#E74C3C',
+  success: '#27AE60',
+  warning: '#F39C12',
+  vegetarian: '#27AE60',
+  nonVegetarian: '#E74C3C',
+};
 
 export default function HomeScreen() {
-  const { user, isInitialized, isAuthenticated } = useAuthStore();
-  const { 
-    listings, 
-    filteredListings, 
-    fetchListings, 
-    searchListings, 
-    isLoading,
-    getTopSellingItems
-  } = useListingsStore();
-  
-  const reviewsStore = useReviewsStore();
-  
-  const [refreshing, setRefreshing] = useState(false);
-  const [notifyModalVisible, setNotifyModalVisible] = useState(false);
-  const [filterModalVisible, setFilterModalVisible] = useState(false);
-  const [topSellingItems, setTopSellingItems] = useState<FoodListing[]>([]);
-  const [topChefs, setTopChefs] = useState<User[]>([]);
-  const [recentReviews, setRecentReviews] = useState<Review[]>([]);
-  
   const router = useRouter();
   
-  // Show loading if auth is not initialized
-  if (!isInitialized) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ fontSize: 16, color: colors.text }}>Loading...</Text>
-      </View>
-    );
-  }
-  
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (isInitialized && !isAuthenticated) {
-      router.replace('/(auth)');
-    }
-  }, [isInitialized, isAuthenticated, router]);
-  
-  // Don't render content if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ fontSize: 16, color: colors.text }}>Redirecting to login...</Text>
-      </View>
-    );
-  }
-  
-  useEffect(() => {
-    fetchListings();
-    loadTopSellingItems();
-    loadTopChefs();
-    loadRecentReviews();
-  }, []);
-  
-  const loadTopSellingItems = async () => {
-    try {
-      // Use the getTopSellingItems from the store
-      const items = await getTopSellingItems(5);
-      setTopSellingItems(items);
-    } catch (error) {
-      console.error("Error loading top selling items:", error);
-      // Fallback to first 5 listings if there's an error
-      setTopSellingItems(listings.slice(0, 5));
-    }
-  };
-  
-  const loadTopChefs = () => {
-    // Get top 5 chefs based on rating
-    const chefs = [...mockUsers]
-      .filter(user => user.isChef && user.allowProfileDisplay)
-      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-      .slice(0, 5);
-    
-    setTopChefs(chefs);
-  };
-  
-  const loadRecentReviews = async () => {
-    try {
-      const reviews = await reviewsStore.fetchRecentReviews(5);
-      setRecentReviews(reviews);
-    } catch (error) {
-      console.error("Error loading recent reviews:", error);
-    }
-  };
-  
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchListings();
-    await loadTopSellingItems();
-    await loadRecentReviews();
-    loadTopChefs();
-    setRefreshing(false);
-  };
-  
-  const handleListingPress = (listing: FoodListing) => {
-    router.push(`/listing/${listing.id}`);
-  };
-
-  const handleChefPress = (chefId: string) => {
-    router.push(`/profile/${chefId}`);
-  };
-
-  const handleExplorePress = () => {
+  const handleExploreNowPress = () => {
     router.push('/(tabs)/search');
   };
 
   const handleRouteSettingsPress = () => {
     router.push('/(tabs)/route-settings');
-  };
-
-  const handleSearchPress = () => {
-    router.push('/(tabs)/search');
-  };
-
-  const handleExploreNowPress = () => {
-    router.push('/(tabs)/search');
   };
   
   return (
