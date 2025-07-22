@@ -23,7 +23,7 @@ if (Platform.OS !== 'web') {
   Polyline = maps.Polyline;
 }
 import colors from '../constants/colors';
-import Button from '../Button';
+import Button from './Button';
 
 interface LocationPickerProps {
   visible: boolean;
