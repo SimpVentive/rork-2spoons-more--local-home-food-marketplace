@@ -5,7 +5,7 @@ import { TouchableOpacity, View, ActivityIndicator, Platform } from 'react-nativ
 import { ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import colors from '../constants/colors';
-import { ErrorBoundary } from './error-boundary';
+import { ErrorBoundary } from '../error-boundary';
 
 export default function RootLayout() {
   const router = useRouter();
