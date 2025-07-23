@@ -10,16 +10,7 @@ import {
 import { MapPin, Navigation, Clock, Utensils, Route } from 'lucide-react-native';
 import { Platform } from 'react-native';
 
-// Conditional import for react-native-maps to avoid web issues
-let MapView: any, Marker: any, PROVIDER_GOOGLE: any, Polyline: any;
-
-if (Platform.OS !== 'web') {
-  const maps = require('react-native-maps');
-  MapView = maps.default;
-  Marker = maps.Marker;
-  PROVIDER_GOOGLE = maps.PROVIDER_GOOGLE;
-  Polyline = maps.Polyline;
-}
+import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
 import colors from '@/constants/colors';
 import { RouteLocation } from '@/types';
 import { useAuthStore } from '@/store/auth-store';
@@ -50,38 +41,7 @@ export default function RouteMapViewNative({ routePoints, dishesOnRoute, onDishP
     longitudeDelta: 0.05,
   });
 
-  // Return fallback for web
-  if (Platform.OS === 'web') {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Route size={20} color={colors.primary} />
-          <Text style={styles.headerTitle}>Your Route Map</Text>
-          <View style={styles.routeStats}>
-            <Text style={styles.routeStatsText}>
-              {routePoints.length} stops • {dishesOnRoute.length} dishes available
-            </Text>
-          </View>
-        </View>
-        <View style={styles.webMapFallback}>
-          <MapPin size={48} color={colors.textLight} />
-          <Text style={styles.webMapText}>Map view is not available on web</Text>
-          <Text style={styles.webMapSubtext}>Please use the mobile app for full map functionality</Text>
-        </View>
-        <View style={styles.routeSummary}>
-          <Text style={styles.routeSummaryTitle}>Route Summary</Text>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total Stops:</Text>
-            <Text style={styles.summaryValue}>{routePoints.length}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Available Dishes:</Text>
-            <Text style={styles.summaryValue}>{dishesOnRoute.length}</Text>
-          </View>
-        </View>
-      </View>
-    );
-  }
+
 
   useEffect(() => {
     if (routePoints.length > 0) {

@@ -12,16 +12,7 @@ import {
 } from 'react-native';
 import { X, Search, MapPin, Navigation, CheckCircle, Route } from 'lucide-react-native';
 import * as Location from 'expo-location';
-// Conditional import for react-native-maps
-let MapView: any, Marker: any, PROVIDER_GOOGLE: any, Polyline: any;
-
-if (Platform.OS !== 'web') {
-  const maps = require('react-native-maps');
-  MapView = maps.default;
-  Marker = maps.Marker;
-  PROVIDER_GOOGLE = maps.PROVIDER_GOOGLE;
-  Polyline = maps.Polyline;
-}
+import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
 import colors from '@/constants/colors';
 import Button from '@/components/Button';
 
