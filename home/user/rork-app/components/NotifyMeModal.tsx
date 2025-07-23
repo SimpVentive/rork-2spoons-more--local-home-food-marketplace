@@ -12,7 +12,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Bell, X, MapPin } from 'lucide-react-native';
-import colors from '@/constants/colors';
+import colors from '../constants/colors';
 
 interface NotifyMeModalProps {
   visible: boolean;

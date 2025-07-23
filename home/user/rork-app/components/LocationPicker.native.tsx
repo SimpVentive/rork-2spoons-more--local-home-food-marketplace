@@ -22,8 +22,8 @@ if (Platform.OS !== 'web') {
   PROVIDER_GOOGLE = maps.PROVIDER_GOOGLE;
   Polyline = maps.Polyline;
 }
-import colors from '@/constants/colors';
-import Button from '@/components/Button';
+import colors from '../constants/colors';
+import Button from './Button';
 
 interface LocationPickerProps {
   visible: boolean;

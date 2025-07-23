@@ -11,7 +11,19 @@ import {
   View,
   Pressable,
 } from 'react-native';
-import colors from '@/constants/colors';
+
+const colors = {
+  primary: '#FF6B35',
+  secondary: '#4ECDC4',
+  background: '#F8F9FA',
+  white: '#FFFFFF',
+  text: '#2C3E50',
+  textLight: '#7F8C8D',
+  border: '#E9ECEF',
+  card: '#FFFFFF',
+  error: '#E74C3C',
+  success: '#27AE60',
+};
 
 interface ButtonProps {
   title: string;
