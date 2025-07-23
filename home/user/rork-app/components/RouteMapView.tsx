@@ -104,20 +104,86 @@ export default function RouteMapView(props: RouteMapViewProps) {
       </View>
     );
   } else {
-    // For native platforms, use the native component from LocationPicker.native.tsx
-    const LocationPickerNative = require('./LocationPicker.native').default;
+    // For native platforms, show a simple fallback as well
     return (
-      <LocationPickerNative
-        visible={true}
-        onLocationSelect={() => {}}
-        onClose={() => {}}
-        title="Route Map"
-        showRoute={true}
-        routeStart={null}
-        routeEnd={null}
-        routePoints={props.routePoints}
-        dishesOnRoute={props.dishesOnRoute}
-      />
+      <View style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}>
+        <View style={{
+          padding: 16,
+          backgroundColor: colors.white,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          flexDirection: 'row',
+          alignItems: 'center',
+        }}>
+          <Route size={20} color={colors.primary} />
+          <Text style={{
+            fontSize: 18,
+            fontWeight: '600',
+            color: colors.text,
+            marginLeft: 8,
+          }}>Your Route Map</Text>
+        </View>
+        
+        <View style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: colors.card,
+          margin: 16,
+          borderRadius: 12,
+          padding: 32,
+        }}>
+          <MapPin size={48} color={colors.textLight} />
+          <Text style={{
+            fontSize: 16,
+            fontWeight: '600',
+            color: colors.text,
+            marginTop: 16,
+            textAlign: 'center',
+          }}>Map view is temporarily unavailable</Text>
+          <Text style={{
+            fontSize: 14,
+            color: colors.textLight,
+            marginTop: 8,
+            textAlign: 'center',
+          }}>Route functionality will be available soon</Text>
+        </View>
+        
+        <View style={{
+          backgroundColor: colors.white,
+          padding: 16,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+        }}>
+          <Text style={{
+            fontSize: 16,
+            fontWeight: '600',
+            color: colors.text,
+            marginBottom: 12,
+          }}>Route Summary</Text>
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingVertical: 4,
+          }}>
+            <Text style={{ fontSize: 14, color: colors.textLight }}>Total Stops:</Text>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{props.routePoints.length}</Text>
+          </View>
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingVertical: 4,
+          }}>
+            <Text style={{ fontSize: 14, color: colors.textLight }}>Available Dishes:</Text>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>{props.dishesOnRoute.length}</Text>
+          </View>
+        </View>
+      </View>
     );
   }
 }

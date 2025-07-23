@@ -21,21 +21,21 @@ interface LocationPickerProps {
   showRoute: boolean;
   routeStart: any;
   routeEnd: any;
-  routePoints?: {
+  routePoints?: Array<{
     latitude: number;
     longitude: number;
     name: string;
-  }[];
-  dishesOnRoute?: {
+  }>;
+  dishesOnRoute?: Array<{
     latitude: number;
     longitude: number;
     dishName: string;
     availableUntil: string;
     sellerName: string;
-  }[];
+  }>;
 }
 
-const LocationPicker: React.FC<LocationPickerProps> = (props) => {
+const LocationPickerWeb: React.FC<LocationPickerProps> = (props) => {
   return (
     <Modal visible={props.visible} transparent onRequestClose={props.onClose}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
@@ -46,7 +46,7 @@ const LocationPicker: React.FC<LocationPickerProps> = (props) => {
           <View style={{ alignItems: 'center', marginBottom: 20 }}>
             <MapPin size={48} color={colors.textLight} />
             <Text style={{ fontSize: 14, color: colors.textLight, textAlign: 'center', marginTop: 12 }}>
-              Location picker is not available. Using default location.
+              Location picker is not available on web. Using default location.
             </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -57,7 +57,7 @@ const LocationPicker: React.FC<LocationPickerProps> = (props) => {
                 props.onLocationSelect({
                   latitude: 17.4123,
                   longitude: 78.2679,
-                  address: 'Default Location'
+                  address: 'Default Location (Web)'
                 });
               }} 
               style={{ flex: 1 }} 
@@ -69,4 +69,4 @@ const LocationPicker: React.FC<LocationPickerProps> = (props) => {
   );
 };
 
-export default LocationPicker;
+export default LocationPickerWeb;
