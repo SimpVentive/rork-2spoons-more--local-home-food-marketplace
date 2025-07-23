@@ -12,20 +12,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Bell, X, MapPin } from 'lucide-react-native';
-
-const colors = {
-  primary: '#FF6B35',
-  secondary: '#4ECDC4',
-  background: '#F8F9FA',
-  white: '#FFFFFF',
-  text: '#2C3E50',
-  textLight: '#7F8C8D',
-  border: '#E9ECEF',
-  card: '#FFFFFF',
-  error: '#E74C3C',
-  success: '#27AE60',
-  warning: '#F39C12',
-};
+import colors from '@/constants/colors';
 
 interface NotifyMeModalProps {
   visible: boolean;

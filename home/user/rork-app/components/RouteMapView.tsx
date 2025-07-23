@@ -1,5 +1,7 @@
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, View, Text } from 'react-native';
+import { MapPin, Route } from 'lucide-react-native';
+import colors from '@/constants/colors';
 
 interface RouteMapViewProps {
   routePoints: Array<{
@@ -20,9 +22,6 @@ interface RouteMapViewProps {
 export default function RouteMapView(props: RouteMapViewProps) {
   if (Platform.OS === 'web') {
     // Simple fallback for web to avoid react-native-maps issues
-    const { View, Text, StyleSheet } = require('react-native');
-    const { MapPin, Route } = require('lucide-react-native');
-    const colors = require('@/constants/colors').default;
     
     return (
       <View style={{
