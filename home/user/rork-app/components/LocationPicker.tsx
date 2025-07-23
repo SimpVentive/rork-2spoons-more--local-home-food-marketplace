@@ -36,21 +36,10 @@ interface LocationPickerProps {
 const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElement => {
   if (Platform.OS === 'web') {
     // Simple fallback for web to avoid react-native-maps issues
-    const { View, Text, Modal, TouchableOpacity, StyleSheet, TextInput } = require('react-native');
-    const { MapPin, X } = require('lucide-react-native');
+    const { View, Text, Modal } = require('react-native');
+    const { MapPin } = require('lucide-react-native');
     const colors = require('@/constants/colors').default;
     const Button = require('./Button').default;
-    const [address, setAddress] = React.useState('');
-    
-    const handleSelect = () => {
-      if (address.trim()) {
-        props.onLocationSelect({
-          latitude: 17.4123, // Default coordinates for demo
-          longitude: 78.2679,
-          address: address.trim(),
-        });
-      }
-    };
     
     return (
       <Modal visible={props.visible} transparent onRequestClose={props.onClose}>
@@ -59,9 +48,12 @@ const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElemen
             <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 16, textAlign: 'center' }}>
               {props.title}
             </Text>
-            <Text style={{ fontSize: 14, color: colors.textLight, textAlign: 'center', marginBottom: 20 }}>
-              Location picker is not available on web. Using default location.
-            </Text>
+            <View style={{ alignItems: 'center', marginBottom: 20 }}>
+              <MapPin size={48} color={colors.textLight} />
+              <Text style={{ fontSize: 14, color: colors.textLight, textAlign: 'center', marginTop: 12 }}>
+                Location picker is not available on web. Using default location.
+              </Text>
+            </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Button title="Cancel" onPress={props.onClose} variant="outline" style={{ flex: 1 }} />
               <Button 
@@ -82,7 +74,7 @@ const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElemen
     );
   } else {
     // Use native component
-    const LocationPickerNative = require('./LocationPickerNative').default;
+    const LocationPickerNative = require('./LocationPicker.native').default;
     return <LocationPickerNative {...props} />;
   }
 };

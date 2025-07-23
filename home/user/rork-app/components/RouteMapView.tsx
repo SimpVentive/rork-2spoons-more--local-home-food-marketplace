@@ -104,7 +104,20 @@ export default function RouteMapView(props: RouteMapViewProps) {
       </View>
     );
   } else {
-    const RouteMapViewNative = require('./RouteMapViewNative').default;
-    return <RouteMapViewNative {...props} />;
+    // For native platforms, use the native component from LocationPicker.native.tsx
+    const LocationPickerNative = require('./LocationPicker.native').default;
+    return (
+      <LocationPickerNative
+        visible={true}
+        onLocationSelect={() => {}}
+        onClose={() => {}}
+        title="Route Map"
+        showRoute={true}
+        routeStart={null}
+        routeEnd={null}
+        routePoints={props.routePoints}
+        dishesOnRoute={props.dishesOnRoute}
+      />
+    );
   }
 }

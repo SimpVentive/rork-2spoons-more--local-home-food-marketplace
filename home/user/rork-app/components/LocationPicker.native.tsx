@@ -15,12 +15,30 @@ import * as Location from 'expo-location';
 // Conditional import for react-native-maps
 let MapView: any, Marker: any, PROVIDER_GOOGLE: any, Polyline: any;
 
+// Only import react-native-maps on native platforms
 if (Platform.OS !== 'web') {
-  const maps = require('react-native-maps');
-  MapView = maps.default;
-  Marker = maps.Marker;
-  PROVIDER_GOOGLE = maps.PROVIDER_GOOGLE;
-  Polyline = maps.Polyline;
+  try {
+    const maps = require('react-native-maps');
+    MapView = maps.default;
+    Marker = maps.Marker;
+    PROVIDER_GOOGLE = maps.PROVIDER_GOOGLE;
+    Polyline = maps.Polyline;
+  } catch (error) {
+    console.warn('react-native-maps not available:', error);
+    // Use fallback components
+    const fallback = require('./MapFallback.web.js');
+    MapView = fallback.default;
+    Marker = fallback.Marker;
+    PROVIDER_GOOGLE = fallback.PROVIDER_GOOGLE;
+    Polyline = fallback.Polyline;
+  }
+} else {
+  // Use web fallback
+  const fallback = require('./MapFallback.web.js');
+  MapView = fallback.default;
+  Marker = fallback.Marker;
+  PROVIDER_GOOGLE = fallback.PROVIDER_GOOGLE;
+  Polyline = fallback.Polyline;
 }
 import colors from '../constants/colors';
 import Button from './Button';
