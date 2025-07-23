@@ -19,14 +19,14 @@ import {
   Star,
   Route,
 } from 'lucide-react-native';
-import { useAuthStore } from '@/store/auth-store';
-import { useListingsStore } from '@/store/listings-store';
-import { useReviewsStore } from '@/store/reviews-store';
-import { FoodCard } from '@/components/FoodCard';
-import { NotifyMeModal } from '@/components/NotifyMeModal';
-import { FoodListing, User, Review } from '@/types';
-import colors from '@/constants/colors';
-import { mockUsers } from '@/mocks/data';
+import { useAuthStore } from '../../store/auth-store';
+import { useListingsStore } from '../../store/listings-store';
+import { useReviewsStore } from '../../store/reviews-store';
+import { FoodCard } from '../../components/FoodCard';
+import { NotifyMeModal } from '../../components/NotifyMeModal';
+import { FoodListing, User, Review } from '../../types';
+import colors from '../../constants/colors';
+import { mockUsers } from '../../mocks/data';
 
 export default function HomeScreen() {
   const { user, isInitialized } = useAuthStore();
@@ -49,6 +49,15 @@ export default function HomeScreen() {
   
   const router = useRouter();
   
+  useEffect(() => {
+    if (isInitialized) {
+      fetchListings();
+      loadTopSellingItems();
+      loadTopChefs();
+      loadRecentReviews();
+    }
+  }, [isInitialized]);
+  
   // Show loading if auth is not initialized
   if (!isInitialized) {
     return (
@@ -57,13 +66,6 @@ export default function HomeScreen() {
       </View>
     );
   }
-  
-  useEffect(() => {
-    fetchListings();
-    loadTopSellingItems();
-    loadTopChefs();
-    loadRecentReviews();
-  }, []);
   
   const loadTopSellingItems = async () => {
     try {
