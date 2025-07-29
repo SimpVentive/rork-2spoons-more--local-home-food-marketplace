@@ -6,11 +6,19 @@ import {
   Alert,
   TouchableOpacity,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { MapPin, Navigation, Clock, Utensils, Route } from 'lucide-react-native';
-import { Platform } from 'react-native';
 
-import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
+let MapView: any, Marker: any, PROVIDER_GOOGLE: any, Polyline: any;
+
+if (Platform.OS !== 'web') {
+  const maps = require('react-native-maps');
+  MapView = maps.default;
+  Marker = maps.Marker;
+  PROVIDER_GOOGLE = maps.PROVIDER_GOOGLE;
+  Polyline = maps.Polyline;
+}
 import colors from '@/constants/colors';
 import { RouteLocation } from '@/types';
 import { useAuthStore } from '@/store/auth-store';
