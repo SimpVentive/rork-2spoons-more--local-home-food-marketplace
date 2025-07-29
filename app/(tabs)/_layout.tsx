@@ -18,10 +18,15 @@ import {
   Menu,
   Heart,
   MoreHorizontal,
+  UtensilsCrossed,
+  MapPin,
+  ChefHat,
+  CreditCard,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
-import { Platform, StyleSheet, View, ActivityIndicator, TouchableOpacity, Text,Alert } from 'react-native';
+import { Platform, StyleSheet, View, ActivityIndicator, TouchableOpacity, Text, Alert, Animated } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 export default function TabLayout(): React.ReactElement {
   const router = useRouter();
@@ -175,55 +180,177 @@ export default function TabLayout(): React.ReactElement {
       }
   };
   console.log(isSeller)
+  // Custom tab bar icon component with notification badge
+  const TabIcon = ({ icon, color, focused, badgeCount }: { 
+    icon: React.ReactNode; 
+    color: string; 
+    focused: boolean;
+    badgeCount?: number;
+  }) => {
+    const scaleAnim = React.useRef(new Animated.Value(1)).current;
+    const glowAnim = React.useRef(new Animated.Value(0)).current;
+
+    React.useEffect(() => {
+      if (focused) {
+        // Haptic feedback on tab switch
+        if (Platform.OS !== 'web') {
+          Haptics.selectionAsync();
+        }
+        
+        // Scale animation
+        Animated.spring(scaleAnim, {
+          toValue: 1.1,
+          useNativeDriver: true,
+          tension: 300,
+          friction: 10,
+        }).start();
+        
+        // Glow animation
+        Animated.timing(glowAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: false,
+        }).start();
+      } else {
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 300,
+          friction: 10,
+        }).start();
+        
+        Animated.timing(glowAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: false,
+        }).start();
+      }
+    }, [focused]);
+
+    const glowColor = glowAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['rgba(255, 107, 53, 0)', 'rgba(255, 107, 53, 0.3)'],
+    });
+
+    return (
+      <View style={styles.tabIconContainer}>
+        <Animated.View 
+          style={[
+            styles.iconWrapper,
+            {
+              transform: [{ scale: scaleAnim }],
+              shadowColor: glowColor,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 1,
+              shadowRadius: focused ? 8 : 0,
+              elevation: focused ? 8 : 0,
+            }
+          ]}
+        >
+          {icon}
+        </Animated.View>
+        {badgeCount && badgeCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>
+              {badgeCount > 99 ? '99+' : badgeCount.toString()}
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
   const screens = [
-    
-    
     {
       name: 'index',
       title: 'Home',
-      icon: (color: string) => <Home size={24} color={color} />, 
+      icon: (color: string, focused: boolean) => (
+        <TabIcon 
+          icon={<ChefHat size={24} color={color} />} 
+          color={color} 
+          focused={focused}
+        />
+      ), 
       show: user?.isChef,
       tabbutton: true,
     },
 	{
       name: 'orders',
-      title: 'Orders',
-      icon: (color: string) => <ShoppingBag size={24} color={color} />, 
+      title: 'My Orders',
+      icon: (color: string, focused: boolean) => (
+        <TabIcon 
+          icon={<UtensilsCrossed size={24} color={color} />} 
+          color={color} 
+          focused={focused}
+          badgeCount={3} // Mock notification count
+        />
+      ), 
       show: user?.isChef,
       tabbutton: true,
     },
 	{
       name: 'finances',
       title: 'Wallet',
-      icon: (color: string) => <Wallet size={24} color={color} />, 
+      icon: (color: string, focused: boolean) => (
+        <TabIcon 
+          icon={<CreditCard size={24} color={color} />} 
+          color={color} 
+          focused={focused}
+        />
+      ), 
       show: user?.isChef,
       tabbutton: true,
     },	
 	{
       name: 'index',
       title: 'Explore',
-      icon: (color: string) => <Home size={24} color={color} />, 
+      icon: (color: string, focused: boolean) => (
+        <TabIcon 
+          icon={<Home size={24} color={color} />} 
+          color={color} 
+          focused={focused}
+        />
+      ), 
       show: !user?.isChef,
       tabbutton: true,
     },
     {
       name: 'route-settings',
-      title: 'Routes',
-      icon: (color: string) => <Settings size={24} color={color} />, 
+      title: 'Route Settings',
+      icon: (color: string, focused: boolean) => (
+        <TabIcon 
+          icon={<MapPin size={24} color={color} />} 
+          color={color} 
+          focused={focused}
+          badgeCount={1} // Mock notification for new routes
+        />
+      ), 
       show: !user?.isChef,
       tabbutton: true,
     },
 	{
       name: 'following',
       title: 'Following',
-      icon: (color: string) => <Heart size={24} color={color} />, 
+      icon: (color: string, focused: boolean) => (
+        <TabIcon 
+          icon={<Heart size={24} color={color} />} 
+          color={color} 
+          focused={focused}
+        />
+      ), 
       show: true,
       tabbutton: true,
     },
     {
       name: 'more',
-      title: 'Profile',
-      icon: (color: string) => <User size={24} color={color} />, 
+      title: 'More',
+      icon: (color: string, focused: boolean) => (
+        <TabIcon 
+          icon={<User size={24} color={color} />} 
+          color={color} 
+          focused={focused}
+        />
+      ), 
       show: true,
       tabbutton: true,
     },
@@ -258,11 +385,18 @@ export default function TabLayout(): React.ReactElement {
           styles.tabBar,
           {
             height: tabBarHeight,
-            paddingTop: Platform.OS === 'ios' ? 8 : 6,
-            paddingBottom: Platform.OS === 'ios' ? 25 : 18,
-            paddingHorizontal: 6,
+            paddingTop: Platform.OS === 'ios' ? 12 : 8,
+            paddingBottom: Platform.OS === 'ios' ? 28 : 20,
+            paddingHorizontal: 16,
             zIndex: 9999,
             elevation: 30,
+            marginHorizontal: 16,
+            marginBottom: Platform.OS === 'ios' ? 20 : 16,
+            borderRadius: 24,
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,
@@ -300,7 +434,7 @@ export default function TabLayout(): React.ReactElement {
               name={screen.name}
               options={{
                 title: screen.title,
-                tabBarIcon: ({ color }) => screen.icon ? screen.icon(color) : null,
+                tabBarIcon: ({ color, focused }) => screen.icon ? screen.icon(color, focused) : null,
               }}
             />
           );
@@ -335,30 +469,58 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   tabBar: {
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
     backgroundColor: colors.white,
-    paddingHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 12,
+    borderTopWidth: 0,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   tabBarLabel: {
-    fontSize: Platform.OS === 'android' ? 11 : 10,
-    marginTop: Platform.OS === 'android' ? 4 : 2,
+    fontSize: Platform.OS === 'android' ? 10 : 9,
+    marginTop: Platform.OS === 'android' ? 2 : 1,
     fontWeight: '600',
   },
   tabBarItem: {
-    paddingVertical: Platform.OS === 'android' ? 4 : 6,
+    paddingVertical: Platform.OS === 'android' ? 6 : 8,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    minWidth: 55,
-    borderRadius: 8,
-    marginHorizontal: 1,
-    height: Platform.OS === 'android' ? 48 : 50,
+    minWidth: 60,
+    borderRadius: 16,
+    marginHorizontal: 2,
+    height: Platform.OS === 'android' ? 52 : 54,
+  },
+  tabIconContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconWrapper: {
+    padding: 4,
+    borderRadius: 12,
+  },
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -6,
+    backgroundColor: colors.error,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.white,
+  },
+  badgeText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   iconContainer: {
     width: Platform.OS === 'android' ? 32 : 36,
