@@ -10,6 +10,7 @@ import { Clock, MapPin } from 'lucide-react-native';
 import { Order } from '@/types';
 import OrderStatusBadge from './OrderStatusBadge';
 import colors from '@/constants/colors';
+import { optimizeImageUrl, generatePlaceholder } from '@/utils/imageOptimization';
 
 interface OrderCardProps {
   order: Order;
@@ -35,9 +36,20 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onPress }) => {
       
       <View style={styles.content}>
         <Image
-          source={{ uri: order.listingSnapshot.image }}
+          source={{ 
+            uri: optimizeImageUrl({
+              uri: order.listingSnapshot.image,
+              width: 160,
+              height: 160,
+              quality: 85,
+              format: 'webp'
+            })
+          }}
           style={styles.image}
           contentFit="cover"
+          placeholder={generatePlaceholder(160, 160)}
+          transition={200}
+          cachePolicy="memory-disk"
         />
         
         <View style={styles.details}>

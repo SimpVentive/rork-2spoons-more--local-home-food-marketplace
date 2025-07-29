@@ -10,6 +10,7 @@ import { Image } from 'expo-image';
 import { MapPin, Clock, Star } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { FoodListing } from '@/types';
+import { optimizeImageUrl, generatePlaceholder } from '@/utils/imageOptimization';
 
 interface FoodCardProps {
   listing: FoodListing;
@@ -54,9 +55,20 @@ export const FoodCard: React.FC<FoodCardProps> = ({
     >
       <View style={styles.imageContainer}>
         <Image
-          source={{ uri: listing.image }}
+          source={{ 
+            uri: optimizeImageUrl({
+              uri: listing.image,
+              width: 400,
+              height: 240,
+              quality: 85,
+              format: 'webp'
+            })
+          }}
           style={styles.image}
           contentFit="cover"
+          placeholder={generatePlaceholder(400, 240)}
+          transition={200}
+          cachePolicy="memory-disk"
         />
         
         {(isExpired || isSoldOut) && (
@@ -77,9 +89,20 @@ export const FoodCard: React.FC<FoodCardProps> = ({
         
         <View style={styles.sellerInfo}>
           <Image
-            source={{ uri: listing.sellerImage }}
+            source={{ 
+              uri: optimizeImageUrl({
+                uri: listing.sellerImage,
+                width: 40,
+                height: 40,
+                quality: 90,
+                format: 'webp'
+              })
+            }}
             style={styles.sellerImage}
             contentFit="cover"
+            placeholder={generatePlaceholder(40, 40)}
+            transition={150}
+            cachePolicy="memory-disk"
           />
           
           <Text style={styles.sellerName} numberOfLines={1}>
