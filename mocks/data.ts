@@ -1,14 +1,15 @@
 import { User, FoodListing, Order, Review, Complaint, Notification, Follow, TopEarner, TopDish, TopChef, AdminDashboardData, SubscriptionPlan } from '@/types';
+import { loadWithCache, getEssentialData } from '@/utils/dataOptimization';
 
-// Mock Users
-export const mockUsers: User[] = [
+// Essential mock data - only what's needed for initial render
+export const getEssentialMockUsers = (): User[] => [
   {
     id: 'user1',
     name: 'John Doe',
     email: 'john@example.com',
     phone: '+1234567890',
     address: '123 Main St, Anytown, USA',
-    profileImage: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36',
+    profileImage: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=200&h=200&fit=crop&q=80',
     experience: '5 years of cooking experience',
     cuisineTypes: ['Indian', 'Italian'],
     paymentMethods: ['UPI', 'Card'],
@@ -38,7 +39,7 @@ export const mockUsers: User[] = [
     email: 'jane@example.com',
     phone: '+1987654321',
     address: '456 Oak St, Othertown, USA',
-    profileImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
+    profileImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&q=80',
     experience: '10 years of professional cooking',
     cuisineTypes: ['Chinese', 'Thai', 'Japanese'],
     paymentMethods: ['UPI', 'Cash'],
@@ -62,13 +63,18 @@ export const mockUsers: User[] = [
     detourPreference: 700,
     freePostsRemaining: 1,
   },
+];
+
+// Lazy-loaded full user data
+export const mockUsers: User[] = [
+  ...getEssentialMockUsers(),
   {
     id: 'admin1',
     name: 'Admin User',
     email: 'admin@example.com',
     phone: '+1122334455',
     address: '789 Admin St, Admintown, USA',
-    profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
+    profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&q=80',
     experience: 'Platform administrator',
     cuisineTypes: [],
     paymentMethods: [],
@@ -191,12 +197,12 @@ export const mockFoodListings: FoodListing[] = [
     id: 'listing1',
     sellerId: 'user2',
     sellerName: 'Jane Smith',
-    sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
+    sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&q=80',
     sellerRating: 4.8,
     dishName: 'Homemade Butter Chicken',
     description: 'Authentic North Indian butter chicken made with organic ingredients and traditional spices.',
     price: 250,
-    image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398',
+    image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&h=300&fit=crop&q=80',
     isVegetarian: false,
     cuisineType: 'Indian',
     subcuisineType: 'North Indian',
@@ -229,12 +235,12 @@ export const mockFoodListings: FoodListing[] = [
     id: 'listing2',
     sellerId: 'user2',
     sellerName: 'Jane Smith',
-    sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
+    sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&q=80',
     sellerRating: 4.8,
     dishName: 'Vegetable Biryani',
     description: 'Fragrant basmati rice cooked with mixed vegetables and aromatic spices.',
     price: 180,
-    image: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0',
+    image: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=400&h=300&fit=crop&q=80',
     isVegetarian: true,
     cuisineType: 'Indian',
     subcuisineType: 'Hyderabadi',
@@ -267,12 +273,12 @@ export const mockFoodListings: FoodListing[] = [
     id: 'listing3',
     sellerId: 'user2',
     sellerName: 'Jane Smith',
-    sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
+    sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&q=80',
     sellerRating: 4.8,
     dishName: 'Homemade Pasta',
     description: 'Fresh pasta made from scratch with a rich tomato sauce and parmesan cheese.',
     price: 220,
-    image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9',
+    image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop&q=80',
     isVegetarian: true,
     cuisineType: 'Italian',
     ingredients: ['Pasta', 'Tomatoes', 'Olive Oil', 'Garlic', 'Basil', 'Parmesan'],
@@ -304,12 +310,12 @@ export const mockFoodListings: FoodListing[] = [
     id: 'listing4',
     sellerId: 'user2',
     sellerName: 'Jane Smith',
-    sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
+    sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&q=80',
     sellerRating: 4.8,
     dishName: 'Lunch Box Special',
     description: 'Complete lunch box with rice, curry, salad, and dessert.',
     price: 300,
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd',
+    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop&q=80',
     isVegetarian: true,
     cuisineType: 'Indian',
     subcuisineType: 'South Indian',
@@ -360,7 +366,7 @@ export const mockFoodListings: FoodListing[] = [
         name: 'Salad',
         description: 'Fresh cucumber and tomato salad',
         quantity: '1/4 cup',
-        image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd',
+        image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop&q=80',
       },
       {
         id: 'item5',
@@ -395,9 +401,9 @@ export const mockOrders: Order[] = [
     listingSnapshot: {
       dishName: 'Homemade Butter Chicken',
       price: 250,
-      image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398',
+      image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&h=300&fit=crop&q=80',
       sellerName: 'Jane Smith',
-      sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
+      sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&q=80',
       location: {
         latitude: 17.4223,
         longitude: 78.3379,
@@ -435,9 +441,9 @@ export const mockOrders: Order[] = [
     listingSnapshot: {
       dishName: 'Vegetable Biryani',
       price: 180,
-      image: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0',
+      image: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=400&h=300&fit=crop&q=80',
       sellerName: 'Jane Smith',
-      sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
+      sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&q=80',
       location: {
         latitude: 17.4223,
         longitude: 78.3379,

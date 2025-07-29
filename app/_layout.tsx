@@ -6,6 +6,8 @@ import { ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import colors from '@/constants/colors';
 import { ErrorBoundary } from './error-boundary';
+import { initializeProductionOptimizations } from '@/utils/productionOptimization';
+import { bundleAnalysis } from '@/utils/bundleOptimization';
 
 export default function RootLayout() {
   const router = useRouter();
@@ -13,6 +15,14 @@ export default function RootLayout() {
   
   // Ensure component is mounted before allowing navigation
   useEffect(() => {
+    // Initialize production optimizations
+    initializeProductionOptimizations();
+    
+    // Log bundle analysis in development
+    if (__DEV__) {
+      bundleAnalysis.logBundleInfo();
+    }
+    
     const timer = setTimeout(() => {
       setIsMounted(true);
     }, 100);
@@ -56,7 +66,7 @@ export default function RootLayout() {
                       try {
                         router.back();
                       } catch (error) {
-                        console.error('Navigation error:', error);
+                        // Navigation error handled silently in production
                       }
                     }}
                     style={{ 
