@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { X, Check, MapPin, Star, DollarSign, Clock, Users, Calendar, Leaf, Utensils, Zap } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
-import { CUISINE_TYPES } from '@/mocks/data';
+import { ESSENTIAL_CUISINE_TYPES } from '@/mocks/data';
 import colors from '@/constants/colors';
 import Button from './Button';
 import Input from './Input';
@@ -48,7 +48,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   const [availableNow, setAvailableNow] = useState<boolean>(
     initialFilters.availableNow || false
   );
-  const [sortBy, setSortBy] = useState<'rating' | 'price' | 'distance' | 'availableUntil' | 'servings' | undefined>(
+  const [sortBy, setSortBy] = useState<'rating' | 'price' | 'distance' | 'availableUntil' | undefined>(
     initialFilters.sortBy
   );
   const [foodType, setFoodType] = useState<'vegetarian' | 'non-vegetarian' | 'both'>(
@@ -459,7 +459,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Cuisine Types</Text>
               <View style={styles.cuisineContainer}>
-                {CUISINE_TYPES.map((cuisine) => (
+                {ESSENTIAL_CUISINE_TYPES.map((cuisine) => (
                   <TouchableOpacity
                     key={cuisine}
                     style={[
@@ -571,27 +571,6 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                   ]}
                 >
                   Ending Soon
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.sortOption,
-                  sortBy === 'servings' && styles.selectedSortOption,
-                ]}
-                onPress={() => setSortBy('servings')}
-              >
-                <Users
-                  size={16}
-                  color={sortBy === 'servings' ? colors.white : colors.primary}
-                />
-                <Text
-                  style={[
-                    styles.sortText,
-                    sortBy === 'servings' && styles.selectedSortText,
-                  ]}
-                >
-                  Servings
                 </Text>
               </TouchableOpacity>
             </View>
