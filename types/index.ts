@@ -130,7 +130,7 @@ export interface FilterOptions {
   maxPrice?: number;
   minRating?: number;
   maxDistance?: number;
-  sortBy?: 'price' | 'rating' | 'distance' | 'availableUntil';
+  sortBy?: 'price' | 'rating' | 'distance' | 'availableUntil' | 'servings';
   sortOrder?: 'asc' | 'desc';
   userLocation?: {
     latitude: number;
@@ -138,6 +138,7 @@ export interface FilterOptions {
   };
   availableNow?: boolean;
   minServings?: number;
+  maxServings?: number;
 }
 
 export interface RouteSearchParams {
