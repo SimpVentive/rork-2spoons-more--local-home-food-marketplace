@@ -16,7 +16,7 @@ import { useNotificationsStore } from '@/store/notifications-store';
 import Input from './Input';
 import Button from './Button';
 import colors from '@/constants/colors';
-import { SOUTH_INDIAN_SUBCUISINES, SOUTH_INDIAN_CUISINES_FLAT } from '@/mocks/data';
+import { ESSENTIAL_SOUTH_INDIAN } from '@/mocks/data';
 
 interface NotifyMeModalProps {
   visible: boolean;
@@ -110,8 +110,8 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
     if (!selectedCuisine) return [];
     
     // Check if the selected cuisine is a main category in South Indian subcuisines
-    if (selectedCuisine in SOUTH_INDIAN_SUBCUISINES) {
-      return SOUTH_INDIAN_SUBCUISINES[selectedCuisine as keyof typeof SOUTH_INDIAN_SUBCUISINES];
+    if (selectedCuisine in ESSENTIAL_SOUTH_INDIAN) {
+      return ESSENTIAL_SOUTH_INDIAN[selectedCuisine as keyof typeof ESSENTIAL_SOUTH_INDIAN];
     }
     
     return [];
@@ -169,7 +169,7 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
                   
                   <Text style={styles.sectionTitle}>South Indian Cuisine (Optional)</Text>
                   <View style={styles.cuisineContainer}>
-                    {Object.keys(SOUTH_INDIAN_SUBCUISINES).map((cuisine) => (
+                    {Object.keys(ESSENTIAL_SOUTH_INDIAN).map((cuisine) => (
                       <TouchableOpacity
                         key={cuisine}
                         style={[
