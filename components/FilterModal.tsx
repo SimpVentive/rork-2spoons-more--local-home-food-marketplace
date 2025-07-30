@@ -48,7 +48,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   const [availableNow, setAvailableNow] = useState<boolean>(
     initialFilters.availableNow || false
   );
-  const [sortBy, setSortBy] = useState<'rating' | 'price' | 'distance' | 'availableUntil' | undefined>(
+  const [sortBy, setSortBy] = useState<'rating' | 'price' | 'distance' | 'availableUntil' | 'servings' | undefined>(
     initialFilters.sortBy
   );
   const [foodType, setFoodType] = useState<'vegetarian' | 'non-vegetarian' | 'both'>(
@@ -571,6 +571,27 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                   ]}
                 >
                   Ending Soon
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.sortOption,
+                  sortBy === 'servings' && styles.selectedSortOption,
+                ]}
+                onPress={() => setSortBy('servings')}
+              >
+                <Users
+                  size={16}
+                  color={sortBy === 'servings' ? colors.white : colors.primary}
+                />
+                <Text
+                  style={[
+                    styles.sortText,
+                    sortBy === 'servings' && styles.selectedSortText,
+                  ]}
+                >
+                  Servings
                 </Text>
               </TouchableOpacity>
             </View>
