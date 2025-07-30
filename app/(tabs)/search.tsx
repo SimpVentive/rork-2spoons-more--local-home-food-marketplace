@@ -149,19 +149,30 @@ export default function SearchScreen() {
     setNotifyModalVisible(true);
   };
   
+  const handleVoiceSearch = () => {
+    // Placeholder for voice search functionality
+    console.log('Voice search activated');
+    // In a real app, you would implement speech-to-text here
+  };
+
   const renderHeader = () => (
     <View style={styles.header}>
-      <Text style={styles.headerTitle}>Explore Homemade Food</Text>
-      <Text style={styles.headerSubtitle}>
-        I am looking for...
-      </Text>
+      <View style={styles.welcomeSection}>
+        <Text style={styles.headerTitle}>What's cooking in your neighborhood?</Text>
+        <Text style={styles.headerSubtitle}>
+          Discover delicious homemade meals from local chefs
+        </Text>
+      </View>
       
       <View style={styles.searchContainer}>
         <SearchBar
-          placeholder="Search for dishes, cuisines, or chefs..."
+          placeholder="What's cooking in your neighborhood?"
           value={searchQuery}
           onChangeText={handleSearch}
           onFilterPress={() => setFilterModalVisible(true)}
+          onVoiceSearch={handleVoiceSearch}
+          isLarge={true}
+          showSuggestions={true}
         />
       </View>
       
@@ -431,53 +442,110 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: colors.white,
-    padding: 16,
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
     marginBottom: 8,
+    shadowColor: colors.text,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  welcomeSection: {
+    alignItems: 'center',
+    marginBottom: 24,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     color: colors.text,
     marginBottom: 8,
+    textAlign: 'center',
+    lineHeight: 34,
   },
   headerSubtitle: {
     fontSize: 16,
     color: colors.textLight,
-    marginBottom: 16,
+    textAlign: 'center',
+    fontWeight: '400',
+    lineHeight: 22,
   },
   searchContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
+    zIndex: 1000,
   },
   foodTypeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 20,
+    paddingHorizontal: 4,
   },
   foodTypeOption: {
     alignItems: 'center',
-    paddingVertical: 12, // Increased touch target
-    paddingHorizontal: 12, // Increased touch target
-    borderRadius: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     backgroundColor: colors.card,
     width: '31%',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   activeFoodTypeOption: {
     backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   vegFoodTypeOption: {
     backgroundColor: colors.vegetarian,
+    borderColor: colors.vegetarian,
+    shadowColor: colors.vegetarian,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   nonVegFoodTypeOption: {
     backgroundColor: colors.nonVegetarian,
+    borderColor: colors.nonVegetarian,
+    shadowColor: colors.nonVegetarian,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   foodTypeIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
+    shadowColor: colors.text,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   bothFoodIcon: {
     flexDirection: 'row',
@@ -497,8 +565,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.nonVegetarian,
   },
   foodTypeText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
     color: colors.text,
   },
   vegFoodTypeText: {
