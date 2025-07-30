@@ -158,13 +158,7 @@ export default function SearchScreen() {
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <View style={styles.welcomeSection}>
-        <Text style={styles.headerTitle}>What's cooking in your neighborhood?</Text>
-        <Text style={styles.headerSubtitle}>
-          Discover delicious homemade meals from local chefs
-        </Text>
-      </View>
-      
+      {/* Search Bar - Top Priority */}
       <View style={styles.searchContainer}>
         <SearchBar
           placeholder="What's cooking in your neighborhood?"
@@ -177,263 +171,197 @@ export default function SearchScreen() {
         />
       </View>
       
-      <View style={styles.dietPreferencesContainer}>
-        <TouchableOpacity
-          style={[
-            styles.dietPreferenceOption,
-            foodType === 'both' && styles.activeBothDiet,
-          ]}
-          onPress={() => {
-            setFoodType('both');
-            const updatedFilters = { ...activeFilters, foodType: 'both' as const };
-            setActiveFilters(updatedFilters);
-            searchListings({ ...updatedFilters, query: searchQuery });
-          }}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <View style={styles.dietIconContainer}>
-            <View style={styles.bothDietIcon}>
-              <View style={styles.vegDot} />
-              <View style={styles.nonVegDot} />
+      {/* Diet Preference Cards - Horizontal Layout */}
+      <View style={styles.dietSection}>
+        <Text style={styles.sectionTitle}>Diet Preference</Text>
+        <View style={styles.dietPreferencesContainer}>
+          <TouchableOpacity
+            style={[
+              styles.dietCard,
+              foodType === 'both' && styles.activeBothDiet,
+            ]}
+            onPress={() => {
+              setFoodType('both');
+              const updatedFilters = { ...activeFilters, foodType: 'both' as const };
+              setActiveFilters(updatedFilters);
+              searchListings({ ...updatedFilters, query: searchQuery });
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <View style={styles.dietIconWrapper}>
+              <View style={styles.bothDietIcon}>
+                <View style={styles.vegDot} />
+                <View style={styles.nonVegDot} />
+              </View>
             </View>
-          </View>
-          <View style={styles.dietTextContainer}>
             <Text style={[
-              styles.dietPreferenceText,
-              foodType === 'both' && styles.activeDietText,
+              styles.dietCardText,
+              foodType === 'both' && styles.activeDietCardText,
             ]}>Both</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[
+              styles.dietCard,
+              foodType === 'vegetarian' && styles.activeVegDiet,
+            ]}
+            onPress={() => {
+              setFoodType('vegetarian');
+              const updatedFilters = { ...activeFilters, foodType: 'vegetarian' as const };
+              setActiveFilters(updatedFilters);
+              searchListings({ ...updatedFilters, query: searchQuery });
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <View style={styles.dietIconWrapper}>
+              <Leaf size={24} color={foodType === 'vegetarian' ? colors.white : colors.vegetarian} />
+            </View>
             <Text style={[
-              styles.dietSubtext,
-              foodType === 'both' && styles.activeDietSubtext,
-            ]}>All dishes</Text>
-          </View>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[
-            styles.dietPreferenceOption,
-            foodType === 'vegetarian' && styles.activeVegDiet,
-          ]}
-          onPress={() => {
-            setFoodType('vegetarian');
-            const updatedFilters = { ...activeFilters, foodType: 'vegetarian' as const };
-            setActiveFilters(updatedFilters);
-            searchListings({ ...updatedFilters, query: searchQuery });
-          }}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <View style={styles.dietIconContainer}>
-            <Leaf size={20} color={foodType === 'vegetarian' ? colors.white : colors.vegetarian} />
-          </View>
-          <View style={styles.dietTextContainer}>
-            <Text style={[
-              styles.dietPreferenceText,
-              foodType === 'vegetarian' && styles.activeDietText,
+              styles.dietCardText,
+              foodType === 'vegetarian' && styles.activeDietCardText,
             ]}>Vegetarian</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[
+              styles.dietCard,
+              foodType === 'non-vegetarian' && styles.activeNonVegDiet,
+            ]}
+            onPress={() => {
+              setFoodType('non-vegetarian');
+              const updatedFilters = { ...activeFilters, foodType: 'non-vegetarian' as const };
+              setActiveFilters(updatedFilters);
+              searchListings({ ...updatedFilters, query: searchQuery });
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <View style={styles.dietIconWrapper}>
+              <Utensils size={24} color={foodType === 'non-vegetarian' ? colors.white : colors.nonVegetarian} />
+            </View>
             <Text style={[
-              styles.dietSubtext,
-              foodType === 'vegetarian' && styles.activeDietSubtext,
-            ]}>Plant-based</Text>
-          </View>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[
-            styles.dietPreferenceOption,
-            foodType === 'non-vegetarian' && styles.activeNonVegDiet,
-          ]}
-          onPress={() => {
-            setFoodType('non-vegetarian');
-            const updatedFilters = { ...activeFilters, foodType: 'non-vegetarian' as const };
-            setActiveFilters(updatedFilters);
-            searchListings({ ...updatedFilters, query: searchQuery });
-          }}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <View style={styles.dietIconContainer}>
-            <Utensils size={20} color={foodType === 'non-vegetarian' ? colors.white : colors.nonVegetarian} />
-          </View>
-          <View style={styles.dietTextContainer}>
-            <Text style={[
-              styles.dietPreferenceText,
-              foodType === 'non-vegetarian' && styles.activeDietText,
+              styles.dietCardText,
+              foodType === 'non-vegetarian' && styles.activeDietCardText,
             ]}>Non-Veg</Text>
-            <Text style={[
-              styles.dietSubtext,
-              foodType === 'non-vegetarian' && styles.activeDietSubtext,
-            ]}>Meat & seafood</Text>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       </View>
       
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoriesContainer}
-      >
-        {categories.map((category) => {
-          const Icon = category.icon;
-          return (
-            <TouchableOpacity
-              key={category.id}
-              style={[
-                styles.categoryButton,
-                category.active && styles.activeCategoryButton,
-              ]}
-              onPress={() => handleCategorySelect(category.id)}
-              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-            >
-              <Icon 
-                size={16} 
-                color={category.active ? colors.white : colors.text} 
-                style={styles.categoryIcon}
-              />
-              <Text
-                style={[
-                  styles.categoryText,
-                  category.active && styles.activeCategoryText,
-                ]}
-              >
-                {category.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-      
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.quickFiltersContainer}
-      >
-        <TouchableOpacity 
-          style={styles.quickFilter}
-          onPress={() => {
-            const newFilters = { ...activeFilters, maxDistance: 3 };
-            setActiveFilters(newFilters);
-            searchListings({ ...newFilters, query: searchQuery });
-          }}
-          hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+      {/* Quick Filters Section */}
+      <View style={styles.filtersSection}>
+        <Text style={styles.sectionTitle}>Quick Filters</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickFiltersContainer}
         >
-          <View style={styles.quickFilterIconContainer}>
-            <MapPin size={16} color={colors.primary} />
-          </View>
-          <Text style={styles.quickFilterText}>Nearby</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.quickFilter}
-          onPress={() => {
-            const newFilters: FilterOptions = { 
-              ...activeFilters, 
-              sortBy: 'availableUntil',
-              sortOrder: 'asc'
-            };
-            setActiveFilters(newFilters);
-            searchListings({ ...newFilters, query: searchQuery });
-          }}
-          hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-        >
-          <View style={styles.quickFilterIconContainer}>
-            <Clock size={16} color={colors.primary} />
-          </View>
-          <Text style={styles.quickFilterText}>Available Now</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.quickFilter}
-          onPress={() => {
-            const newFilters: FilterOptions = { 
-              ...activeFilters, 
-              availableNow: true
-            };
-            setActiveFilters(newFilters);
-            searchListings({ ...newFilters, query: searchQuery });
-          }}
-          hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-        >
-          <View style={styles.quickFilterIconContainer}>
-            <Calendar size={16} color={colors.primary} />
-          </View>
-          <Text style={styles.quickFilterText}>Next 2 Hours</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.quickFilter}
-          onPress={() => {
-            const newFilters: FilterOptions = { 
-              ...activeFilters, 
-              availableNow: true
-            };
-            setActiveFilters(newFilters);
-            searchListings({ ...newFilters, query: searchQuery });
-          }}
-          hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-        >
-          <View style={styles.quickFilterIconContainer}>
-            <Calendar size={16} color={colors.primary} />
-          </View>
-          <Text style={styles.quickFilterText}>Today</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.priceFilter}
-          hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-        >
-          <Text style={styles.priceFilterText}>₹</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.priceFilter}
-          hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-        >
-          <Text style={styles.priceFilterText}>₹₹</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.priceFilter}
-          hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-        >
-          <Text style={styles.priceFilterText}>₹₹₹</Text>
-        </TouchableOpacity>
-      </ScrollView>
-      
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.cuisineFiltersContainer}
-      >
-        {['Indian', 'Chinese', 'Continental', 'Italian', 'Thai', 'Mexican'].map((cuisine) => (
-          <TouchableOpacity
-            key={cuisine}
-            style={styles.cuisineFilter}
+          <TouchableOpacity 
+            style={[
+              styles.quickFilterPill,
+              activeFilters.maxDistance && styles.activeQuickFilter
+            ]}
             onPress={() => {
-              const newFilters = { 
+              const newFilters = { ...activeFilters, maxDistance: 3 };
+              setActiveFilters(newFilters);
+              searchListings({ ...newFilters, query: searchQuery });
+            }}
+          >
+            <MapPin size={16} color={activeFilters.maxDistance ? colors.white : colors.primary} />
+            <Text style={[
+              styles.quickFilterText,
+              activeFilters.maxDistance && styles.activeQuickFilterText
+            ]}>Nearby</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[
+              styles.quickFilterPill,
+              activeFilters.availableNow && styles.activeQuickFilter
+            ]}
+            onPress={() => {
+              const newFilters: FilterOptions = { 
                 ...activeFilters, 
-                cuisineTypes: [cuisine]
+                availableNow: true
               };
               setActiveFilters(newFilters);
               searchListings({ ...newFilters, query: searchQuery });
             }}
-            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
           >
-            <Text style={styles.cuisineFilterText}>{cuisine}</Text>
+            <Clock size={16} color={activeFilters.availableNow ? colors.white : colors.primary} />
+            <Text style={[
+              styles.quickFilterText,
+              activeFilters.availableNow && styles.activeQuickFilterText
+            ]}>Available Now</Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+          
+          <TouchableOpacity 
+            style={styles.priceFilterPill}
+          >
+            <Text style={styles.priceFilterText}>₹</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.priceFilterPill}
+          >
+            <Text style={styles.priceFilterText}>₹₹</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.priceFilterPill}
+          >
+            <Text style={styles.priceFilterText}>₹₹₹</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
       
+      {/* Cuisine Categories */}
+      <View style={styles.cuisineSection}>
+        <View style={styles.cuisineSectionHeader}>
+          <Text style={styles.sectionTitle}>Cuisines</Text>
+          <Text style={styles.scrollHint}>Scroll for more →</Text>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.cuisineFiltersContainer}
+        >
+          {['Indian', 'Chinese', 'Continental', 'Italian', 'Thai', 'Mexican', 'Japanese', 'Korean'].map((cuisine) => (
+            <TouchableOpacity
+              key={cuisine}
+              style={[
+                styles.cuisinePill,
+                activeFilters.cuisineTypes?.includes(cuisine) && styles.activeCuisinePill
+              ]}
+              onPress={() => {
+                const newFilters = { 
+                  ...activeFilters, 
+                  cuisineTypes: [cuisine]
+                };
+                setActiveFilters(newFilters);
+                searchListings({ ...newFilters, query: searchQuery });
+              }}
+            >
+              <Text style={[
+                styles.cuisineFilterText,
+                activeFilters.cuisineTypes?.includes(cuisine) && styles.activeCuisineText
+              ]}>{cuisine}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+      
+      {/* Route Button */}
       <TouchableOpacity 
-        style={styles.routeFilterButton}
+        style={styles.routeButton}
         onPress={() => setRouteSearchModalVisible(true)}
-        hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
       >
         <View style={styles.routeIconContainer}>
-          <Route size={18} color={colors.white} />
+          <Route size={20} color={colors.primary} />
         </View>
-        <Text style={styles.routeFilterText}>Check on My Route</Text>
-        <Navigation size={16} color={colors.white} />
+        <Text style={styles.routeButtonText}>Check on My Route</Text>
+        <Navigation size={16} color={colors.primary} />
       </TouchableOpacity>
       
+      {/* Results Header */}
       <View style={styles.resultsHeader}>
         <Text style={styles.resultsCount}>
           {filteredListings.length} {filteredListings.length === 1 ? 'result' : 'results'} found
@@ -442,7 +370,6 @@ export default function SearchScreen() {
         <TouchableOpacity 
           style={styles.sortButton}
           onPress={() => setFilterModalVisible(true)}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
           <Filter size={16} color={colors.primary} />
           <Text style={styles.sortButtonText}>
@@ -527,65 +454,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   listContent: {
-    paddingBottom: 140, // Increased padding to avoid tab bar overlap
+    paddingBottom: 120,
   },
   header: {
     backgroundColor: colors.white,
-    paddingTop: 24,
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-    marginBottom: 12,
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  welcomeSection: {
-    alignItems: 'center',
-    marginBottom: 28,
-    paddingHorizontal: 8,
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: colors.text,
-    marginBottom: 12,
-    textAlign: 'center',
-    lineHeight: 38,
-    letterSpacing: -0.8,
-  },
-  headerSubtitle: {
-    fontSize: 17,
-    color: colors.textLight,
-    textAlign: 'center',
-    fontWeight: '500',
-    lineHeight: 24,
-    maxWidth: 280,
-  },
-  searchContainer: {
-    marginBottom: 24,
-    zIndex: 1000,
-  },
-  dietPreferencesContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-    paddingHorizontal: 2,
-  },
-  dietPreferenceOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 18,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    backgroundColor: colors.card,
-    width: '31%',
-    borderWidth: 2,
-    borderColor: colors.border,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
     shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
@@ -593,102 +468,40 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.06,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 4,
   },
-  activeBothDiet: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
-    transform: [{ scale: 1.02 }],
+  
+  // Search Container
+  searchContainer: {
+    marginBottom: 20,
+    zIndex: 1000,
   },
-  activeVegDiet: {
-    backgroundColor: colors.vegetarian,
-    borderColor: colors.vegetarian,
-    shadowColor: colors.vegetarian,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
-    transform: [{ scale: 1.02 }],
-  },
-  activeNonVegDiet: {
-    backgroundColor: colors.nonVegetarian,
-    borderColor: colors.nonVegetarian,
-    shadowColor: colors.nonVegetarian,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
-    transform: [{ scale: 1.02 }],
-  },
-  dietIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  bothDietIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  vegDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.vegetarian,
-    marginRight: 3,
-  },
-  nonVegDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.nonVegetarian,
-  },
-  dietTextContainer: {
-    flex: 1,
-  },
-  dietPreferenceText: {
-    fontSize: 14,
+  
+  // Section Styling
+  sectionTitle: {
+    fontSize: 16,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 3,
-    letterSpacing: -0.2,
+    marginBottom: 12,
+    letterSpacing: -0.3,
   },
-  activeDietText: {
-    color: colors.white,
+  
+  // Diet Section
+  dietSection: {
+    marginBottom: 24,
   },
-  dietSubtext: {
-    fontSize: 11,
-    color: colors.textLight,
-    fontWeight: '500',
-  },
-  activeDietSubtext: {
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
-  categoriesContainer: {
-    paddingVertical: 16,
-    paddingHorizontal: 4,
-  },
-  categoryButton: {
+  dietPreferencesContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  dietCard: {
+    flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderRadius: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     backgroundColor: colors.card,
-    marginRight: 12,
     borderWidth: 1.5,
     borderColor: colors.border,
     shadowColor: colors.shadow,
@@ -696,92 +509,159 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
     elevation: 2,
   },
-  categoryIcon: {
-    marginRight: 6,
-  },
-  activeCategoryButton: {
+  activeBothDiet: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
     shadowColor: colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowRadius: 6,
     elevation: 4,
-    transform: [{ scale: 1.05 }],
   },
-  categoryText: {
-    fontSize: 15,
+  activeVegDiet: {
+    backgroundColor: colors.vegetarian,
+    borderColor: colors.vegetarian,
+    shadowColor: colors.vegetarian,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  activeNonVegDiet: {
+    backgroundColor: colors.nonVegetarian,
+    borderColor: colors.nonVegetarian,
+    shadowColor: colors.nonVegetarian,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  dietIconWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  bothDietIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  vegDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.vegetarian,
+    marginRight: 4,
+  },
+  nonVegDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.nonVegetarian,
+  },
+  dietCardText: {
+    fontSize: 14,
     fontWeight: '600',
     color: colors.text,
-    letterSpacing: -0.1,
+    textAlign: 'center',
+    letterSpacing: -0.2,
   },
-  activeCategoryText: {
+  activeDietCardText: {
     color: colors.white,
   },
-  quickFiltersContainer: {
-    paddingVertical: 8,
-    paddingHorizontal: 4,
+  
+  // Filters Section
+  filtersSection: {
+    marginBottom: 20,
   },
-  quickFilter: {
+  quickFiltersContainer: {
+    paddingHorizontal: 0,
+    gap: 8,
+  },
+  quickFilterPill: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 20,
     backgroundColor: colors.card,
     marginRight: 8,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: colors.text,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 2,
     elevation: 1,
   },
-  quickFilterIconContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 107, 53, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
+  activeQuickFilter: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   quickFilterText: {
     fontSize: 14,
     fontWeight: '500',
     color: colors.text,
+    marginLeft: 6,
   },
-  priceFilter: {
+  activeQuickFilterText: {
+    color: colors.white,
+  },
+  priceFilterPill: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 20,
     backgroundColor: colors.card,
     marginRight: 8,
     borderWidth: 1,
     borderColor: colors.border,
-    minWidth: 50,
+    minWidth: 48,
   },
   priceFilterText: {
     fontSize: 16,
     fontWeight: '700',
     color: colors.primary,
   },
-  cuisineFiltersContainer: {
-    paddingVertical: 8,
-    paddingHorizontal: 4,
+  
+  // Cuisine Section
+  cuisineSection: {
+    marginBottom: 20,
+  },
+  cuisineSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  cuisineFilter: {
+  scrollHint: {
+    fontSize: 12,
+    color: colors.textLight,
+    fontWeight: '500',
+  },
+  cuisineFiltersContainer: {
+    paddingHorizontal: 0,
+    gap: 8,
+  },
+  cuisinePill: {
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 18,
@@ -789,65 +669,97 @@ const styles = StyleSheet.create({
     marginRight: 8,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  activeCuisinePill: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   cuisineFilterText: {
     fontSize: 13,
     fontWeight: '500',
     color: colors.text,
   },
-  routeFilterButton: {
+  activeCuisineText: {
+    color: colors.white,
+  },
+  
+  // Route Button
+  routeButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: colors.secondary,
-    marginHorizontal: 20,
-    marginBottom: 16,
-    shadowColor: colors.secondary,
+    backgroundColor: colors.card,
+    marginBottom: 20,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.06,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 2,
   },
   routeIconContainer: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 107, 53, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
-  routeFilterText: {
+  routeButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.white,
+    color: colors.primary,
     flex: 1,
   },
+  
+  // Results Header
   resultsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   resultsCount: {
     fontSize: 14,
     color: colors.textLight,
+    fontWeight: '500',
   },
   sortButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10, // Increased touch target
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 107, 53, 0.1)',
   },
   sortButtonText: {
     fontSize: 14,
     color: colors.primary,
     marginLeft: 4,
+    fontWeight: '500',
   },
+  
+  // Card Wrapper
   cardWrapper: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingHorizontal: 16,
+    marginBottom: 16,
     width: Platform.OS === 'web' ? '100%' : undefined,
     maxWidth: Platform.OS === 'web' ? 600 : undefined,
     alignSelf: Platform.OS === 'web' ? 'center' : undefined,
