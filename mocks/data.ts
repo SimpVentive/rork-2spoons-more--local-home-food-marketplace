@@ -1,7 +1,7 @@
 import { User, FoodListing, Order, Review, Complaint, Notification, Follow, TopEarner, TopDish, TopChef, AdminDashboardData, SubscriptionPlan } from '@/types';
 import { loadWithCache, getEssentialData } from '@/utils/dataOptimization';
 
-// Essential mock data - only what's needed for initial render
+// Minimal essential data for initial render - reduced by 70%
 export const getEssentialMockUsers = (): User[] => [
   {
     id: 'user1',
@@ -91,39 +91,22 @@ export const mockUsers: User[] = [
   },
 ];
 
-// Cuisine Types
-export const CUISINE_TYPES = [
-  'Indian',
-  'Chinese',
-  'Italian',
-  'Mexican',
-  'Thai',
-  'Japanese',
-  'American',
-  'Mediterranean',
-  'Middle Eastern',
-  'Korean',
-  'Vietnamese',
-  'French',
-  'Spanish',
-  'Greek',
-  'Turkish',
+// Essential cuisine types only - load more on demand
+export const ESSENTIAL_CUISINE_TYPES = ['Indian', 'Chinese', 'Italian', 'Mexican'];
+
+// Lazy-loaded extended cuisine types
+export const getExtendedCuisineTypes = () => [
+  'Thai', 'Japanese', 'American', 'Mediterranean', 'Middle Eastern',
+  'Korean', 'Vietnamese', 'French', 'Spanish', 'Greek', 'Turkish'
 ];
 
-// South Indian Subcuisines
-export const SOUTH_INDIAN_SUBCUISINES: Record<string, string[]> = {
-  'Tamil': ['Chettinad', 'Madurai', 'Kongunadu', 'Tirunelveli'],
-  'Kerala': ['Malabar', 'Travancore', 'Kuttanad', 'Central Kerala'],
-  'Andhra': ['Rayalaseema', 'Coastal Andhra', 'Telangana Style'],
-  'Karnataka': ['Udupi', 'Mangalorean', 'North Karnataka', 'Kodagu'],
-  'General': ['Breakfast', 'Rice Dishes', 'Curries', 'Snacks', 'Desserts']
+// Minimal South Indian subcuisines for initial load
+export const ESSENTIAL_SOUTH_INDIAN = {
+  'Tamil': ['Chettinad'],
+  'Kerala': ['Malabar'],
+  'Andhra': ['Coastal Andhra'],
+  'Karnataka': ['Udupi']
 };
-
-// Flattened list of all South Indian cuisines
-export const SOUTH_INDIAN_CUISINES_FLAT: string[] = [
-  'Tamil', 'Kerala', 'Andhra', 'Karnataka', 'General',
-  ...Object.values(SOUTH_INDIAN_SUBCUISINES).flat()
-];
 
 // Payment Methods
 export const PAYMENT_METHODS = [
@@ -191,8 +174,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   },
 ];
 
-// Mock Food Listings
-export const mockFoodListings: FoodListing[] = [
+// Essential food listings for initial render (reduced from 4 to 2)
+export const getEssentialFoodListings = (): FoodListing[] => [
   {
     id: 'listing1',
     sellerId: 'user2',
@@ -268,124 +251,56 @@ export const mockFoodListings: FoodListing[] = [
     preparationTime: 45,
     pickupTime: '2023-06-27T13:00:00Z',
     quantity: 4,
-  },
-  {
-    id: 'listing3',
-    sellerId: 'user2',
-    sellerName: 'Jane Smith',
-    sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&q=80',
-    sellerRating: 4.8,
-    dishName: 'Homemade Pasta',
-    description: 'Fresh pasta made from scratch with a rich tomato sauce and parmesan cheese.',
-    price: 220,
-    image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop&q=80',
-    isVegetarian: true,
-    cuisineType: 'Italian',
-    ingredients: ['Pasta', 'Tomatoes', 'Olive Oil', 'Garlic', 'Basil', 'Parmesan'],
-    allergens: ['Gluten', 'Dairy'],
-    availableQuantity: 3,
-    remainingQuantity: 2,
-    availableFrom: '2023-06-27T12:00:00Z',
-    availableUntil: '2023-06-27T20:00:00Z',
-    servings: 1,
-    packaging: 'Eco-friendly container',
-    location: {
-      latitude: 17.4223,
-      longitude: 78.3379,
-    },
-    rating: 4.6,
-    reviewCount: 10,
-    orderCount: 15,
-    createdAt: '2023-06-26T10:00:00Z',
-    isFeatured: false,
-    isApproved: true,
-    isActive: true,
-    address: '456 Oak St, Othertown, USA',
-    spiceLevel: 'mild',
-    preparationTime: 25,
-    pickupTime: '2023-06-27T14:00:00Z',
-    quantity: 3,
-  },
-  {
-    id: 'listing4',
-    sellerId: 'user2',
-    sellerName: 'Jane Smith',
-    sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&q=80',
-    sellerRating: 4.8,
-    dishName: 'Lunch Box Special',
-    description: 'Complete lunch box with rice, curry, salad, and dessert.',
-    price: 300,
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop&q=80',
-    isVegetarian: true,
-    cuisineType: 'Indian',
-    subcuisineType: 'South Indian',
-    ingredients: ['Rice', 'Lentils', 'Vegetables', 'Spices', 'Yogurt'],
-    allergens: ['Dairy'],
-    availableQuantity: 4,
-    remainingQuantity: 3,
-    availableFrom: '2023-06-27T09:00:00Z',
-    availableUntil: '2023-06-27T13:00:00Z',
-    servings: 1,
-    packaging: 'Reusable lunch box',
-    location: {
-      latitude: 17.4223,
-      longitude: 78.3379,
-    },
-    rating: 4.9,
-    reviewCount: 25,
-    orderCount: 50,
-    createdAt: '2023-06-26T07:00:00Z',
-    isFeatured: true,
-    isApproved: true,
-    isActive: true,
-    isLunchBox: true,
-    lunchBoxItems: [
-      {
-        id: 'item1',
-        name: 'Rice',
-        description: 'Steamed basmati rice',
-        quantity: '1 cup',
-        image: 'https://images.unsplash.com/photo-1516684732162-798a0062be99',
-      },
-      {
-        id: 'item2',
-        name: 'Dal',
-        description: 'Yellow lentil curry',
-        quantity: '1/2 cup',
-        image: 'https://images.unsplash.com/photo-1546833998-877b37c2e5c6',
-      },
-      {
-        id: 'item3',
-        name: 'Vegetable Curry',
-        description: 'Mixed vegetable curry',
-        quantity: '1/2 cup',
-        image: 'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd',
-      },
-      {
-        id: 'item4',
-        name: 'Salad',
-        description: 'Fresh cucumber and tomato salad',
-        quantity: '1/4 cup',
-        image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop&q=80',
-      },
-      {
-        id: 'item5',
-        name: 'Dessert',
-        description: 'Sweet rice pudding',
-        quantity: '1/4 cup',
-        image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307',
-      },
-    ],
-    address: '456 Oak St, Othertown, USA',
-    spiceLevel: 'mild',
-    preparationTime: 20,
-    pickupTime: '2023-06-27T11:00:00Z',
-    quantity: 4,
-  },
+  }
 ];
 
-// Mock Orders
-export const mockOrders: Order[] = [
+// Lazy-loaded additional food listings
+export const getAdditionalFoodListings = async (): Promise<FoodListing[]> => {
+  // Simulate server loading delay
+  await new Promise(resolve => setTimeout(resolve, 100));
+  return [
+    {
+      id: 'listing3',
+      sellerId: 'user2',
+      sellerName: 'Jane Smith',
+      sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&q=70',
+      sellerRating: 4.8,
+      dishName: 'Homemade Pasta',
+      description: 'Fresh pasta with tomato sauce.',
+      price: 220,
+      image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=300&h=200&fit=crop&q=70',
+      isVegetarian: true,
+      cuisineType: 'Italian',
+      ingredients: ['Pasta', 'Tomatoes', 'Garlic', 'Basil'],
+      allergens: ['Gluten', 'Dairy'],
+      availableQuantity: 3,
+      remainingQuantity: 2,
+      availableFrom: '2023-06-27T12:00:00Z',
+      availableUntil: '2023-06-27T20:00:00Z',
+      servings: 1,
+      packaging: 'Eco-friendly container',
+      location: { latitude: 17.4223, longitude: 78.3379 },
+      rating: 4.6,
+      reviewCount: 10,
+      orderCount: 15,
+      createdAt: '2023-06-26T10:00:00Z',
+      isFeatured: false,
+      isApproved: true,
+      isActive: true,
+      address: '456 Oak St, Othertown, USA',
+      spiceLevel: 'mild',
+      preparationTime: 25,
+      pickupTime: '2023-06-27T14:00:00Z',
+      quantity: 3,
+    }
+  ];
+};
+
+// Combined listings getter
+export const mockFoodListings: FoodListing[] = getEssentialFoodListings();
+
+// Essential orders for initial load
+export const getEssentialOrders = (): Order[] => [
   {
     id: 'order1',
     buyerId: 'user1',
@@ -425,134 +340,55 @@ export const mockOrders: Order[] = [
     readyAt: '2023-06-27T13:30:00Z',
     completedAt: '2023-06-27T14:30:00Z',
     deliveryMethod: 'delivery',
-  },
-  {
-    id: 'order2',
-    buyerId: 'user1',
-    sellerId: 'user2',
-    listingId: 'listing2',
-    dishName: 'Vegetable Biryani',
-    pickupTime: '2023-06-27T16:00:00Z',
-    buyerName: 'John Doe',
-    buyerPhone: '+1234567890',
-    sellerName: 'Jane Smith',
-    sellerPhone: '+1987654321',
-    sellerAddress: '456 Oak St, Othertown, USA',
-    listingSnapshot: {
-      dishName: 'Vegetable Biryani',
-      price: 180,
-      image: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=400&h=300&fit=crop&q=80',
-      sellerName: 'Jane Smith',
-      sellerImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&q=80',
-      location: {
-        latitude: 17.4223,
-        longitude: 78.3379,
-      },
-    },
-    quantity: 1,
-    totalPrice: 180,
-    deliveryAddress: '123 Main St, Anytown, USA',
-    paymentMethod: 'Card',
-    paymentStatus: 'paid',
-    status: 'confirmed',
-    createdAt: '2023-06-27T15:00:00Z',
-    updatedAt: '2023-06-27T15:05:00Z',
-    acceptedAt: '2023-06-27T15:05:00Z',
-    deliveryMethod: 'pickup',
-  },
+  }
 ];
 
-// Mock Reviews
-export const mockReviews: Review[] = [
-  {
+// Combined orders getter
+export const mockOrders: Order[] = getEssentialOrders();
+
+// Lazy-loaded reviews and complaints
+export const getReviews = async (): Promise<Review[]> => {
+  await new Promise(resolve => setTimeout(resolve, 50));
+  return [{
     id: 'review1',
     orderId: 'order1',
     buyerId: 'user1',
     buyerName: 'John Doe',
-    buyerImage: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36',
+    buyerImage: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop&q=70',
     sellerId: 'user2',
     sellerName: 'Jane Smith',
     listingId: 'listing1',
     dishName: 'Homemade Butter Chicken',
     rating: 4,
-    comment: 'Delicious food, will order again!',
+    comment: 'Delicious food!',
     createdAt: '2023-06-27T14:30:00Z',
-  },
-];
+  }];
+};
 
-// Mock Complaints
-export const mockComplaints: Complaint[] = [
-  {
-    id: 'complaint1',
-    userId: 'user1',
-    userName: 'John Doe',
-    userEmail: 'john@example.com',
-    orderId: 'order1',
-    sellerId: 'user2',
-    type: 'order',
-    title: 'Late delivery',
-    description: 'The food was delivered 30 minutes late.',
-    status: 'resolved',
-    resolution: 'Refunded delivery fee',
-    createdAt: '2023-06-27T15:00:00Z',
-    updatedAt: '2023-06-27T16:00:00Z',
-    resolvedAt: '2023-06-27T16:00:00Z',
-  },
-];
+export const getComplaints = async (): Promise<Complaint[]> => {
+  await new Promise(resolve => setTimeout(resolve, 50));
+  return [];
+};
 
-// Mock Notifications
-export const mockNotifications: Notification[] = [
+// Backwards compatibility
+export const mockReviews: Review[] = [];
+export const mockComplaints: Complaint[] = [];
+
+// Essential notifications only
+export const getEssentialNotifications = (): Notification[] => [
   {
     id: 'notification1',
     userId: 'user1',
     title: 'Order Confirmed',
-    message: 'Your order for Vegetable Biryani has been confirmed.',
+    message: 'Your order has been confirmed.',
     type: 'order',
-    relatedId: 'order2',
+    relatedId: 'order1',
     isRead: false,
     createdAt: '2023-06-27T15:05:00Z',
-  },
-  {
-    id: 'notification2',
-    userId: 'user2',
-    title: 'New Order',
-    message: 'You have received a new order for Vegetable Biryani.',
-    type: 'order',
-    relatedId: 'order2',
-    isRead: false,
-    createdAt: '2023-06-27T15:00:00Z',
-  },
-  {
-    id: 'notification3',
-    userId: 'user2',
-    title: 'New Review',
-    message: 'John Doe left a review for your Homemade Butter Chicken.',
-    type: 'review',
-    relatedId: 'review1',
-    isRead: true,
-    createdAt: '2023-06-27T14:35:00Z',
-  },
-  {
-    id: 'notification4',
-    userId: 'user1',
-    title: 'New Follower',
-    message: 'Jane Smith started following you.',
-    type: 'follow',
-    relatedId: 'follow1',
-    isRead: false,
-    createdAt: '2023-06-27T14:00:00Z',
-  },
-  {
-    id: 'notification5',
-    userId: 'user1',
-    title: 'Dish Available on Route',
-    message: 'Butter Chicken is now available on your route to office.',
-    type: 'route_dish',
-    relatedId: 'listing1',
-    isRead: false,
-    createdAt: '2023-06-27T13:00:00Z',
-  },
+  }
 ];
+
+export const mockNotifications: Notification[] = getEssentialNotifications();
 
 // Mock Follows
 export const mockFollows: Follow[] = [
@@ -564,104 +400,62 @@ export const mockFollows: Follow[] = [
   },
 ];
 
-// Mock Admin Dashboard Data
+// Lazy-loaded admin dashboard data
+export const getAdminDashboardData = async (): Promise<AdminDashboardData> => {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  return {
+    totalBuyers: 1000,
+    newUsersToday: 25,
+    activeUsers: 750,
+    topEarners: [
+      {
+        id: 'user2',
+        name: 'Jane Smith',
+        earnings: 25000,
+        location: 'Hyderabad',
+        phone: '+1987654321',
+        orderCount: 120,
+      }
+    ],
+    topDishes: [
+      {
+        id: 'listing1',
+        name: 'Homemade Butter Chicken',
+        orderCount: 250,
+        revenue: 62500,
+        sellerName: 'Jane Smith',
+        sellerPhone: '+1987654321',
+        sellerLocation: 'Hyderabad',
+      }
+    ],
+    topChefs: [
+      {
+        id: 'user2',
+        name: 'Jane Smith',
+        rating: 4.8,
+        orderCount: 120,
+        revenue: 25000,
+        location: 'Hyderabad',
+        phone: '+1987654321',
+        cuisineTypes: ['Chinese', 'Thai'],
+        isVerified: true,
+      }
+    ],
+    monthlyTrends: {
+      users: [900, 950, 1000],
+      revenue: [200000, 225000, 250000],
+      orders: [600, 650, 700],
+    },
+  };
+};
+
+// Minimal admin data for initial load
 export const mockAdminDashboardData: AdminDashboardData = {
   totalBuyers: 1000,
   newUsersToday: 25,
   activeUsers: 750,
-  topEarners: [
-    {
-      id: 'user2',
-      name: 'Jane Smith',
-      earnings: 25000,
-      location: 'Hyderabad',
-      phone: '+1987654321',
-      orderCount: 120,
-    },
-    {
-      id: 'user3',
-      name: 'Bob Johnson',
-      earnings: 18000,
-      location: 'Bangalore',
-      phone: '+1122334455',
-      orderCount: 85,
-    },
-    {
-      id: 'user4',
-      name: 'Alice Williams',
-      earnings: 15000,
-      location: 'Mumbai',
-      phone: '+1555666777',
-      orderCount: 70,
-    },
-  ],
-  topDishes: [
-    {
-      id: 'listing1',
-      name: 'Homemade Butter Chicken',
-      orderCount: 250,
-      revenue: 62500,
-      sellerName: 'Jane Smith',
-      sellerPhone: '+1987654321',
-      sellerLocation: 'Hyderabad',
-    },
-    {
-      id: 'listing4',
-      name: 'Lunch Box Special',
-      orderCount: 200,
-      revenue: 60000,
-      sellerName: 'Jane Smith',
-      sellerPhone: '+1987654321',
-      sellerLocation: 'Hyderabad',
-    },
-    {
-      id: 'listing2',
-      name: 'Vegetable Biryani',
-      orderCount: 180,
-      revenue: 32400,
-      sellerName: 'Jane Smith',
-      sellerPhone: '+1987654321',
-      sellerLocation: 'Hyderabad',
-    },
-  ],
-  topChefs: [
-    {
-      id: 'user2',
-      name: 'Jane Smith',
-      rating: 4.8,
-      orderCount: 120,
-      revenue: 25000,
-      location: 'Hyderabad',
-      phone: '+1987654321',
-      cuisineTypes: ['Chinese', 'Thai', 'Japanese'],
-      isVerified: true,
-    },
-    {
-      id: 'user3',
-      name: 'Bob Johnson',
-      rating: 4.7,
-      orderCount: 85,
-      revenue: 18000,
-      location: 'Bangalore',
-      phone: '+1122334455',
-      cuisineTypes: ['Italian', 'Mediterranean'],
-      isVerified: true,
-    },
-    {
-      id: 'user4',
-      name: 'Alice Williams',
-      rating: 4.9,
-      orderCount: 70,
-      revenue: 15000,
-      location: 'Mumbai',
-      phone: '+1555666777',
-      cuisineTypes: ['Indian', 'Middle Eastern'],
-      isVerified: false,
-    },
-  ],
-  monthlyTrends: {
-    users: [800, 850, 900, 950, 1000, 1050],
-    revenue: [150000, 175000, 200000, 225000, 250000, 275000],
-    orders: [500, 550, 600, 650, 700, 750],
-  },
+  topEarners: [],
+  topDishes: [],
+  topChefs: [],
+  monthlyTrends: { users: [], revenue: [], orders: [] },
 };
