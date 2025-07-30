@@ -22,7 +22,7 @@ import {
 import { useAuthStore } from '../../store/auth-store';
 import { useListingsStore } from '../../store/listings-store';
 import { useReviewsStore } from '../../store/reviews-store';
-import { FoodCard } from '../../components/FoodCard';
+import { LoadingState } from '../../components/LoadingState';
 import { NotifyMeModal } from '../../components/NotifyMeModal';
 import { FoodListing, User, Review } from '../../types';
 import colors from '../../constants/colors';
@@ -61,9 +61,10 @@ export default function HomeScreen() {
   // Show loading if auth is not initialized
   if (!isInitialized) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ fontSize: 16, color: colors.text }}>Loading...</Text>
-      </View>
+      <LoadingState 
+        message="Welcome back! Loading your personalized feed..."
+        size="large"
+      />
     );
   }
   
@@ -172,50 +173,64 @@ export default function HomeScreen() {
       </View>
       
       {/* Hero Section with Indian Woman Cooking */}
-      <ImageBackground
-        source={{ uri: 'https://images.unsplash.com/photo-1627662168223-7df99068099a' }}
-        style={styles.heroImage}
-        imageStyle={styles.heroImageStyle}
-      >
-        <View style={styles.heroOverlay}>
-          <Text style={styles.heroTitle}>Homemade Food</Text>
-          <Text style={styles.heroSubtitle}>From local kitchens to your plate</Text>
-          <TouchableOpacity 
-            style={styles.exploreButton}
-            onPress={handleExploreNowPress}
-          >
-            <Text style={styles.exploreButtonText}>Explore Now</Text>
-          </TouchableOpacity>
-        </View>
-      </ImageBackground>
+      <View style={styles.heroCard}>
+        <ImageBackground
+          source={{ uri: 'https://images.unsplash.com/photo-1627662168223-7df99068099a' }}
+          style={styles.heroImage}
+          imageStyle={styles.heroImageStyle}
+        >
+          <View style={styles.heroOverlay}>
+            <View style={styles.heroContent}>
+              <Text style={styles.heroTitle}>Homemade Food</Text>
+              <Text style={styles.heroSubtitle}>From local kitchens to your plate</Text>
+              <TouchableOpacity 
+                style={styles.exploreButton}
+                onPress={handleExploreNowPress}
+              >
+                <Text style={styles.exploreButtonText}>Explore Now</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ImageBackground>
+      </View>
 
       {/* Route Settings Banner */}
       {(!user?.officeAddress) && (
-        <TouchableOpacity 
-          style={styles.routeBanner}
-          onPress={handleRouteSettingsPress}
-        >
-          <View style={styles.routeBannerIconContainer}>
-            <Route size={24} color={colors.white} />
-          </View>
-          <View style={styles.routeBannerContent}>
-            <Text style={styles.routeBannerTitle}>Set Up Your Route</Text>
-            <Text style={styles.routeBannerText}>
-              Find food along your daily commute route (up to 5 locations)
-            </Text>
-          </View>
-          <MapPin size={20} color={colors.white} />
-        </TouchableOpacity>
+        <View style={styles.bannerSection}>
+          <TouchableOpacity 
+            style={styles.routeBanner}
+            onPress={handleRouteSettingsPress}
+          >
+            <View style={styles.routeBannerIconContainer}>
+              <Route size={24} color={colors.white} />
+            </View>
+            <View style={styles.routeBannerContent}>
+              <Text style={styles.routeBannerTitle}>Set Up Your Route</Text>
+              <Text style={styles.routeBannerText}>
+                Find food along your daily commute route (up to 5 locations)
+              </Text>
+            </View>
+            <MapPin size={20} color={colors.white} />
+          </TouchableOpacity>
+        </View>
       )}
       
       {/* Top Selling Items Section */}
-      <View style={styles.sectionContainer}>
+      <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
-            <TrendingUp size={20} color={colors.primary} />
-            <Text style={styles.sectionTitle}>Top Selling Items</Text>
+            <View style={styles.sectionIconContainer}>
+              <TrendingUp size={20} color={colors.primary} />
+            </View>
+            <View>
+              <Text style={styles.sectionTitle}>Top Selling Items</Text>
+              <Text style={styles.sectionSubtitle}>Most loved dishes this week</Text>
+            </View>
           </View>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/search')}>
+          <TouchableOpacity 
+            style={styles.seeAllButton}
+            onPress={() => router.push('/(tabs)/search')}
+          >
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -231,12 +246,14 @@ export default function HomeScreen() {
               style={styles.topItemCard}
               onPress={() => handleListingPress(item)}
             >
-              <Image
-                source={{ uri: item.image }}
-                style={styles.topItemImage}
-                contentFit="cover"
-              />
-              <View style={item.isVegetarian ? styles.vegIndicator : styles.nonVegIndicator} />
+              <View style={styles.topItemImageContainer}>
+                <Image
+                  source={{ uri: item.image }}
+                  style={styles.topItemImage}
+                  contentFit="cover"
+                />
+                <View style={item.isVegetarian ? styles.vegIndicator : styles.nonVegIndicator} />
+              </View>
               <View style={styles.topItemInfo}>
                 <Text style={styles.topItemName} numberOfLines={1}>{item.dishName}</Text>
                 <Text style={styles.topItemPrice}>₹{item.price}</Text>
@@ -251,13 +268,21 @@ export default function HomeScreen() {
       </View>
       
       {/* Top Chefs Section */}
-      <View style={styles.sectionContainer}>
+      <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
-            <ChefHat size={20} color={colors.primary} />
-            <Text style={styles.sectionTitle}>Top Chefs</Text>
+            <View style={styles.sectionIconContainer}>
+              <ChefHat size={20} color={colors.primary} />
+            </View>
+            <View>
+              <Text style={styles.sectionTitle}>Top Chefs</Text>
+              <Text style={styles.sectionSubtitle}>Master chefs in your area</Text>
+            </View>
           </View>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/following')}>
+          <TouchableOpacity 
+            style={styles.seeAllButton}
+            onPress={() => router.push('/(tabs)/following')}
+          >
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -273,11 +298,13 @@ export default function HomeScreen() {
               style={styles.chefCard}
               onPress={() => handleChefPress(chef.id)}
             >
-              <Image
-                source={{ uri: chef.profileImage }}
-                style={styles.chefImage}
-                contentFit="cover"
-              />
+              <View style={styles.chefImageContainer}>
+                <Image
+                  source={{ uri: chef.profileImage }}
+                  style={styles.chefImage}
+                  contentFit="cover"
+                />
+              </View>
               <Text style={styles.chefName} numberOfLines={1}>{chef.name}</Text>
               <View style={styles.chefRating}>
                 <Star size={12} color="#FFD700" fill="#FFD700" />
@@ -308,25 +335,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
     backgroundColor: colors.white,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   greeting: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 26,
+    fontWeight: '800',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: -0.5,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   locationText: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.textLight,
-    marginLeft: 4,
+    marginLeft: 6,
+    fontWeight: '500',
   },
   headerActions: {
     flexDirection: 'row',
@@ -366,54 +403,88 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: colors.border,
   },
+  heroCard: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
   heroImage: {
-    height: 240,
+    height: 260,
     width: '100%',
     justifyContent: 'flex-end',
   },
   heroImageStyle: {
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
+    borderRadius: 20,
   },
   heroOverlay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    padding: 24,
+  },
+  heroContent: {
+    alignItems: 'flex-start',
   },
   heroTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontWeight: '900',
     color: colors.white,
     marginBottom: 8,
+    letterSpacing: -0.8,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   heroSubtitle: {
-    fontSize: 16,
-    color: colors.white,
-    marginBottom: 16,
+    fontSize: 17,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 20,
+    fontWeight: '500',
+    lineHeight: 24,
   },
   exploreButton: {
     backgroundColor: colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 25,
     alignSelf: 'flex-start',
+    shadowColor: colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   exploreButtonText: {
     color: colors.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  bannerSection: {
+    paddingHorizontal: 20,
+    marginTop: 24,
   },
   routeBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.secondary,
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 6,
   },
   routeBannerIconContainer: {
     width: 48,
@@ -428,60 +499,100 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   routeBannerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
     color: colors.white,
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: -0.3,
   },
   routeBannerText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.85)',
+    lineHeight: 22,
+    fontWeight: '500',
   },
-  sectionContainer: {
-    marginTop: 16,
+  sectionCard: {
+    marginTop: 32,
+    marginHorizontal: 20,
     backgroundColor: colors.white,
-    paddingVertical: 16,
+    borderRadius: 20,
+    paddingVertical: 24,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   sectionTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  sectionIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: `${colors.primary}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '800',
     color: colors.text,
-    marginLeft: 8,
+    marginBottom: 4,
+    letterSpacing: -0.5,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: colors.textLight,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  seeAllButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: `${colors.primary}10`,
   },
   seeAllText: {
     fontSize: 14,
     color: colors.primary,
-    fontWeight: '500',
+    fontWeight: '700',
   },
   topItemsContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 4,
   },
   topItemCard: {
-    width: 140,
-    marginRight: 12,
-    borderRadius: 12,
+    width: 160,
+    marginRight: 16,
+    borderRadius: 16,
     backgroundColor: colors.card,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  topItemImageContainer: {
+    position: 'relative',
   },
   topItemImage: {
     width: '100%',
-    height: 100,
+    height: 120,
     backgroundColor: colors.border,
   },
   vegIndicator: {
@@ -507,19 +618,20 @@ const styles = StyleSheet.create({
     borderColor: colors.white,
   },
   topItemInfo: {
-    padding: 8,
+    padding: 12,
   },
   topItemName: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 6,
+    lineHeight: 20,
   },
   topItemPrice: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
     color: colors.primary,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   topItemRating: {
     flexDirection: 'row',
@@ -531,26 +643,41 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   topChefsContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 4,
   },
   chefCard: {
-    width: 100,
-    marginRight: 16,
+    width: 110,
+    marginRight: 20,
     alignItems: 'center',
   },
+  chefImageContainer: {
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    borderRadius: 45,
+    marginBottom: 12,
+  },
   chefImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     backgroundColor: colors.border,
-    marginBottom: 8,
+    borderWidth: 3,
+    borderColor: colors.white,
   },
   chefName: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
+    lineHeight: 20,
   },
   chefRating: {
     flexDirection: 'row',
@@ -568,6 +695,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   scrollContent: {
-    paddingBottom: 120, // Add padding to avoid tab bar overlap
+    paddingBottom: 140,
   },
 });
