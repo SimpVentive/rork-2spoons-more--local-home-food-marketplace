@@ -10,7 +10,7 @@ import {
   Switch,
   TextInput,
 } from 'react-native';
-import { X, Check, MapPin, Star, DollarSign, Clock, Users, Calendar } from 'lucide-react-native';
+import { X, Check, MapPin, Star, DollarSign, Clock, Users, Calendar, Leaf, Utensils, Zap } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
 import { CUISINE_TYPES } from '@/mocks/data';
 import colors from '@/constants/colors';
@@ -196,6 +196,23 @@ export const FilterModal: React.FC<FilterModalProps> = ({
           <ScrollView style={styles.scrollView}>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Price Range</Text>
+              <View style={styles.priceRangeChips}>
+                <TouchableOpacity style={styles.priceChip}>
+                  <Text style={styles.priceChipText}>₹</Text>
+                  <Text style={styles.priceChipLabel}>Under ₹200</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity style={styles.priceChip}>
+                  <Text style={styles.priceChipText}>₹₹</Text>
+                  <Text style={styles.priceChipLabel}>₹200-500</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity style={styles.priceChip}>
+                  <Text style={styles.priceChipText}>₹₹₹</Text>
+                  <Text style={styles.priceChipLabel}>Above ₹500</Text>
+                </TouchableOpacity>
+              </View>
+              
               <View style={styles.priceContainer}>
                 <Text style={styles.priceText}>₹{minPrice}</Text>
                 <Text style={styles.priceText}>₹{maxPrice}</Text>
@@ -271,10 +288,16 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Maximum Distance</Text>
+              <Text style={styles.sectionTitle}>Distance</Text>
               <View style={styles.distanceContainer}>
-                <MapPin size={16} color={colors.primary} />
-                <Text style={styles.distanceText}>{maxDistance} km</Text>
+                <View style={styles.distanceIconContainer}>
+                  <MapPin size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.distanceText}>Within {maxDistance} km</Text>
+                <View style={styles.radiusIndicator}>
+                  <View style={[styles.radiusRing, { width: Math.min(maxDistance * 3, 60), height: Math.min(maxDistance * 3, 60) }]} />
+                  <View style={styles.radiusCenter} />
+                </View>
               </View>
               
               {/* Distance slider */}
@@ -406,19 +429,30 @@ export const FilterModal: React.FC<FilterModalProps> = ({
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Availability</Text>
-              <View style={styles.availabilityContainer}>
-                <View style={styles.availabilityOption}>
-                  <View style={styles.availabilityLabelContainer}>
-                    <Calendar size={16} color={colors.primary} />
-                    <Text style={styles.availabilityLabel}>Available Now</Text>
-                  </View>
-                  <Switch
-                    value={availableNow}
-                    onValueChange={setAvailableNow}
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={colors.white}
-                  />
-                </View>
+              <View style={styles.availabilityChipsContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.availabilityChip,
+                    availableNow && styles.selectedAvailabilityChip,
+                  ]}
+                  onPress={() => setAvailableNow(!availableNow)}
+                >
+                  <Zap size={16} color={availableNow ? colors.white : colors.primary} />
+                  <Text style={[
+                    styles.availabilityChipText,
+                    availableNow && styles.selectedAvailabilityChipText,
+                  ]}>Available Now</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity style={styles.availabilityChip}>
+                  <Clock size={16} color={colors.textLight} />
+                  <Text style={styles.availabilityChipText}>Next 2 Hours</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity style={styles.availabilityChip}>
+                  <Calendar size={16} color={colors.textLight} />
+                  <Text style={styles.availabilityChipText}>Today</Text>
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -563,59 +597,78 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Food Type</Text>
-              <View style={styles.foodTypeContainer}>
+              <Text style={styles.sectionTitle}>Diet Preferences</Text>
+              <View style={styles.dietPreferencesContainer}>
                 <TouchableOpacity
                   style={[
-                    styles.foodTypeOption,
-                    foodType === 'both' && styles.selectedFoodType,
+                    styles.dietPreferenceOption,
+                    foodType === 'both' && styles.selectedBothDiet,
                   ]}
                   onPress={() => setFoodType('both')}
                 >
+                  <View style={styles.dietIconContainer}>
+                    <View style={styles.bothDietIcon}>
+                      <View style={styles.vegDot} />
+                      <View style={styles.nonVegDot} />
+                    </View>
+                  </View>
                   <Text
                     style={[
-                      styles.foodTypeText,
-                      foodType === 'both' && styles.selectedFoodTypeText,
+                      styles.dietPreferenceText,
+                      foodType === 'both' && styles.selectedDietText,
                     ]}
                   >
                     Both
                   </Text>
+                  <Text style={styles.dietSubtext}>All dishes</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[
-                    styles.foodTypeOption,
-                    foodType === 'vegetarian' && styles.selectedVegFoodType,
+                    styles.dietPreferenceOption,
+                    foodType === 'vegetarian' && styles.selectedVegDiet,
                   ]}
                   onPress={() => setFoodType('vegetarian')}
                 >
+                  <View style={styles.dietIconContainer}>
+                    <Leaf size={24} color={foodType === 'vegetarian' ? colors.white : colors.vegetarian} />
+                  </View>
                   <Text
                     style={[
-                      styles.foodTypeText,
-                      foodType === 'vegetarian' && styles.selectedFoodTypeText,
+                      styles.dietPreferenceText,
+                      foodType === 'vegetarian' && styles.selectedDietText,
                     ]}
-                    numberOfLines={1}
                   >
-                    Veg
+                    Vegetarian
                   </Text>
+                  <Text style={[
+                    styles.dietSubtext,
+                    foodType === 'vegetarian' && styles.selectedDietSubtext,
+                  ]}>Plant-based only</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[
-                    styles.foodTypeOption,
-                    foodType === 'non-vegetarian' && styles.selectedNonVegFoodType,
+                    styles.dietPreferenceOption,
+                    foodType === 'non-vegetarian' && styles.selectedNonVegDiet,
                   ]}
                   onPress={() => setFoodType('non-vegetarian')}
                 >
+                  <View style={styles.dietIconContainer}>
+                    <Utensils size={24} color={foodType === 'non-vegetarian' ? colors.white : colors.nonVegetarian} />
+                  </View>
                   <Text
                     style={[
-                      styles.foodTypeText,
-                      foodType === 'non-vegetarian' && styles.selectedFoodTypeText,
+                      styles.dietPreferenceText,
+                      foodType === 'non-vegetarian' && styles.selectedDietText,
                     ]}
-                    numberOfLines={1}
                   >
                     Non-Veg
                   </Text>
+                  <Text style={[
+                    styles.dietSubtext,
+                    foodType === 'non-vegetarian' && styles.selectedDietSubtext,
+                  ]}>Meat & seafood</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -817,33 +870,181 @@ const styles = StyleSheet.create({
   selectedSortText: {
     color: colors.white,
   },
-  foodTypeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  dietPreferencesContainer: {
+    flexDirection: 'column',
+    gap: 12,
   },
-  foodTypeOption: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
+  dietPreferenceOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderRadius: 12,
     backgroundColor: colors.card,
-    width: '31%',
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  selectedBothDiet: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  selectedVegDiet: {
+    backgroundColor: colors.vegetarian,
+    borderColor: colors.vegetarian,
+    shadowColor: colors.vegetarian,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  selectedNonVegDiet: {
+    backgroundColor: colors.nonVegetarian,
+    borderColor: colors.nonVegetarian,
+    shadowColor: colors.nonVegetarian,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  dietIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+    shadowColor: colors.text,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  bothDietIcon: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  selectedFoodType: {
-    backgroundColor: colors.primary,
-  },
-  selectedVegFoodType: {
+  vegDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: colors.vegetarian,
+    marginRight: 4,
   },
-  selectedNonVegFoodType: {
+  nonVegDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: colors.nonVegetarian,
   },
-  foodTypeText: {
-    fontSize: 13,
+  dietPreferenceText: {
+    fontSize: 16,
+    fontWeight: '600',
     color: colors.text,
+    flex: 1,
   },
-  selectedFoodTypeText: {
+  selectedDietText: {
     color: colors.white,
+  },
+  dietSubtext: {
+    fontSize: 12,
+    color: colors.textLight,
+    marginTop: 2,
+  },
+  selectedDietSubtext: {
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  distanceIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  radiusIndicator: {
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 'auto',
+  },
+  radiusRing: {
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderRadius: 30,
+    opacity: 0.3,
+  },
+  radiusCenter: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+  },
+  availabilityChipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  availabilityChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  selectedAvailabilityChip: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  availabilityChipText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+    marginLeft: 6,
+  },
+  selectedAvailabilityChipText: {
+    color: colors.white,
+  },
+  priceRangeChips: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  priceChip: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    width: '31%',
+  },
+  priceChipText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  priceChipLabel: {
+    fontSize: 12,
+    color: colors.textLight,
+    textAlign: 'center',
   },
   footer: {
     flexDirection: 'row',
