@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { Button } from '@/components/Button';
-import { Input } from '@/components/Input';
+import Button from '@/components/Button';
+import Input from '@/components/Input';
 import { RapidAPIClient } from '@/utils/rapidapi';
 import { useWeatherAPI } from '@/utils/useRapidAPI';
 import { trpc } from '@/lib/trpc';

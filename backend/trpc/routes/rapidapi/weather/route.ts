@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { publicProcedure } from '../../create-context';
+import { publicProcedure } from '../../../create-context';
 
 const weatherInputSchema = z.object({
   location: z.string().min(1, 'Location is required'),
@@ -8,7 +8,7 @@ const weatherInputSchema = z.object({
 
 export const weatherProcedure = publicProcedure
   .input(weatherInputSchema)
-  .query(async ({ input }) => {
+  .query(async ({ input }: { input: z.infer<typeof weatherInputSchema> }) => {
     const { location, days } = input;
     
     const rapidApiKey = process.env.RAPIDAPI_KEY;
