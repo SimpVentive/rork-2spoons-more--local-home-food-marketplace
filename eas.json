@@ -8,19 +8,22 @@
       "environment": "development",
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "aab",
+        "gradleCommand": ":app:bundleRelease"
       }
     },
     "preview": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "aab",
+        "gradleCommand": ":app:bundleRelease"
       }
     },
     "production": {
       "autoIncrement": true,
       "android": {
-        "buildType": "apk"
+        "buildType": "aab",
+        "gradleCommand": ":app:bundleRelease"
       }
     }
   }
