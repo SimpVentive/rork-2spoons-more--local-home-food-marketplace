@@ -44,28 +44,29 @@ export const useAuthStore = create<AuthState>()(
       
       initialize: async () => {
         try {
-          // This will be called after the store is rehydrated from AsyncStorage
-          const { isAuthenticated, user } = get();
+          console.log('Initializing auth store...');
           
-          console.log('Initializing auth store, current state:', { isAuthenticated, user: user?.email });
+          // Clear authentication state to force fresh login on every app start
+          set({
+            user: null,
+            isAuthenticated: false,
+            userPreference: null,
+            token: null,
+            isAdmin: false,
+            isInitialized: true,
+          });
           
-          // Force users to login every time - no auto-authentication
-          if (!isAuthenticated) {
-            console.log('Clearing authentication state to force fresh login');
-            set({
-              user: null,
-              isAuthenticated: false,
-              userPreference: null,
-              token: null,
-              isAdmin: false,
-            });
-          }
-          
-          set({ isInitialized: true });
-          console.log('Auth store initialized successfully');
+          console.log('Auth store initialized - cleared state for fresh login');
         } catch (error) {
           console.error('Auth store initialization error:', error);
-          set({ isInitialized: true });
+          set({ 
+            user: null,
+            isAuthenticated: false,
+            userPreference: null,
+            token: null,
+            isAdmin: false,
+            isInitialized: true 
+          });
         }
       },
       
@@ -271,7 +272,7 @@ export const useAuthStore = create<AuthState>()(
 
       switchRole: async () => {
         try {
-          const { user, userPreference } = get();
+          const { user } = get();
           
           if (!user) {
             throw new Error('User not found');
@@ -584,23 +585,15 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      onRehydrateStorage: () => (state: AuthState | undefined) => {
-        console.log('Auth store rehydration started');
-        return (state: AuthState | undefined, error?: Error) => {
-          if (error) {
-            console.error('Auth store rehydration error:', error);
-          } else {
-            console.log('Auth store rehydration completed, initializing...');
-            // Initialize the store after rehydration
-            if (state) {
-              // Use setTimeout to ensure initialization happens after rehydration is complete
-              setTimeout(() => {
-                state.initialize();
-              }, 100);
-            }
-          }
-        };
-      },
+      // Skip complex rehydration logic for better Android compatibility
+      partialize: (state) => ({
+        // Only persist essential data, not auth state
+        user: null,
+        isAuthenticated: false,
+        userPreference: null,
+        token: null,
+        isAdmin: false,
+      }),
     }
   )
 );

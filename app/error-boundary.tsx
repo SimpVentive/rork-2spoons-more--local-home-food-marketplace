@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
+import colors from '@/constants/colors';
 
 interface Props {
   children: React.ReactNode;
@@ -11,66 +12,27 @@ interface State {
   error: Error | null;
 }
 
-const IFRAME_ID = 'rork-web-preview';
-
-const webTargetOrigins = [
-  "http://localhost:3000",
-  "https://rorkai.com",
-  "https://rork.app",
-];    
-
-function sendErrorToIframeParent(error: any, errorInfo?: any) {
+// Simplified error handling for better Android compatibility
+function logError(error: any, errorInfo?: any) {
+  console.error('App Error:', error);
+  if (errorInfo) {
+    console.error('Error Info:', errorInfo);
+  }
+  
+  // Only send to parent on web
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    console.debug('Sending error to parent:', {
-      error,
-      errorInfo,
-      referrer: document.referrer
-    });
-
-    const errorMessage = {
-      type: 'ERROR',
-      error: {
-        message: error?.message || error?.toString() || 'Unknown error',
-        stack: error?.stack,
-        componentStack: errorInfo?.componentStack,
-        timestamp: new Date().toISOString(),
-      },
-      iframeId: IFRAME_ID,
-    };
-
     try {
-      window.parent.postMessage(
-        errorMessage,
-        webTargetOrigins.includes(document.referrer) ? document.referrer : '*'
-      );
-    } catch (postMessageError) {
-      console.error('Failed to send error to parent:', postMessageError);
+      window.parent.postMessage({
+        type: 'ERROR',
+        error: {
+          message: error?.message || 'Unknown error',
+          stack: error?.stack,
+        }
+      }, '*');
+    } catch {
+      // Ignore postMessage errors
     }
   }
-}
-
-if (Platform.OS === 'web' && typeof window !== 'undefined') {
-  window.addEventListener('error', (event) => {
-    event.preventDefault();
-    const errorDetails = event.error ?? {
-      message: event.message ?? 'Unknown error',
-      filename: event.filename ?? 'Unknown file',
-      lineno: event.lineno ?? 'Unknown line',
-      colno: event.colno ?? 'Unknown column'
-    };
-    sendErrorToIframeParent(errorDetails);
-  }, true);
-
-  window.addEventListener('unhandledrejection', (event) => {
-    event.preventDefault();
-    sendErrorToIframeParent(event.reason);
-  }, true);
-
-  const originalConsoleError = console.error;
-  console.error = (...args) => {
-    sendErrorToIframeParent(args.join(' '));
-    originalConsoleError.apply(console, args);
-  };
 }
 
 export class ErrorBoundary extends React.Component<Props, State> {
@@ -84,7 +46,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    sendErrorToIframeParent(error, errorInfo);
+    logError(error, errorInfo);
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
@@ -95,13 +57,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
       return (
         <View style={styles.container}>
           <View style={styles.content}>
-            <Text style={styles.title}>Something went wrong</Text>
-            <Text style={styles.subtitle}>{this.state.error?.message}</Text>
-            {Platform.OS !== 'web' && (
-              <Text style={styles.description}>
-                Please check your device logs for more details.
-              </Text>
-            )}
+            <Text style={styles.title}>Oops! Something went wrong</Text>
+            <Text style={styles.subtitle}>
+              {this.state.error?.message || 'An unexpected error occurred'}
+            </Text>
+            <Text style={styles.description}>
+              Please restart the app to continue.
+            </Text>
           </View>
         </View>
       );
@@ -114,7 +76,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -123,20 +85,22 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
-    fontSize: 36,
+    fontSize: 24,
     textAlign: 'center',
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 16,
+    color: colors.text,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 16,
+    color: colors.textLight,
     marginBottom: 12,
     textAlign: 'center',
+    lineHeight: 22,
   },
   description: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textLight,
     textAlign: 'center',
     marginTop: 8,
   },
