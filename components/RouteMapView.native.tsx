@@ -1,39 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Alert,
   TouchableOpacity,
-  ScrollView,
 } from 'react-native';
-import { MapPin, Navigation, Clock, Utensils, Route } from 'lucide-react-native';
-import { Platform } from 'react-native';
+import { Route } from 'lucide-react-native';
 
 import MapView, { Marker, PROVIDER_GOOGLE, Polyline } from 'react-native-maps';
 import colors from '@/constants/colors';
-import { RouteLocation } from '@/types';
-import { useAuthStore } from '@/store/auth-store';
-import { useListingsStore } from '@/store/listings-store';
 
 interface RouteMapViewNativeProps {
-  routePoints: Array<{
+  routePoints: {
     latitude: number;
     longitude: number;
     name: string;
-  }>;
-  dishesOnRoute: Array<{
+  }[];
+  dishesOnRoute: {
     latitude: number;
     longitude: number;
     dishName: string;
     availableUntil: string;
     sellerName: string;
-  }>;
+  }[];
   onDishPress?: (dish: any) => void;
 }
 
 export default function RouteMapViewNative({ routePoints, dishesOnRoute, onDishPress }: RouteMapViewNativeProps) {
-  const { user } = useAuthStore();
   const [mapRegion, setMapRegion] = useState<any>({
     latitude: routePoints[0]?.latitude || 17.4123,
     longitude: routePoints[0]?.longitude || 78.2679,
@@ -41,16 +34,10 @@ export default function RouteMapViewNative({ routePoints, dishesOnRoute, onDishP
     longitudeDelta: 0.05,
   });
 
-
-
-  useEffect(() => {
-    if (routePoints.length > 0) {
-      fitToRoute();
-    }
-  }, [routePoints]);
-
-  const fitToRoute = () => {
+  const fitToRoute = useCallback(() => {
     if (routePoints.length === 0) return;
+    
+    console.log('Fitting to route with points:', routePoints);
     
     const latitudes = routePoints.map(p => p.latitude);
     const longitudes = routePoints.map(p => p.longitude);
@@ -62,16 +49,26 @@ export default function RouteMapViewNative({ routePoints, dishesOnRoute, onDishP
     
     const centerLat = (minLat + maxLat) / 2;
     const centerLng = (minLng + maxLng) / 2;
-    const deltaLat = (maxLat - minLat) * 1.2; // Add padding
-    const deltaLng = (maxLng - minLng) * 1.2;
+    const deltaLat = Math.max((maxLat - minLat) * 1.5, 0.02); // Add more padding and minimum delta
+    const deltaLng = Math.max((maxLng - minLng) * 1.5, 0.02);
     
-    setMapRegion({
+    const newRegion = {
       latitude: centerLat,
       longitude: centerLng,
-      latitudeDelta: Math.max(deltaLat, 0.01),
-      longitudeDelta: Math.max(deltaLng, 0.01),
-    });
-  };
+      latitudeDelta: deltaLat,
+      longitudeDelta: deltaLng,
+    };
+    
+    console.log('Setting map region to:', newRegion);
+    setMapRegion(newRegion);
+  }, [routePoints]);
+
+  useEffect(() => {
+    if (routePoints.length > 0) {
+      console.log('RouteMapView: Route points received:', routePoints);
+      fitToRoute();
+    }
+  }, [routePoints, fitToRoute]);
 
   return (
     <View style={styles.container}>
@@ -93,17 +90,21 @@ export default function RouteMapViewNative({ routePoints, dishesOnRoute, onDishP
           onRegionChangeComplete={setMapRegion}
           showsUserLocation
           showsMyLocationButton={false}
-          showsCompass
-          showsScale
-          showsBuildings
-          showsTraffic
-          showsIndoors
+          showsCompass={false}
+          showsScale={false}
+          showsBuildings={false}
+          showsTraffic={false}
+          showsIndoors={false}
           mapType="standard"
           zoomEnabled
-          zoomControlEnabled
+          zoomControlEnabled={false}
           rotateEnabled
           scrollEnabled
           pitchEnabled
+          onMapReady={() => {
+            console.log('Map is ready, fitting to route');
+            setTimeout(() => fitToRoute(), 1000);
+          }}
         >
           {/* Route points markers */}
           {routePoints.map((point, index) => (
@@ -137,7 +138,7 @@ export default function RouteMapViewNative({ routePoints, dishesOnRoute, onDishP
                 longitude: point.longitude,
               }))}
               strokeColor={colors.primary}
-              strokeWidth={3}
+              strokeWidth={4}
             />
           )}
           
@@ -212,7 +213,7 @@ const deg2rad = (deg: number): number => {
 };
 
 // Calculate total route distance
-const calculateTotalDistance = (points: Array<{latitude: number; longitude: number}>): number => {
+const calculateTotalDistance = (points: {latitude: number; longitude: number}[]): number => {
   if (points.length < 2) return 0;
   
   let totalDistance = 0;

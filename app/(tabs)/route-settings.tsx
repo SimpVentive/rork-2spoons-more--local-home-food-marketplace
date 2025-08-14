@@ -8,6 +8,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
 import { 
   MapPin, 
@@ -19,6 +20,7 @@ import {
   Plus,
   Trash2,
   Navigation,
+  Settings,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import LocationPicker from '@/components/LocationPicker';
@@ -39,6 +41,7 @@ export default function RouteSettingsScreen() {
   const [locationPickerType, setLocationPickerType] = useState<'home' | 'office' | 'custom'>('home');
   const [showRouteMap, setShowRouteMap] = useState(false);
   const [selectedLocations, setSelectedLocations] = useState<RoutePoint[]>([]);
+  const [searchRadius, setSearchRadius] = useState<number>(user?.detourPreference ? user.detourPreference / 1000 : 2); // Convert meters to km
   
   const MAX_CUSTOM_LOCATIONS = 3; // Total of 5 locations including home and office
   const MAX_TOTAL_LOCATIONS = 5;
@@ -114,6 +117,7 @@ export default function RouteSettingsScreen() {
           longitude: officeLocation.longitude,
         } : undefined,
         customLocations: customLocations,
+        detourPreference: searchRadius * 1000, // Convert km to meters
       };
       
       await updateProfile(updates);
@@ -172,10 +176,17 @@ export default function RouteSettingsScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Route Settings</Text>
-        <Text style={styles.subtitle}>
-          Set up your daily routes to discover food along the way
-        </Text>
+        <View style={styles.headerContent}>
+          <View style={styles.headerIcon}>
+            <Settings size={28} color={colors.primary} />
+          </View>
+          <View>
+            <Text style={styles.title}>Route Settings</Text>
+            <Text style={styles.subtitle}>
+              Set up your daily routes to discover food along the way
+            </Text>
+          </View>
+        </View>
       </View>
       
       <View style={styles.section}>
@@ -270,14 +281,35 @@ export default function RouteSettingsScreen() {
         <Text style={styles.sectionTitle}>Route Preferences</Text>
         
         <View style={styles.preferenceCard}>
-          <View style={styles.preferenceIconContainer}>
-            <Route size={24} color={colors.warning} />
+          <View style={styles.preferenceHeader}>
+            <View style={styles.preferenceIconContainer}>
+              <Route size={24} color={colors.primary} />
+            </View>
+            <View style={styles.preferenceInfo}>
+              <Text style={styles.preferenceName}>Search Radius</Text>
+              <Text style={styles.preferenceDescription}>
+                Find food within {searchRadius.toFixed(1)}km of your route
+              </Text>
+            </View>
           </View>
-          <View style={styles.preferenceInfo}>
-            <Text style={styles.preferenceName}>Search Radius</Text>
-            <Text style={styles.preferenceDescription}>
-              Find food within 2km of your route
-            </Text>
+          
+          <View style={styles.sliderContainer}>
+            <View style={styles.sliderLabels}>
+              <Text style={styles.sliderLabel}>0km</Text>
+              <Text style={styles.sliderValue}>{searchRadius.toFixed(1)}km</Text>
+              <Text style={styles.sliderLabel}>2km</Text>
+            </View>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={2}
+              value={searchRadius}
+              onValueChange={setSearchRadius}
+              minimumTrackTintColor={colors.primary}
+              maximumTrackTintColor={colors.border}
+              thumbTintColor={colors.primary}
+              step={0.1}
+            />
           </View>
         </View>
         
@@ -353,26 +385,51 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    padding: 16,
+    padding: 20,
     backgroundColor: colors.white,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: `${colors.primary}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: 4,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 16,
     color: colors.textLight,
     lineHeight: 22,
+    fontWeight: '500',
   },
   section: {
     backgroundColor: colors.white,
     marginTop: 16,
-    paddingVertical: 16,
+    paddingVertical: 20,
+    marginHorizontal: 16,
+    borderRadius: 16,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -391,19 +448,27 @@ const styles = StyleSheet.create({
   locationCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   locationIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   locationInfo: {
     flex: 1,
@@ -461,18 +526,21 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   preferenceCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  preferenceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   preferenceIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.card,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: `${colors.primary}15`,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -481,15 +549,40 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   preferenceName: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.text,
     marginBottom: 4,
   },
   preferenceDescription: {
+    fontSize: 15,
+    color: colors.textLight,
+    fontWeight: '500',
+  },
+  sliderContainer: {
+    paddingHorizontal: 4,
+  },
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sliderLabel: {
     fontSize: 14,
     color: colors.textLight,
+    fontWeight: '500',
   },
+  sliderValue: {
+    fontSize: 16,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+
   actionContainer: {
     padding: 16,
     paddingBottom: 32,

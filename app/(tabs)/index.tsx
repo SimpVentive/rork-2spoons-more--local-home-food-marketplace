@@ -132,6 +132,13 @@ export default function HomeScreen() {
     router.push('/(tabs)/search');
   };
   
+  const getTimeOfDay = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'morning';
+    if (hour < 17) return 'afternoon';
+    return 'evening';
+  };
+  
   return (
     <ScrollView 
       style={styles.container}
@@ -139,37 +146,51 @@ export default function HomeScreen() {
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
+      showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>
-            Hello, {user?.name ? user.name.split(' ')[0] : 'Guest'}
-          </Text>
-          <View style={styles.locationContainer}>
-            <MapPin size={16} color={colors.primary} />
-            <Text style={styles.locationText}>{user?.address || 'Set your location'}</Text>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.greeting}>
+              Good {getTimeOfDay()}, {user?.name ? user.name.split(' ')[0] : 'Guest'}! 👋
+            </Text>
+            <View style={styles.locationContainer}>
+              <MapPin size={16} color={colors.primary} />
+              <Text style={styles.locationText}>{user?.address || 'Set your location'}</Text>
+            </View>
+          </View>
+          
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              style={styles.notifyButton}
+              onPress={() => router.push('/(tabs)/notifications')}
+            >
+              <Bell size={20} color={colors.primary} />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>3</Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}>
+              <Image
+                source={{ uri: user?.profileImage || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167' }}
+                style={styles.profileImage}
+                contentFit="cover"
+              />
+            </TouchableOpacity>
           </View>
         </View>
         
-        <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={styles.notifyButton}
-            onPress={() => router.push('/(tabs)/notifications')}
-          >
-            <Bell size={20} color={colors.primary} />
-            <View style={styles.notificationBadge}>
-              <Text style={styles.notificationBadgeText}>3</Text>
-            </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}>
-            <Image
-              source={{ uri: user?.profileImage || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167' }}
-              style={styles.profileImage}
-              contentFit="cover"
-            />
-          </TouchableOpacity>
-        </View>
+        {/* Search Bar */}
+        <TouchableOpacity 
+          style={styles.searchBar}
+          onPress={handleSearchPress}
+        >
+          <View style={styles.searchIcon}>
+            <Text style={styles.searchEmoji}>🔍</Text>
+          </View>
+          <Text style={styles.searchPlaceholder}>Search for dishes, cuisines...</Text>
+        </TouchableOpacity>
       </View>
       
       {/* Hero Section with Indian Woman Cooking */}
@@ -332,13 +353,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    backgroundColor: colors.white,
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 16,
-    backgroundColor: colors.white,
+    paddingBottom: 20,
     shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
@@ -348,12 +366,18 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   greeting: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
     color: colors.text,
     marginBottom: 6,
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
   },
   locationContainer: {
     flexDirection: 'row',
@@ -405,7 +429,7 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     marginHorizontal: 20,
-    marginTop: 16,
+    marginTop: 8,
     borderRadius: 20,
     overflow: 'hidden',
     shadowColor: colors.shadow,
@@ -416,6 +440,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 8,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchEmoji: {
+    fontSize: 18,
+  },
+  searchPlaceholder: {
+    fontSize: 16,
+    color: colors.textLight,
+    fontWeight: '500',
+    flex: 1,
   },
   heroImage: {
     height: 260,
@@ -512,7 +557,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   sectionCard: {
-    marginTop: 32,
+    marginTop: 24,
     marginHorizontal: 20,
     backgroundColor: colors.white,
     borderRadius: 20,
@@ -576,7 +621,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   topItemCard: {
-    width: 160,
+    width: 170,
     marginRight: 16,
     borderRadius: 16,
     backgroundColor: colors.card,
@@ -592,7 +637,7 @@ const styles = StyleSheet.create({
   },
   topItemImage: {
     width: '100%',
-    height: 120,
+    height: 130,
     backgroundColor: colors.border,
   },
   vegIndicator: {
@@ -618,7 +663,7 @@ const styles = StyleSheet.create({
     borderColor: colors.white,
   },
   topItemInfo: {
-    padding: 12,
+    padding: 14,
   },
   topItemName: {
     fontSize: 15,
