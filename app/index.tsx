@@ -1,35 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
 
 export default function AppIndex() {
   const router = useRouter();
   const [isInitializing, setIsInitializing] = useState(true);
-  const { isAuthenticated, isInitialized, user, userPreference, initialize } = useAuthStore();
 
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Initialize the auth store
-        await initialize();
+        console.log('Initializing app...');
         
-        // Small delay to ensure everything is properly set up
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Simple delay to ensure everything is loaded
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        const state = useAuthStore.getState();
+        // For now, always redirect to auth to avoid complex state issues
+        console.log('Redirecting to auth...');
+        router.replace('/(auth)');
         
-        // Route based on authentication state
-        if (!state.isAuthenticated) {
-          router.replace('/(auth)');
-        } else if (state.user?.isAdmin) {
-          router.replace('/(admin)');
-        } else if (!state.userPreference) {
-          router.replace('/user-preference');
-        } else {
-          router.replace('/(tabs)');
-        }
       } catch (error) {
         console.error('App initialization error:', error);
         // Fallback to auth screen on error
@@ -40,7 +29,7 @@ export default function AppIndex() {
     };
 
     initializeApp();
-  }, []);
+  }, [router]);
 
   if (isInitializing) {
     return (
@@ -56,7 +45,7 @@ export default function AppIndex() {
           color: colors.textLight,
           fontSize: 16 
         }}>
-          Starting...
+          Loading...
         </Text>
       </View>
     );

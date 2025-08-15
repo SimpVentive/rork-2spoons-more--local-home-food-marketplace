@@ -1,50 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { Stack } from 'expo-router';
+import React from 'react';
+import { Stack, useRouter } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { TouchableOpacity, View, ActivityIndicator, Platform } from 'react-native';
+import { TouchableOpacity, Platform } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
 import colors from '@/constants/colors';
 import { ErrorBoundary } from './error-boundary';
-import { initializeProductionOptimizations } from '@/utils/productionOptimization';
-import { bundleAnalysis } from '@/utils/bundleOptimization';
 
 export default function RootLayout() {
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
-  
-  // Ensure component is mounted before allowing navigation
-  useEffect(() => {
-    // Initialize production optimizations
-    initializeProductionOptimizations();
-    
-    // Log bundle analysis in development
-    if (__DEV__) {
-      bundleAnalysis.logBundleInfo();
-    }
-    
-    const timer = setTimeout(() => {
-      setIsMounted(true);
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Show loading while mounting
-  if (!isMounted) {
-    return (
-      <SafeAreaProvider>
-        <View style={{ 
-          flex: 1, 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          backgroundColor: colors.background 
-        }}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      </SafeAreaProvider>
-    );
-  }
   
   return (
     <ErrorBoundary>
@@ -66,7 +29,7 @@ export default function RootLayout() {
                       try {
                         router.back();
                       } catch (error) {
-                        // Navigation error handled silently in production
+                        console.error('Navigation error:', error);
                       }
                     }}
                     style={{ 
