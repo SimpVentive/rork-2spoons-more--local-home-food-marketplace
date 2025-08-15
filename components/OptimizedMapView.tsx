@@ -2,14 +2,55 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import { MapPin } from 'lucide-react-native';
 import colors from '@/constants/colors';
-import {
-  loadMapComponent,
-  calculateMapRegion,
-  clusterMarkers,
-  mapPerformanceMonitor,
-  LITE_MAP_CONFIG,
-  LiteMapPoint,
-} from '@/utils/mapsOptimization';
+
+// Simplified types for better Android compatibility
+interface LiteMapPoint {
+  lat: number;
+  lng: number;
+  title?: string;
+  count?: number;
+}
+
+// Simple fallback functions
+const calculateMapRegion = (points: LiteMapPoint[]) => {
+  if (points.length === 0) {
+    return {
+      latitude: 37.78825,
+      longitude: -122.4324,
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    };
+  }
+  
+  const lats = points.map(p => p.lat);
+  const lngs = points.map(p => p.lng);
+  
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+  
+  return {
+    latitude: (minLat + maxLat) / 2,
+    longitude: (minLng + maxLng) / 2,
+    latitudeDelta: Math.max(maxLat - minLat, 0.01) * 1.2,
+    longitudeDelta: Math.max(maxLng - minLng, 0.01) * 1.2,
+  };
+};
+
+const loadMapComponent = async () => {
+  try {
+    if (Platform.OS === 'web') {
+      return null;
+    }
+    const MapView = require('react-native-maps').default;
+    const { Marker, Polyline, PROVIDER_GOOGLE } = require('react-native-maps');
+    return { MapView, Marker, Polyline, PROVIDER_GOOGLE };
+  } catch (error) {
+    console.warn('Maps not available:', error);
+    return null;
+  }
+};
 
 interface OptimizedMapViewProps {
   points: LiteMapPoint[];
@@ -39,9 +80,9 @@ const OptimizedMapView: React.FC<OptimizedMapViewProps> = ({
   }, [points, routePoints]);
 
   const clusteredMarkers = useMemo(() => {
-    if (points.length < 50) return points; // No clustering for small datasets
-    return clusterMarkers(points, zoomLevel);
-  }, [points, zoomLevel]);
+    // Simplified - no clustering for Android compatibility
+    return points.slice(0, 20); // Limit markers for performance
+  }, [points]);
 
   // Load map components dynamically
   useEffect(() => {
@@ -49,16 +90,12 @@ const OptimizedMapView: React.FC<OptimizedMapViewProps> = ({
 
     const initializeMap = async () => {
       try {
-        mapPerformanceMonitor.startTiming('Map Initialization');
-        
         const components = await loadMapComponent();
         
         if (mounted) {
           setMapComponents(components);
           setLoading(false);
         }
-        
-        mapPerformanceMonitor.endTiming('Map Initialization');
       } catch (err) {
         console.error('Failed to load map components:', err);
         if (mounted) {
@@ -75,11 +112,9 @@ const OptimizedMapView: React.FC<OptimizedMapViewProps> = ({
     };
   }, []);
 
-  // Handle marker press with performance optimization
+  // Handle marker press
   const handleMarkerPress = useCallback((point: LiteMapPoint) => {
-    mapPerformanceMonitor.startTiming('Marker Press');
     onPointPress?.(point);
-    mapPerformanceMonitor.endTiming('Marker Press');
   }, [onPointPress]);
 
   // Loading state
@@ -133,40 +168,29 @@ const OptimizedMapView: React.FC<OptimizedMapViewProps> = ({
     <View style={[styles.container, style]}>
       <MapView
         style={styles.map}
-        provider={PROVIDER_GOOGLE}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         region={mapRegion}
-        {...LITE_MAP_CONFIG.features}
-        mapType={LITE_MAP_CONFIG.mapType}
-        onMapReady={() => {
-          mapPerformanceMonitor.logMemoryUsage();
-        }}
+        showsUserLocation={false}
+        showsMyLocationButton={false}
+        showsCompass={false}
+        showsScale={false}
+        showsBuildings={false}
+        showsTraffic={false}
+        showsIndoors={false}
+        mapType="standard"
       >
-        {/* Clustered markers */}
-        {clusteredMarkers.map((point, index) => {
-          const isCluster = 'count' in point && point.count && point.count > 1;
-          
-          return (
-            <Marker
-              key={`marker-${index}`}
-              coordinate={{
-                latitude: point.lat,
-                longitude: point.lng,
-              }}
-              title={point.title || `Location ${index + 1}`}
-              onPress={() => handleMarkerPress(point)}
-            >
-              {isCluster ? (
-                <View style={styles.clusterMarker}>
-                  <Text style={styles.clusterText}>{point.count}</Text>
-                </View>
-              ) : (
-                <View style={styles.singleMarker}>
-                  <MapPin size={20} color={colors.white} />
-                </View>
-              )}
-            </Marker>
-          );
-        })}
+        {/* Simple markers */}
+        {clusteredMarkers.map((point, index) => (
+          <Marker
+            key={`marker-${index}`}
+            coordinate={{
+              latitude: point.lat,
+              longitude: point.lng,
+            }}
+            title={point.title || `Location ${index + 1}`}
+            onPress={() => handleMarkerPress(point)}
+          />
+        ))}
 
         {/* Route polyline */}
         {showRoute && routePoints.length > 1 && (
@@ -312,4 +336,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default React.memo(OptimizedMapView);
+export default OptimizedMapView;
+export type { LiteMapPoint };

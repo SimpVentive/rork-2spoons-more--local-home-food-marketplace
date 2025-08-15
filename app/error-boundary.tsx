@@ -19,6 +19,15 @@ function logError(error: any, errorInfo?: any) {
     console.error('Error Info:', errorInfo);
   }
   
+  // Android-specific error logging
+  if (Platform.OS === 'android') {
+    console.warn('Android Error Details:', {
+      message: error?.message,
+      name: error?.name,
+      componentStack: errorInfo?.componentStack?.slice(0, 500), // Limit stack size
+    });
+  }
+  
   // Only send to parent on web
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     try {
@@ -47,6 +56,15 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     logError(error, errorInfo);
+    
+    // Android-specific error recovery
+    if (Platform.OS === 'android') {
+      // Try to recover from common Android errors
+      setTimeout(() => {
+        this.setState({ hasError: false, error: null });
+      }, 3000);
+    }
+    
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
