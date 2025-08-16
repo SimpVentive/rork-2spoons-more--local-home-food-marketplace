@@ -10,7 +10,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Image } from 'expo-image';
+import { Image } from 'react-native';
 import { 
   MapPin, 
   Bell, 
@@ -175,7 +175,7 @@ export default function HomeScreen() {
               <Image
                 source={{ uri: user?.profileImage || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167' }}
                 style={styles.profileImage}
-                contentFit="cover"
+                resizeMode="cover"
               />
             </TouchableOpacity>
           </View>
@@ -271,7 +271,7 @@ export default function HomeScreen() {
                 <Image
                   source={{ uri: item.image }}
                   style={styles.topItemImage}
-                  contentFit="cover"
+                  resizeMode="cover"
                 />
                 <View style={item.isVegetarian ? styles.vegIndicator : styles.nonVegIndicator} />
               </View>
@@ -323,7 +323,7 @@ export default function HomeScreen() {
                 <Image
                   source={{ uri: chef.profileImage }}
                   style={styles.chefImage}
-                  contentFit="cover"
+                  resizeMode="cover"
                 />
               </View>
               <Text style={styles.chefName} numberOfLines={1}>{chef.name}</Text>

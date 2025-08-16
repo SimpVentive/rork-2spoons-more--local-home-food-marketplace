@@ -13,7 +13,7 @@ import {
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
 import { Platform, StyleSheet, View, ActivityIndicator, TouchableOpacity, Text, Alert } from 'react-native';
-import * as Haptics from 'expo-haptics';
+// Haptics removed for Android compatibility
 
 export default function TabLayout(): React.ReactElement {
   const router = useRouter();
@@ -116,7 +116,13 @@ export default function TabLayout(): React.ReactElement {
         headerRight: () => (
           <TouchableOpacity 
             style={styles.switchButton}
-            onPress={handleSwitchRole}
+            onPress={() => {
+              try {
+                handleSwitchRole();
+              } catch (error) {
+                console.error('Switch role error:', error);
+              }
+            }}
           >
             <RefreshCw size={16} color={colors.primary} />
             <Text style={styles.switchButtonText}>
@@ -124,7 +130,7 @@ export default function TabLayout(): React.ReactElement {
             </Text>
           </TouchableOpacity>
         ),
-        tabBarHideOnKeyboard: true,
+        tabBarHideOnKeyboard: Platform.OS === 'android',
       }}
     >
       {/* Chef/Seller Tabs */}
