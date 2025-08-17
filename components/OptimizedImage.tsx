@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
-import { Image, ImageProps } from 'expo-image';
-import { ViewStyle } from 'react-native';
-import { optimizeImageUrl, generatePlaceholder } from '@/utils/imageOptimization';
+import { Image, ImageProps, ViewStyle } from 'react-native';
+import { optimizeImageUrl } from '@/utils/imageOptimization';
 import { assetOptimization } from '@/utils/bundleOptimization';
 
 interface OptimizedImageComponentProps extends Omit<ImageProps, 'source'> {
@@ -32,8 +31,7 @@ const OptimizedImage: React.FC<OptimizedImageComponentProps> = memo(({
   style,
   placeholder = true,
   transition = 200,
-  contentFit = 'cover',
-  cachePolicy = 'memory-disk',
+  resizeMode = 'cover',
   ...props
 }) => {
   // Get dimensions based on use case if not provided
@@ -56,21 +54,13 @@ const OptimizedImage: React.FC<OptimizedImageComponentProps> = memo(({
     });
   }, [uri, dimensions.width, dimensions.height, quality]);
 
-  // Generate placeholder
-  const placeholderUri = React.useMemo(() => {
-    return placeholder 
-      ? generatePlaceholder(dimensions.width, dimensions.height)
-      : undefined;
-  }, [placeholder, dimensions.width, dimensions.height]);
+  // Note: Placeholder functionality removed for Android compatibility
 
   return (
     <Image
       source={{ uri: optimizedUri }}
       style={style}
-      contentFit={contentFit}
-      placeholder={placeholderUri}
-      transition={transition}
-      cachePolicy={cachePolicy}
+      resizeMode={resizeMode}
       {...props}
     />
   );
