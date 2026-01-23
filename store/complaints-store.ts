@@ -54,7 +54,7 @@ export const useComplaintsStore = create<ComplaintsState>()(
       },
       
       getComplaintsByBuyer: (buyerId) => {
-        return get().complaints.filter(complaint => complaint.buyerId === buyerId);
+        return get().complaints.filter(complaint => complaint.userId === buyerId);
       },
       
       getComplaintsBySeller: (sellerId) => {
@@ -69,10 +69,11 @@ export const useComplaintsStore = create<ComplaintsState>()(
         set({ isLoading: true, error: null });
         
         try {
+          const mappedStatus = status === 'reviewing' ? 'investigating' : status;
           set((state) => ({
             complaints: state.complaints.map(complaint => 
               complaint.id === complaintId 
-                ? { ...complaint, status } 
+                ? { ...complaint, status: mappedStatus as Complaint['status'] } 
                 : complaint
             ),
             isLoading: false,

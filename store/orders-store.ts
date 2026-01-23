@@ -115,14 +115,22 @@ export const useOrdersStore = create<OrdersState>()(
           
           const now = new Date().toISOString();
           
-          const newOrder: Order = {
+          const newOrder = {
             id: `order-${Date.now()}`,
             ...orderData,
-            status: 'pending',
+            dishName: orderData.listingSnapshot?.dishName || '',
+            pickupTime: now,
+            buyerName: '',
+            buyerPhone: '',
+            sellerName: orderData.listingSnapshot?.sellerName || '',
+            sellerPhone: '',
+            sellerAddress: '',
+            paymentMethod: orderData.paymentMethod,
+            status: 'pending' as const,
             paymentStatus: 'pending',
             createdAt: now,
             updatedAt: now,
-          };
+          } satisfies Order;
           
           set(state => ({
             orders: [...state.orders, newOrder],
@@ -157,15 +165,23 @@ export const useOrdersStore = create<OrdersState>()(
           const now = new Date().toISOString();
           
           // Create a status timestamp field based on the new status
-          let statusUpdate: Partial<Order> = { status, updatedAt: now };
+          // Map extended statuses to Order-compatible statuses
+          const mappedStatus = (() => {
+            if (status === 'accepted') return 'confirmed' as const;
+            if (status === 'delivered') return 'completed' as const;
+            if (status === 'canceled') return 'cancelled' as const;
+            if (status === 'in_delivery') return 'ready' as const;
+            return status as Order['status'];
+          })();
           
-          if (status === 'accepted') {
+          let statusUpdate: Partial<Order> = { status: mappedStatus, updatedAt: now };
+          
+          if (status === 'accepted' || status === 'confirmed') {
             statusUpdate.acceptedAt = now;
           } else if (status === 'ready') {
             statusUpdate.readyAt = now;
-          } else if (status === 'delivered') {
+          } else if (status === 'delivered' || status === 'completed') {
             statusUpdate.deliveredAt = now;
-          } else if (status === 'completed') {
             statusUpdate.completedAt = now;
           }
           
@@ -207,12 +223,12 @@ export const useOrdersStore = create<OrdersState>()(
             throw new Error('Order not found');
           }
           
-          const updatedOrder = { 
+          const updatedOrder: Order = { 
             ...orders[orderIndex], 
-            status: 'canceled' as OrderStatus, 
-            cancellationReason: reason,
+            status: 'cancelled' as const, 
+            notes: reason,
             updatedAt: new Date().toISOString(),
-            canceledAt: new Date().toISOString()
+            cancelledAt: new Date().toISOString()
           };
           
           const updatedOrders = [...orders];
@@ -248,10 +264,10 @@ export const useOrdersStore = create<OrdersState>()(
             throw new Error('Order not found');
           }
           
-          const updatedOrder = { 
+          const updatedOrder: Order = { 
             ...orders[orderIndex], 
-            status: 'refund_requested' as OrderStatus, 
-            refundReason: reason,
+            status: 'cancelled' as const,
+            notes: `Refund requested: ${reason}`,
             updatedAt: new Date().toISOString() 
           };
           

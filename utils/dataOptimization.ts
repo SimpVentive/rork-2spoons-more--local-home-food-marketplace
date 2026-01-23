@@ -33,7 +33,9 @@ export const loadDataProgressively = async <T>(
     try {
       const secondaryData = await secondaryDataLoader();
       // Merge secondary data with essential data
-      Object.assign(essentialData, secondaryData);
+      if (essentialData && typeof essentialData === 'object') {
+        Object.assign(essentialData as object, secondaryData);
+      }
     } catch (error) {
       // Secondary data loading failed, but app continues with essential data
     }

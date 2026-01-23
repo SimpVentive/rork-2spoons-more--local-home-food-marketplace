@@ -177,7 +177,7 @@ export const initializeProductionOptimizations = () => {
     stripDebugCode();
     
     // Set up memory monitoring
-    if (performanceMonitoring.memoryUsage.track !== false) {
+    if (performanceMonitoring.memoryUsage) {
       setInterval(() => {
         if (Platform.OS === 'web' && (performance as any).memory) {
           const memory = (performance as any).memory;

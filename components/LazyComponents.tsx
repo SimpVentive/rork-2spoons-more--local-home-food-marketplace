@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, ComponentType, FC } from 'react';
+import React, { lazy, Suspense, ComponentType } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import colors from '@/constants/colors';
 import { lazyImport, platformImport } from '@/utils/bundleOptimization';
@@ -14,7 +14,8 @@ const LoadingFallback = () => (
   </View>
 );
 
-interface LazyComponentType extends FC<Record<string, any>> {
+interface LazyComponentType {
+  (props: Record<string, any>): JSX.Element;
   displayName?: string;
 }
 
@@ -23,13 +24,13 @@ const withLazyLoading = <T extends ComponentType<any>>(
 ): LazyComponentType => {
   const LazyComponent = lazy(importFn);
   
-  const WrappedComponent: LazyComponentType = (props: Record<string, any>) => (
+  const WrappedComponent = (props: Record<string, any>): JSX.Element => (
     <Suspense fallback={<LoadingFallback />}>
-      <LazyComponent {...props as any} />
+      <LazyComponent {...(props as any)} />
     </Suspense>
   );
   
-  return WrappedComponent;
+  return WrappedComponent as LazyComponentType;
 };
 
 export const LazyQRCodeScanner = withLazyLoading(

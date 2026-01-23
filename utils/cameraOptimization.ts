@@ -74,7 +74,7 @@ export const compressImage = async (uri: string, options: {
   const {
     maxWidth = 1200,
     maxHeight = 900,
-    quality = LITE_CAMERA_CONFIG.quality,
+    quality = LITE_CAMERA_CONFIG.quality ?? 0.8,
     format = 'jpeg',
   } = options;
   
