@@ -84,9 +84,9 @@ export default function FinancesScreen() {
     if (!user) return [];
     
     if (type === 'earned') {
-      return orders.filter(order => order.sellerId === user.id && order.status !== 'canceled');
+      return orders.filter(order => order.sellerId === user.id && order.status !== 'cancelled');
     } else {
-      return orders.filter(order => order.buyerId === user.id && order.status !== 'canceled');
+      return orders.filter(order => order.buyerId === user.id && order.status !== 'cancelled');
     }
   };
   
@@ -144,7 +144,7 @@ export default function FinancesScreen() {
     return (
       <TouchableOpacity 
         style={styles.transactionItem}
-        onPress={() => router.push(`/order/${item.id}`)}
+        onPress={() => router.push(`/order/${item.id}` as any)}
       >
         <View style={styles.transactionIconContainer}>
           {isEarned ? (
@@ -156,7 +156,7 @@ export default function FinancesScreen() {
         
         <View style={styles.transactionDetails}>
           <Text style={styles.transactionTitle} numberOfLines={1}>
-            {orderListing?.dishName || item.listingSnapshot.dishName}
+            {orderListing?.dishName || item.listingSnapshot?.dishName || 'Unknown Dish'}
           </Text>
           
           <View style={styles.transactionMeta}>

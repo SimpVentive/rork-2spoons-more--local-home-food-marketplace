@@ -60,11 +60,11 @@ export default function FollowingScreen() {
   };
   
   const handleSellerPress = (sellerId: string) => {
-    router.push(`/profile/${sellerId}`);
+    router.push(`/profile/${sellerId}` as any);
   };
   
   const handleListingPress = (listing: FoodListing) => {
-    router.push(`/listing/${listing.id}`);
+    router.push(`/listing/${listing.id}` as any);
   };
   
   if (!user) {
@@ -73,7 +73,7 @@ export default function FollowingScreen() {
         title="Not Logged In"
         message="Please log in to view followed sellers"
         buttonTitle="Login"
-        onButtonPress={() => router.replace('/(auth)')}
+        onButtonPress={() => router.replace('/(auth)' as any)}
       />
     );
   }

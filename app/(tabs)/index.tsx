@@ -109,11 +109,11 @@ export default function HomeScreen() {
   };
   
   const handleListingPress = (listing: FoodListing) => {
-    router.push(`/listing/${listing.id}`);
+    router.push(`/listing/${listing.id}` as any);
   };
 
   const handleChefPress = (chefId: string) => {
-    router.push(`/profile/${chefId}`);
+    router.push(`/profile/${chefId}` as any);
   };
 
   const handleExplorePress = () => {

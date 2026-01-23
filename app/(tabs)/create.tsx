@@ -19,11 +19,11 @@ export default function CreateScreen() {
     switch (option) {
       case 'food':
         console.log("Navigating to create-listing");
-        router.push('/create-listing');
+        router.push('/create-listing' as any);
         break;
       case 'scan':
         console.log("Navigating to scan screen from create");
-        router.push('/scan');
+        router.push('/scan' as any);
         break;
       case 'order':
         Alert.alert('Coming Soon', 'This feature will be available soon!');
@@ -36,7 +36,7 @@ export default function CreateScreen() {
   const handleScanQR = () => {
     console.log("Navigating to scan screen from quick action");
     try {
-      router.push('/scan');
+      router.push('/scan' as any);
     } catch (error) {
       console.error("Navigation error:", error);
       Alert.alert('Error', 'Failed to open QR scanner. Please try again.');
@@ -54,7 +54,7 @@ export default function CreateScreen() {
           <TouchableOpacity 
             onPress={() => {
               console.log("Header button pressed - navigating to create-listing");
-              router.push('/create-listing');
+              router.push('/create-listing' as any);
             }}
             style={styles.headerButton}
           >
@@ -115,7 +115,7 @@ export default function CreateScreen() {
               style={styles.quickAction}
               onPress={() => {
                 console.log("Quick action - New Listing pressed");
-                router.push('/create-listing');
+                router.push('/create-listing' as any);
               }}
             >
               <Plus size={20} color={colors.primary} />
@@ -134,7 +134,7 @@ export default function CreateScreen() {
               style={styles.quickAction}
               onPress={() => {
                 console.log("Quick action - Analytics pressed");
-                router.push('/analytics');
+                router.push('/analytics' as any);
               }}
             >
               <Tag size={20} color={colors.primary} />
@@ -211,7 +211,7 @@ export default function CreateScreen() {
           title="Create New Food Listing"
           onPress={() => {
             console.log("Main button - Create New Food Listing pressed");
-            router.push('/create-listing');
+            router.push('/create-listing' as any);
           }}
           style={styles.createButton}
         />

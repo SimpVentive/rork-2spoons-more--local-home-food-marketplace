@@ -33,7 +33,7 @@ export default function WelcomeScreen() {
           </Text>
           
           <View style={styles.buttonContainer}>
-            <Link href="/login" asChild>
+            <Link href="/login" as any asChild>
               <Button
                 title="Login"
                 onPress={() => {}}
@@ -42,7 +42,7 @@ export default function WelcomeScreen() {
               />
             </Link>
             
-            <Link href="/register" asChild>
+            <Link href="/register" as any asChild>
               <Button
                 title="Create Account"
                 onPress={() => {}}

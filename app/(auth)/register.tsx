@@ -39,7 +39,8 @@ export default function RegisterScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   
-  const { register, isLoading } = useAuthStore();
+  const { register } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   
   const updateFormData = (key: string, value: any) => {
@@ -107,13 +108,16 @@ export default function RegisterScreen() {
   };
   
   const handleRegister = async () => {
+    setIsLoading(true);
     try {
       await register(formData);
-      router.replace('/(tabs)');
+      router.replace('/(tabs)' as any);
     } catch (error) {
       setErrors({
         general: 'Registration failed. Please try again.',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -373,7 +377,7 @@ export default function RegisterScreen() {
         
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account? </Text>
-          <Link href="/login" asChild>
+          <Link href="/login" as any asChild>
             <TouchableOpacity>
               <Text style={styles.loginText}>Login</Text>
             </TouchableOpacity>
@@ -383,9 +387,18 @@ export default function RegisterScreen() {
       
       {showLocationPicker && (
         <LocationPicker
+          visible={showLocationPicker}
           initialLocation={formData.location}
-          onSelectLocation={handleLocationSelect}
+          onLocationSelect={(location: any) => {
+            updateFormData('location', { latitude: location.latitude, longitude: location.longitude });
+            updateFormData('address', location.address);
+            setShowLocationPicker(false);
+          }}
           onClose={() => setShowLocationPicker(false)}
+          title="Select Location"
+          showRoute={false}
+          routeStart={null}
+          routeEnd={null}
         />
       )}
     </KeyboardAvoidingView>
