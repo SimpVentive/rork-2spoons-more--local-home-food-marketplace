@@ -29,7 +29,7 @@ export default function UserPreferenceScreen() {
       // Use setTimeout to ensure navigation happens after state update
       setTimeout(() => {
         if (selectedOption === 'buyer') {
-          router.replace('/(tabs)');
+          router.replace('/(tabs)/home' as any);
         } else {
           // Navigate to seller onboarding screen
           router.push('/seller-onboarding' as any);

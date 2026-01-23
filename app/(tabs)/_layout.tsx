@@ -130,7 +130,7 @@ export default function TabLayout(): React.ReactElement {
       {isChef && (
         <>
           <Tabs.Screen
-            name="index"
+            name="home"
             options={{
               title: 'Home',
               tabBarIcon: ({ color }) => (
@@ -165,7 +165,7 @@ export default function TabLayout(): React.ReactElement {
       {!isChef && (
         <>
           <Tabs.Screen
-            name="index"
+            name="home"
             options={{
               title: 'Explore',
               tabBarIcon: ({ color }) => (

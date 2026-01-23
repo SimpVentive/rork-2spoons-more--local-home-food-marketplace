@@ -111,7 +111,7 @@ export default function RegisterScreen() {
     setIsLoading(true);
     try {
       await register(formData);
-      router.replace('/(tabs)' as any);
+      router.replace('/(tabs)/home' as any);
     } catch (error) {
       setErrors({
         general: 'Registration failed. Please try again.',

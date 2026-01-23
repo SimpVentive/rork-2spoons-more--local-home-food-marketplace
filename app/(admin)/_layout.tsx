@@ -95,7 +95,7 @@ export default function AdminLayout() {
           }
           else{
             console.log('TabLayout: Admin user detected, redirecting to user panel');
-            router.replace('/(tabs)');
+            router.replace('/(tabs)/home' as any);
             return;
           }
           
@@ -128,9 +128,9 @@ export default function AdminLayout() {
 
   const menuItems = [
     { 
-      icon: <LayoutDashboard size={24} color={isActive('/(admin)') ? colors.white : colors.textLight} />, 
+      icon: <LayoutDashboard size={24} color={isActive('/(admin)/dashboard') ? colors.white : colors.textLight} />, 
       label: 'Dashboard', 
-      path: '/(admin)' 
+      path: '/(admin)/dashboard' 
     },
     { 
       icon: <Tag size={24} color={isActive('/(admin)/listings') ? colors.white : colors.textLight} />, 
@@ -244,7 +244,7 @@ export default function AdminLayout() {
       }}
     >
       <Stack.Screen
-        name="index"
+        name="dashboard"
         options={{
           title: 'Admin Dashboard',
         }}

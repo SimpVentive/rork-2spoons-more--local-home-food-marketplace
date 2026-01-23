@@ -40,6 +40,8 @@ interface LocationPickerProps {
 export type { LocationPickerProps };
 
 const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElement => {
+  const [address, setAddress] = React.useState('');
+
   const handleLocationSelect = (location: { latitude: number; longitude: number; address: string }) => {
     if (props.onSelectLocation) {
       props.onSelectLocation(location);
@@ -49,21 +51,9 @@ const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElemen
   };
 
   if (Platform.OS === 'web') {
-    const { View, Text, Modal, TouchableOpacity, StyleSheet, TextInput } = require('react-native');
-    const { MapPin, X } = require('lucide-react-native');
+    const { View, Text, Modal } = require('react-native');
     const colors = require('@/constants/colors').default;
     const Button = require('./Button').default;
-    const [address, setAddress] = React.useState('');
-    
-    const handleSelect = () => {
-      if (address.trim()) {
-        handleLocationSelect({
-          latitude: 17.4123,
-          longitude: 78.2679,
-          address: address.trim(),
-        });
-      }
-    };
     
     return (
       <Modal visible={props.visible} transparent onRequestClose={props.onClose}>
@@ -94,7 +84,6 @@ const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElemen
       </Modal>
     );
   } else {
-    // Use native component
     const LocationPickerNative = require('./LocationPicker.native').default;
     return <LocationPickerNative {...props} />;
   }

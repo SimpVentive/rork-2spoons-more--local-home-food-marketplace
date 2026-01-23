@@ -85,7 +85,7 @@ export default function FollowingScreen() {
         message="You haven't followed any sellers yet"
         image="https://images.unsplash.com/photo-1594708053019-5c77bf8a8ee5"
         buttonTitle="Explore Sellers"
-        onButtonPress={() => router.push('/(tabs)')}
+        onButtonPress={() => router.push('/(tabs)/home' as any)}
       />
     );
   }

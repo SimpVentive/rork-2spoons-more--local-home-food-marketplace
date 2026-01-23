@@ -68,7 +68,7 @@ export default function LoginScreen() {
               router.replace('/user-preference' as any);
             } else {
               console.log('Redirecting to main tabs');
-              router.replace('/(tabs)');
+              router.replace('/(tabs)/home' as any);
             }
           } else {
             console.log('User not authenticated after login');

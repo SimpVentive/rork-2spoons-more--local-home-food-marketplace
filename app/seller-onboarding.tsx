@@ -26,7 +26,7 @@ export default function SellerOnboardingScreen() {
   const handleContinue = () => {
     if (showVideo) {
       // Navigate to tabs
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/home' as any);
     } else {
       setShowVideo(true);
     }

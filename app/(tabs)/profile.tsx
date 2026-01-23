@@ -456,7 +456,7 @@ export default function ProfileScreen() {
             </Text>
             <Button
               title="Browse Food"
-              onPress={() => router.push('/(tabs)')}
+              onPress={() => router.push('/(tabs)/home' as any)}
               style={styles.browseButton}
             />
           </View>

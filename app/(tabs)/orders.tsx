@@ -103,7 +103,7 @@ export default function OrdersScreen() {
           buttonTitle={activeTab === 'buying' ? 'Browse Food' : 'Create Listing'}
           onButtonPress={() => 
             activeTab === 'buying' 
-              ? router.push('/(tabs)') 
+              ? router.push('/(tabs)/home' as any) 
               : router.push('/create-listing' as any)
           }
         />
