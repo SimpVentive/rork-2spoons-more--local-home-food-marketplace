@@ -87,7 +87,7 @@ export default function ManageOrders() {
 
   const handleOrderAction = (order: Order, action: 'view' | 'complete' | 'refund') => {
     if (action === 'view') {
-      router.push(`/admin/order-details/${order.id}`);
+      router.push(`/admin/order-details/${order.id}` as any);
     } else if (action === 'complete') {
       Alert.alert(
         "Complete Order",
@@ -230,7 +230,7 @@ export default function ManageOrders() {
       </View>
       
       <View style={styles.orderActions}>
-        {(item.status !== 'completed' && item.status !== 'refunded' && item.status !== 'canceled') && (
+        {(item.status !== 'completed' && item.status !== 'cancelled') && (
           <TouchableOpacity 
             style={[styles.actionButton, { backgroundColor: '#E8F5E9' }]}
             onPress={() => handleOrderAction(item, 'complete')}
@@ -239,7 +239,7 @@ export default function ManageOrders() {
           </TouchableOpacity>
         )}
         
-        {(item.status !== 'refunded' && item.status !== 'canceled') && (
+        {(item.status !== 'cancelled') && (
           <TouchableOpacity 
             style={[styles.actionButton, { backgroundColor: '#FFEBEE' }]}
             onPress={() => handleOrderAction(item, 'refund')}

@@ -91,9 +91,9 @@ export default function ManageUsers() {
     setShowActionMenu(null);
     
     if (action === 'view') {
-      router.push(`/admin/user-details/${user.id}`);
+      router.push(`/admin/user-details/${user.id}` as any);
     } else if (action === 'edit') {
-      router.push(`/admin/edit-user/${user.id}`);
+      router.push(`/admin/edit-user/${user.id}` as any);
     } else if (action === 'ban') {
       Alert.alert(
         "Ban User",
@@ -351,7 +351,7 @@ export default function ManageUsers() {
       
       <TouchableOpacity 
         style={styles.addButton}
-        onPress={() => router.push('/admin/add-user')}
+        onPress={() => router.push('/admin/add-user' as any)}
       >
         <Text style={styles.addButtonText}>+ Add New User</Text>
       </TouchableOpacity>

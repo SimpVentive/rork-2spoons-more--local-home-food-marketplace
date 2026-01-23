@@ -133,7 +133,7 @@ export default function TopEarnersScreen() {
   const renderEarnerItem = ({ item, index }: { item: TopEarner, index: number }) => (
     <TouchableOpacity 
       style={styles.earnerCard}
-      onPress={() => router.push(`/admin/user-details/${item.id}`)}
+      onPress={() => router.push(`/admin/user-details/${item.id}` as any)}
     >
       <View style={styles.rankContainer}>
         <Text style={styles.rankText}>{index + 1}</Text>
@@ -149,7 +149,7 @@ export default function TopEarnersScreen() {
           </View>
           
           <View style={styles.earnerDetail}>
-            <ShoppingBag size={16} color={colors.adminSecondary} />
+            <ShoppingBag size={16} color={colors.adminPrimary} />
             <Text style={styles.earnerDetailText}>{item.orderCount} orders</Text>
           </View>
         </View>

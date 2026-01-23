@@ -62,10 +62,10 @@ export default function LoginScreen() {
             // Admin users should go to admin panel
             if (isAdmin) {
               console.log('Redirecting admin user to admin panel');
-              router.replace('/(admin)');
+              router.replace('/(admin)' as any);
             } else if (!userPreference) {
               console.log('Redirecting to user preference selection');
-              router.replace('/user-preference');
+              router.replace('/user-preference' as any);
             } else {
               console.log('Redirecting to main tabs');
               router.replace('/(tabs)');
@@ -85,7 +85,7 @@ export default function LoginScreen() {
   };
 
   const handleAdminLogin = () => {
-    router.push('/admin-login');
+    router.push('/admin-login' as any);
   };
 
   return (
@@ -172,7 +172,7 @@ export default function LoginScreen() {
           
           <View style={styles.registerContainer}>
             <Text style={styles.registerText}>Do not have an account? </Text>
-            <TouchableOpacity onPress={() => router.push('/register')}>
+            <TouchableOpacity onPress={() => router.push('/register' as any)}>
               <Text style={styles.registerLink}>Sign Up</Text>
             </TouchableOpacity>
           </View>

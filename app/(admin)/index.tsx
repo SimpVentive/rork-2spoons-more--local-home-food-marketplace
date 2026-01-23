@@ -558,42 +558,42 @@ export default function AdminDashboard() {
             icon={<Tag size={24} color={colors.adminPrimary} />}
             title="Manage Listings"
             color={colors.adminPrimary}
-            onPress={() => router.push('/(admin)/listings')}
+            onPress={() => router.push('/(admin)/listings' as any)}
           />
           
           <QuickActionButton
             icon={<Users size={24} color={colors.adminPrimary} />}
             title="Manage Users"
             color={colors.adminPrimary}
-            onPress={() => router.push('/(admin)/users')}
+            onPress={() => router.push('/(admin)/users' as any)}
           />
           
           <QuickActionButton
             icon={<ShoppingBag size={24} color={colors.adminPrimary} />}
             title="View Orders"
             color={colors.adminPrimary}
-            onPress={() => router.push('/(admin)/orders')}
+            onPress={() => router.push('/(admin)/orders' as any)}
           />
           
           <QuickActionButton
             icon={<MessageSquare size={24} color={colors.adminPrimary} />}
             title="Handle Complaints"
             color={colors.adminPrimary}
-            onPress={() => router.push('/(admin)/complaints')}
+            onPress={() => router.push('/(admin)/complaints' as any)}
           />
           
           <QuickActionButton
             icon={<BarChart3 size={24} color={colors.adminPrimary} />}
             title="Create Campaign"
             color={colors.adminPrimary}
-            onPress={() => router.push('/(admin)/campaigns')}
+            onPress={() => router.push('/(admin)/campaigns' as any)}
           />
           
           <QuickActionButton
             icon={<Settings size={24} color={colors.adminPrimary} />}
             title="Settings"
             color={colors.adminPrimary}
-            onPress={() => router.push('/(admin)/settings')}
+            onPress={() => router.push('/(admin)/settings' as any)}
           />
         </View>
       </View>
@@ -612,7 +612,7 @@ export default function AdminDashboard() {
               description={`${stats.pendingApprovals} listings waiting for your approval`}
               icon={<Clock size={20} color={colors.adminWarning} />}
               color={colors.adminWarning}
-              onPress={() => router.push('/(admin)/listings')}
+              onPress={() => router.push('/(admin)/listings' as any)}
             />
           )}
           
@@ -622,7 +622,7 @@ export default function AdminDashboard() {
               description={`${stats.pendingComplaints} complaints need your attention`}
               icon={<AlertTriangle size={20} color={colors.adminError} />}
               color={colors.adminError}
-              onPress={() => router.push('/(admin)/complaints')}
+              onPress={() => router.push('/(admin)/complaints' as any)}
             />
           )}
           
@@ -632,7 +632,7 @@ export default function AdminDashboard() {
               description={`${stats.pendingChefs} chefs waiting to be verified`}
               icon={<ChefHat size={20} color={colors.adminPrimary} />}
               color={colors.adminPrimary}
-              onPress={() => router.push('/(admin)/users')}
+              onPress={() => router.push('/(admin)/users' as any)}
             />
           )}
           
