@@ -30,6 +30,8 @@ const mockComplaints: Complaint[] = [
   {
     id: 'complaint-1',
     userId: '2',
+    userName: 'John Doe',
+    userEmail: 'john@example.com',
     orderId: 'order-3',
     sellerId: '2',
     type: 'order',
@@ -42,18 +44,22 @@ const mockComplaints: Complaint[] = [
   {
     id: 'complaint-2',
     userId: '1',
+    userName: 'Jane Smith',
+    userEmail: 'jane@example.com',
     type: 'payment',
     title: 'Payment not received',
     description: 'I have not received payment for my order that was delivered 3 days ago.',
-    status: 'in_progress',
+    status: 'investigating',
     createdAt: '2023-06-12T09:15:00Z',
     updatedAt: '2023-06-12T15:45:00Z',
   },
   {
     id: 'complaint-3',
     userId: '3',
+    userName: 'Bob Wilson',
+    userEmail: 'bob@example.com',
     sellerId: '1',
-    type: 'seller',
+    type: 'user',
     title: 'Seller was rude',
     description: 'The seller was very rude during pickup and refused to provide proper packaging.',
     status: 'resolved',
@@ -64,7 +70,9 @@ const mockComplaints: Complaint[] = [
   {
     id: 'complaint-4',
     userId: '2',
-    type: 'app',
+    userName: 'John Doe',
+    userEmail: 'john@example.com',
+    type: 'other',
     title: 'App crashes during checkout',
     description: 'The app keeps crashing when I try to complete my payment during checkout.',
     status: 'pending',
@@ -74,6 +82,8 @@ const mockComplaints: Complaint[] = [
   {
     id: 'complaint-5',
     userId: '1',
+    userName: 'Jane Smith',
+    userEmail: 'jane@example.com',
     orderId: 'order-5',
     type: 'order',
     title: 'Wrong order delivered',
@@ -92,7 +102,7 @@ export default function ManageComplaints() {
   const [filteredComplaints, setFilteredComplaints] = useState<Complaint[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'in_progress' | 'resolved' | 'closed'>('all');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'investigating' | 'resolved' | 'closed'>('all');
 
   useEffect(() => {
     loadComplaints();
@@ -140,7 +150,7 @@ export default function ManageComplaints() {
 
   const handleComplaintAction = (complaint: Complaint, action: 'view' | 'resolve' | 'close') => {
     if (action === 'view') {
-      router.push(`/admin/complaint-details/${complaint.id}`);
+      router.push(`/admin/complaint-details/${complaint.id}` as any);
     } else if (action === 'resolve') {
       Alert.alert(
         "Resolve Complaint",
@@ -208,7 +218,7 @@ export default function ManageComplaints() {
         return '#43A047';
       case 'closed':
         return '#9E9E9E';
-      case 'in_progress':
+      case 'investigating':
         return '#1976D2';
       case 'pending':
         return '#FF9800';
@@ -223,7 +233,7 @@ export default function ManageComplaints() {
         return <CheckCircle size={16} color="#43A047" />;
       case 'closed':
         return <CheckCircle size={16} color="#9E9E9E" />;
-      case 'in_progress':
+      case 'investigating':
         return <Clock size={16} color="#1976D2" />;
       case 'pending':
         return <AlertTriangle size={16} color="#FF9800" />;
@@ -236,11 +246,11 @@ export default function ManageComplaints() {
     switch (type) {
       case 'order':
         return <ShoppingBag size={16} color="#1976D2" />;
-      case 'seller':
+      case 'user':
         return <User size={16} color="#9C27B0" />;
       case 'payment':
         return <CreditCard size={16} color="#FF9800" />;
-      case 'app':
+      case 'other':
         return <Settings size={16} color="#43A047" />;
       default:
         return <HelpCircle size={16} color={colors.textLight} />;
@@ -285,7 +295,7 @@ export default function ManageComplaints() {
         </Text>
         
         <View style={styles.complaintActions}>
-          {(item.status === 'pending' || item.status === 'in_progress') && (
+          {(item.status === 'pending' || item.status === 'investigating') && (
             <TouchableOpacity 
               style={[styles.actionButton, { backgroundColor: '#E8F5E9' }]}
               onPress={() => handleComplaintAction(item, 'resolve')}
@@ -295,7 +305,7 @@ export default function ManageComplaints() {
             </TouchableOpacity>
           )}
           
-          {(item.status === 'pending' || item.status === 'in_progress') && (
+          {(item.status === 'pending' || item.status === 'investigating') && (
             <TouchableOpacity 
               style={[styles.actionButton, { backgroundColor: '#EEEEEE' }]}
               onPress={() => handleComplaintAction(item, 'close')}
@@ -353,14 +363,14 @@ export default function ManageComplaints() {
         <TouchableOpacity
           style={[
             styles.filterButton,
-            filter === 'in_progress' && styles.filterButtonActive
+            filter === 'investigating' && styles.filterButtonActive
           ]}
-          onPress={() => setFilter('in_progress')}
+          onPress={() => setFilter('investigating')}
         >
           <Text style={[
             styles.filterButtonText,
-            filter === 'in_progress' && styles.filterButtonTextActive
-          ]}>In Progress</Text>
+            filter === 'investigating' && styles.filterButtonTextActive
+          ]}>Investigating</Text>
         </TouchableOpacity>
         
         <TouchableOpacity

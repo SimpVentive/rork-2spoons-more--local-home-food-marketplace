@@ -124,7 +124,7 @@ export default function AdminDashboard() {
   };
   const handleLogout = () => {
     logout();
-    router.replace('/(auth)');
+    router.replace('/(auth)' as any);
   };
   const loadStats = () => {
     // Calculate stats from store data
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
     
     const completedOrders = orders.filter(order => order.status === 'completed').length;
     const pendingOrders = orders.filter(order => ['confirmed', 'preparing', 'ready'].includes(order.status)).length;
-    const canceledOrders = orders.filter(order => order.status === 'canceled').length;
+    const canceledOrders = orders.filter(order => order.status === 'cancelled').length;
     
     const resolvedComplaints = complaints.filter(complaint => complaint.status === 'resolved').length;
     const pendingComplaints = complaints.filter(complaint => complaint.status === 'pending').length;
@@ -221,10 +221,10 @@ export default function AdminDashboard() {
     orders.forEach(order => {
       const sellerId = order.sellerId;
       if (!sellerOrderCounts[sellerId]) {
-        const sellerImage = order.listingSnapshot.sellerImage || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d";
+        const sellerImage = order.listingSnapshot?.sellerImage || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d";
         sellerOrderCounts[sellerId] = {
           sellerId: order.sellerId,
-          sellerName: order.listingSnapshot.sellerName,
+          sellerName: order.listingSnapshot?.sellerName || 'Unknown Seller',
           sellerImage: sellerImage,
           orderCount: 0,
           revenue: 0
@@ -470,7 +470,7 @@ export default function AdminDashboard() {
           color={colors.adminPrimary}
           percentChange={stats.userGrowth}
           isPositive={true}
-          onPress={() => router.push('/admin/users')}
+          onPress={() => router.push('/admin/users' as any)}
         />
         
         <StatCard
@@ -480,7 +480,7 @@ export default function AdminDashboard() {
           color={colors.adminSuccess}
           percentChange={stats.revenueGrowth}
           isPositive={true}
-          onPress={() => router.push('/admin/top-earners')}
+          onPress={() => router.push('/admin/top-earners' as any)}
         />
         
         <StatCard
@@ -490,7 +490,7 @@ export default function AdminDashboard() {
           color={colors.adminWarning}
           percentChange={stats.orderGrowth}
           isPositive={true}
-          onPress={() => router.push('/admin/orders')}
+          onPress={() => router.push('/admin/orders' as any)}
         />
         
         <StatCard
@@ -500,7 +500,7 @@ export default function AdminDashboard() {
           color={colors.adminError}
           percentChange={stats.complaintGrowth}
           isPositive={false}
-          onPress={() => router.push('/admin/complaints')}
+          onPress={() => router.push('/admin/complaints' as any)}
         />
       </View>
       
@@ -836,7 +836,7 @@ export default function AdminDashboard() {
         
         <TouchableOpacity 
           style={styles.viewAllButton}
-          onPress={() => router.push('/admin/top-earners')}
+          onPress={() => router.push('/admin/top-earners' as any)}
         >
           <Text style={styles.viewAllButtonText}>View All Chefs</Text>
         </TouchableOpacity>
