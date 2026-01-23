@@ -102,7 +102,7 @@ export default function ListingDetailScreen() {
   
   const handleViewProfile = () => {
     if (listing) {
-      router.push(`/profile/${listing.sellerId}`);
+      router.push(`/profile/${listing.sellerId}` as any);
     }
   };
   
@@ -113,7 +113,7 @@ export default function ListingDetailScreen() {
         'Please log in to place an order',
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Login', onPress: () => router.push('/(auth)') }
+          { text: 'Login', onPress: () => router.push('/(auth)' as any) }
         ]
       );
       return;
@@ -172,7 +172,7 @@ export default function ListingDetailScreen() {
         'Order Placed Successfully',
         'Your order has been sent to the seller',
         [
-          { text: 'View Order', onPress: () => router.push(`/order/${newOrder.id}`) },
+          { text: 'View Order', onPress: () => router.push(`/order/${newOrder.id}` as any) },
           { text: 'OK' }
         ]
       );

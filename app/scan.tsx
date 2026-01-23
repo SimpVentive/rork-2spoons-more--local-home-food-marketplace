@@ -64,7 +64,7 @@ export default function ScanScreen() {
         case 'order':
           if (parsedData.id) {
             console.log("Navigating to order:", parsedData.id);
-            router.replace(`/order/${parsedData.id}`);
+            router.replace(`/order/${parsedData.id}` as any);
             return;
           } else {
             throw new Error('Invalid order ID');
@@ -73,7 +73,7 @@ export default function ScanScreen() {
         case 'listing':
           if (parsedData.id) {
             console.log("Navigating to listing:", parsedData.id);
-            router.replace(`/listing/${parsedData.id}`);
+            router.replace(`/listing/${parsedData.id}` as any);
             return;
           } else {
             throw new Error('Invalid listing ID');

@@ -32,7 +32,7 @@ export default function UserPreferenceScreen() {
           router.replace('/(tabs)');
         } else {
           // Navigate to seller onboarding screen
-          router.push('/seller-onboarding');
+          router.push('/seller-onboarding' as any);
         }
       }, 100);
     } catch (error) {

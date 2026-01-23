@@ -19,7 +19,7 @@ const withLazyLoading = <T extends ComponentType<any>>(
 ) => {
   const LazyComponent = lazy(importFn);
   
-  return React.forwardRef<any, React.ComponentProps<T>>((props, ref) => (
+  return React.forwardRef<any, any>((props, ref) => (
     <Suspense fallback={<LoadingFallback />}>
       <LazyComponent {...props} ref={ref} />
     </Suspense>

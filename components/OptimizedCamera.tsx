@@ -62,7 +62,7 @@ const OptimizedCamera: React.FC<OptimizedCameraProps> = ({
               if (typeof permissionHook === 'function') {
                 const permResult = await permissionHook();
                 if (permResult && typeof permResult === 'object' && 'granted' in permResult) {
-                  setHasPermission(permResult.granted);
+                  setHasPermission((permResult as { granted: boolean }).granted);
                 } else {
                   setHasPermission(false);
                 }

@@ -17,12 +17,12 @@ export default function AppIndex() {
         
         // For now, always redirect to auth to avoid complex state issues
         console.log('Redirecting to auth...');
-        router.replace('/(auth)');
+        router.replace('/(auth)' as any);
         
       } catch (error) {
         console.error('App initialization error:', error);
         // Fallback to auth screen on error
-        router.replace('/(auth)');
+        router.replace('/(auth)' as any);
       } finally {
         setIsInitializing(false);
       }

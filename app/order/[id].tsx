@@ -68,7 +68,7 @@ export default function OrderDetailsScreen() {
   const handleFileComplaint = () => {
     if (!isBuyer) return;
     
-    router.push(`/file-complaint?orderId=${order.id}`);
+    router.push(`/file-complaint?orderId=${order.id}` as any);
   };
   
   const getStatusActions = () => {
@@ -194,7 +194,7 @@ export default function OrderDetailsScreen() {
         
         <TouchableOpacity 
           style={styles.sellerContainer}
-          onPress={() => router.push(`/profile/${order.sellerId}`)}
+          onPress={() => router.push(`/profile/${order.sellerId}` as any)}
         >
           <View style={styles.sellerInfo}>
             <Text style={styles.sellerLabel}>Seller</Text>

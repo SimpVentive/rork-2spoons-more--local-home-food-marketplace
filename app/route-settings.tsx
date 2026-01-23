@@ -54,7 +54,7 @@ export default function RouteSettingsScreen() {
 
   useEffect(() => {
     if (!user) {
-      router.replace('/(auth)');
+      router.replace('/(auth)' as any);
     }
   }, [user]);
 
@@ -436,7 +436,7 @@ export default function RouteSettingsScreen() {
                           // Find the listing and navigate to it
                           const listing = listings.find(l => l.dishName === dish.dishName && l.sellerName === dish.sellerName);
                           if (listing) {
-                            router.push(`/listing/${listing.id}`);
+                            router.push(`/listing/${listing.id}` as any);
                           }
                         }}
                       ]
