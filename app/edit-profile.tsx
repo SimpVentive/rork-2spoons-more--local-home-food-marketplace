@@ -48,7 +48,7 @@ export default function EditProfileScreen() {
 
   useEffect(() => {
     if (!user) {
-      router.replace('/(auth)');
+      router.replace('/(auth)' as any);
     }
   }, [user]);
 
@@ -131,7 +131,7 @@ export default function EditProfileScreen() {
           text: 'Logout',
           onPress: () => {
             logout();
-            router.replace('/(auth)');
+            router.replace('/(auth)' as any);
           },
           style: 'destructive',
         },

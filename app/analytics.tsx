@@ -66,7 +66,7 @@ export default function AnalyticsScreen() {
         title="Not Logged In"
         message="Please log in to view your analytics"
         buttonTitle="Login"
-        onButtonPress={() => router.replace('/(auth)')}
+        onButtonPress={() => router.replace('/(auth)' as any)}
       />
     );
   }

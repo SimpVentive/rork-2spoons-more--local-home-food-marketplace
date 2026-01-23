@@ -38,7 +38,7 @@ export default function OrdersScreen() {
   };
   
   const handleOrderPress = (order: Order) => {
-    router.push(`/order/${order.id}`);
+    router.push(`/order/${order.id}` as any);
   };
   
   if (!user) {
@@ -48,7 +48,7 @@ export default function OrdersScreen() {
         message="Please log in to view your orders"
         image="https://images.unsplash.com/photo-1594708053019-5c77bf8a8ee5"
         buttonTitle="Log In"
-        onButtonPress={() => router.push('/(auth)')}
+        onButtonPress={() => router.push('/(auth)' as any)}
       />
     );
   }
@@ -104,7 +104,7 @@ export default function OrdersScreen() {
           onButtonPress={() => 
             activeTab === 'buying' 
               ? router.push('/(tabs)') 
-              : router.push('/create-listing')
+              : router.push('/create-listing' as any)
           }
         />
       ) : (

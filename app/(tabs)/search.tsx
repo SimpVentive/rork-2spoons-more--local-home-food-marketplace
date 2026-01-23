@@ -143,7 +143,7 @@ export default function SearchScreen() {
   };
   
   const handleListingPress = (listing: FoodListing) => {
-    router.push(`/listing/${listing.id}`);
+    router.push(`/listing/${listing.id}` as any);
   };
   
   const handleNotifyMe = () => {

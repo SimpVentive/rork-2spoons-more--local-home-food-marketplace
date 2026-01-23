@@ -54,7 +54,7 @@ export default function AdminLoginScreen() {
           
           if (isAuthenticated && isAdmin) {
             console.log('Redirecting to admin dashboard');
-            router.replace('/(admin)');
+            router.replace('/(admin)' as any);
           } else {
             console.log('Admin authentication failed');
             setError('Admin authentication failed. Please try again.');
@@ -133,7 +133,7 @@ export default function AdminLoginScreen() {
           
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => router.push('/login')}
+            onPress={() => router.push('/login' as any)}
           >
             <Text style={styles.backButtonText}>Back to User Login</Text>
           </TouchableOpacity>

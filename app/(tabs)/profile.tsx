@@ -80,15 +80,15 @@ export default function ProfileScreen() {
   
   const handleLogout = () => {
     logout();
-    router.replace('/(auth)');
+    router.replace('/(auth)' as any);
   };
   
   const handleViewAnalytics = () => {
-    router.push('/analytics');
+    router.push('/analytics' as any);
   };
   
   const handleEditProfile = () => {
-    router.push('/edit-profile');
+    router.push('/edit-profile' as any);
   };
 
   const handleCreateListing = () => {
@@ -108,11 +108,11 @@ export default function ProfileScreen() {
         return;
       }
     }
-    router.push('/create-listing');
+    router.push('/create-listing' as any);
   };
 
   const handleAdminDashboard = () => {
-    router.push('/(admin)');
+    router.push('/(admin)' as any);
   };
 
   const handleSwitchRole = async () => {
@@ -137,7 +137,7 @@ export default function ProfileScreen() {
         title="Not Logged In"
         message="Please log in to view your profile"
         buttonTitle="Login"
-        onButtonPress={() => router.replace('/(auth)')}
+        onButtonPress={() => router.replace('/(auth)' as any)}
       />
     );
   }
@@ -276,7 +276,7 @@ export default function ProfileScreen() {
           {user.isAdmin && (
           <TouchableOpacity 
             style={styles.settingsButton}
-            onPress={() => router.push('/settings')}
+            onPress={() => router.push('/settings' as any)}
           >
             <Settings size={24} color={colors.text} />
           </TouchableOpacity>
@@ -349,7 +349,7 @@ export default function ProfileScreen() {
       <View style={styles.statsContainer}>
         <TouchableOpacity 
           style={styles.statCard}
-          onPress={() => router.push('/(tabs)/orders')}
+          onPress={() => router.push('/(tabs)/orders' as any)}
         >
           <View style={[styles.statIconContainer, { backgroundColor: '#E3F2FD' }]}>
             <ShoppingBag size={24} color="#1976D2" />
@@ -360,7 +360,7 @@ export default function ProfileScreen() {
         
         <TouchableOpacity 
           style={styles.statCard}
-          onPress={() => router.push('/(tabs)/following')}
+          onPress={() => router.push('/(tabs)/following' as any)}
         >
           <View style={[styles.statIconContainer, { backgroundColor: '#F3E5F5' }]}>
             <Users size={24} color="#9C27B0" />
@@ -414,7 +414,7 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   key={listing.id}
                   style={getListingCardStyle()}
-                  onPress={() => router.push(`/listing/${listing.id}`)}
+                  onPress={() => router.push(`/listing/${listing.id}` as any)}
                 >
                   <Image
                     source={{ uri: listing.image }}
@@ -444,7 +444,7 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Orders</Text>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/orders')}>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/orders' as any)}>
             <Text style={styles.viewAllText}>View All</Text>
           </TouchableOpacity>
         </View>
@@ -466,7 +466,7 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 key={order.id}
                 style={styles.orderCard}
-                onPress={() => router.push(`/order/${order.id}`)}
+                onPress={() => router.push(`/order/${order.id}` as any)}
               >
                 <Image
                   source={{ uri: order.listingSnapshot?.image }}
