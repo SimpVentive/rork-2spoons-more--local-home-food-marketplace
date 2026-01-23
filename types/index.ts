@@ -254,12 +254,19 @@ export interface Campaign {
   id: string;
   title: string;
   description: string;
-  type: 'promotion' | 'announcement' | 'feature';
-  targetAudience: 'all' | 'buyers' | 'sellers' | 'new_users';
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
+  type: 'email' | 'push' | 'in_app';
+  targetAudience: 'all' | 'buyers' | 'sellers' | 'new_users' | 'inactive';
+  status: 'draft' | 'scheduled' | 'sent' | 'cancelled';
   createdAt: string;
+  updatedAt: string;
+  sentAt?: string;
+  scheduledFor?: string;
+  metrics?: {
+    sent: number;
+    delivered: number;
+    opened: number;
+    clicked: number;
+  };
   imageUrl?: string;
   actionUrl?: string;
   actionText?: string;

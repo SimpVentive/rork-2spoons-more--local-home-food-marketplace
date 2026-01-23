@@ -83,14 +83,14 @@ export default function AdminLayout() {
         try {
           if (!authState.isAuthenticated) {
             console.log('TabLayout: User not authenticated, redirecting to auth');
-            router.replace('/(auth)');
+            router.replace('/(auth)' as any);
             return;
           }
           
           // IMPORTANT: Admin users should NEVER see the tabs - redirect them immediately
           if (authState.user?.isAdmin === true) {
             console.log('TabLayout: Admin user detected, redirecting to admin panel');
-            router.replace('/(admin)');
+            router.replace('/(admin)' as any);
             return;
           }
           else{
@@ -99,9 +99,9 @@ export default function AdminLayout() {
             return;
           }
           
-          if (!authState.userPreference) {
+          if (authState?.userPreference === undefined || authState?.userPreference === null) {
             console.log('TabLayout: No user preference, redirecting to preference selection');
-            router.replace('/user-preference');
+            router.replace('/user-preference' as any);
             return;
           }
           
@@ -119,7 +119,7 @@ export default function AdminLayout() {
     }, [isMounted, authState, hasCheckedAuth, router]);  
   const handleLogout = () => {
     logout();
-    router.replace('/(auth)');
+    router.replace('/(auth)' as any);
   };
 
   const isActive = (path: string) => {
@@ -196,7 +196,7 @@ export default function AdminLayout() {
                   styles.menuItem,
                   isActive(item.path) && styles.menuItemActive
                 ]}
-                onPress={() => router.push(item.path)}
+                onPress={() => router.push(item.path as any)}
               >
                 {item.icon}
                 <Text style={[
