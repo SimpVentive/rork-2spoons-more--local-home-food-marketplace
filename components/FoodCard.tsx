@@ -118,7 +118,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
         <View style={styles.locationContainer}>
           <MapPin size={12} color={colors.textLight} />
           <Text style={styles.locationText} numberOfLines={1}>
-            {listing.location.address}
+            {listing.address}
           </Text>
         </View>
         

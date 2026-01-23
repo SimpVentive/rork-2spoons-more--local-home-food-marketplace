@@ -45,7 +45,7 @@ export const LazyLocationPicker = withLazyLoading(
 );
 
 export const LazyFilterModal = withLazyLoading(
-  lazyImport(() => import('@/components/FilterModal'))
+  lazyImport(() => import('@/components/FilterModal').then(m => ({ default: m.FilterModal })))
 );
 
 export const LazySubscriptionModal = withLazyLoading(
@@ -57,7 +57,7 @@ export const LazyNotifyMeModal = withLazyLoading(
 );
 
 export const LazyRouteSearchModal = withLazyLoading(
-  lazyImport(() => import('@/components/RouteSearchModal'))
+  lazyImport(() => import('@/components/RouteSearchModal').then(m => ({ default: m.RouteSearchModal })))
 );
 
 LazyQRCodeScanner.displayName = 'LazyQRCodeScanner';

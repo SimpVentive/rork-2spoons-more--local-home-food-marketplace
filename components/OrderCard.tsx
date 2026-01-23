@@ -38,7 +38,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onPress }) => {
         <Image
           source={{ 
             uri: optimizeImageUrl({
-              uri: order.listingSnapshot.image,
+              uri: order.listingSnapshot?.image || '',
               width: 160,
               height: 160,
               quality: 85,
@@ -53,11 +53,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onPress }) => {
         />
         
         <View style={styles.details}>
-          <Text style={styles.dishName}>{order.listingSnapshot.dishName}</Text>
+          <Text style={styles.dishName}>{order.listingSnapshot?.dishName || order.dishName}</Text>
           
           <View style={styles.sellerInfo}>
             <Text style={styles.label}>Seller: </Text>
-            <Text style={styles.value}>{order.listingSnapshot.sellerName}</Text>
+            <Text style={styles.value}>{order.listingSnapshot?.sellerName || order.sellerName}</Text>
           </View>
           
           <View style={styles.quantityInfo}>

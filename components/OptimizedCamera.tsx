@@ -37,7 +37,7 @@ const OptimizedCamera: React.FC<OptimizedCameraProps> = ({
   // Web-specific refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load camera components dynamically
   useEffect(() => {
@@ -56,14 +56,20 @@ const OptimizedCamera: React.FC<OptimizedCameraProps> = ({
             // Request web camera permission
             const hasWebPermission = await WebCameraAPI.requestPermission();
             setHasPermission(hasWebPermission);
-          } else if (components && !components.webCamera) {
-            // Request native camera permission
-            const [permission, requestPermission] = components.useCameraPermissions();
-            if (permission?.granted) {
-              setHasPermission(true);
-            } else {
-              const result = await requestPermission();
-              setHasPermission(result.granted);
+          } else if (components && !components.webCamera && components.useCameraPermissions) {
+            try {
+              const permissionHook = components.useCameraPermissions;
+              if (typeof permissionHook === 'function') {
+                const permResult = await permissionHook();
+                if (permResult && typeof permResult === 'object' && 'granted' in permResult) {
+                  setHasPermission(permResult.granted);
+                } else {
+                  setHasPermission(false);
+                }
+              }
+            } catch (permErr) {
+              console.error('Permission error:', permErr);
+              setHasPermission(false);
             }
           }
           
@@ -167,9 +173,11 @@ const OptimizedCamera: React.FC<OptimizedCameraProps> = ({
       }
 
       // Compress the image
+      const dimensionKey = mode === 'photo' ? 'profile' : mode;
+      const dimensions = (LITE_CAMERA_CONFIG.maxDimensions as Record<string, { width: number; height: number }>)[dimensionKey] || { width: 800, height: 600 };
       const compressedUri = await compressImage(imageUri, {
-        maxWidth: LITE_CAMERA_CONFIG.maxDimensions[mode].width,
-        maxHeight: LITE_CAMERA_CONFIG.maxDimensions[mode].height,
+        maxWidth: dimensions.width,
+        maxHeight: dimensions.height,
         quality: LITE_CAMERA_CONFIG.quality,
       });
 

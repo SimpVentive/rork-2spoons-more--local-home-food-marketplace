@@ -21,7 +21,7 @@ app.use(
 );
 
 // Simple health check endpoint
-app.get("/", (c) => {
+app.get("/", (c: any) => {
   return c.json({ status: "ok", message: "API is running" });
 });
 

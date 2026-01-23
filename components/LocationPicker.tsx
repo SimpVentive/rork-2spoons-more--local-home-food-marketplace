@@ -2,23 +2,27 @@ import React from 'react';
 import { Platform } from 'react-native';
 
 interface LocationPickerProps {
-  visible: boolean;
+  visible?: boolean;
   initialLocation?: {
     latitude: number;
     longitude: number;
     address?: string;
   };
-  onLocationSelect: (location: {
+  onLocationSelect?: (location: {
     latitude: number;
     longitude: number;
     address: string;
   }) => void;
-
+  onSelectLocation?: (location: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  }) => void;
   onClose: () => void;
-  title: string;
-  showRoute: boolean;
-  routeStart: any;
-  routeEnd: any;
+  title?: string;
+  showRoute?: boolean;
+  routeStart?: any;
+  routeEnd?: any;
   routePoints?: Array<{
     latitude: number;
     longitude: number;
@@ -33,9 +37,18 @@ interface LocationPickerProps {
   }>;
 }
 
+export type { LocationPickerProps };
+
 const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElement => {
+  const handleLocationSelect = (location: { latitude: number; longitude: number; address: string }) => {
+    if (props.onSelectLocation) {
+      props.onSelectLocation(location);
+    } else if (props.onLocationSelect) {
+      props.onLocationSelect(location);
+    }
+  };
+
   if (Platform.OS === 'web') {
-    // Simple fallback for web to avoid react-native-maps issues
     const { View, Text, Modal, TouchableOpacity, StyleSheet, TextInput } = require('react-native');
     const { MapPin, X } = require('lucide-react-native');
     const colors = require('@/constants/colors').default;
@@ -44,8 +57,8 @@ const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElemen
     
     const handleSelect = () => {
       if (address.trim()) {
-        props.onLocationSelect({
-          latitude: 17.4123, // Default coordinates for demo
+        handleLocationSelect({
+          latitude: 17.4123,
           longitude: 78.2679,
           address: address.trim(),
         });
@@ -67,7 +80,7 @@ const LocationPicker: React.FC<LocationPickerProps> = (props): React.ReactElemen
               <Button 
                 title="Use Default" 
                 onPress={() => {
-                  props.onLocationSelect({
+                  handleLocationSelect({
                     latitude: 17.4123,
                     longitude: 78.2679,
                     address: 'Default Location (Web)'
