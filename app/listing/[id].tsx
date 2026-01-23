@@ -29,7 +29,7 @@ import { useReviewsStore } from '@/store/reviews-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useFollowsStore } from '@/store/follows-store';
 import { useOrdersStore } from '@/store/orders-store';
-import { DeliveryMethod, PaymentMethod } from '@/types';
+import type { DeliveryMethod, PaymentMethod } from '@/types';
 import Button from '@/components/Button';
 import RatingStars from '@/components/RatingStars';
 import FollowButton from '@/components/FollowButton';
@@ -336,7 +336,7 @@ export default function ListingDetailScreen() {
           <View style={styles.detailItem}>
             <MapPin size={20} color={colors.primary} />
             <Text style={styles.detailText}>
-              {listing.location.address}
+              {listing.address || 'Location not specified'}
             </Text>
           </View>
         </View>

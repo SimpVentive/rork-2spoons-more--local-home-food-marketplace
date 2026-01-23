@@ -25,7 +25,7 @@ import Button from '@/components/Button';
 import OrderStatusBadge from '@/components/OrderStatusBadge';
 import RatingStars from '@/components/RatingStars';
 import colors from '@/constants/colors';
-import { OrderStatus } from '@/types';
+import type { OrderStatus } from '@/types';
 
 export default function OrderDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -80,7 +80,7 @@ export default function OrderDetailsScreen() {
           <View style={styles.actionButtons}>
             <Button
               title="Accept Order"
-              onPress={() => handleStatusUpdate('accepted')}
+              onPress={() => handleStatusUpdate('confirmed')}
               style={styles.acceptButton}
             />
             <Button
@@ -92,7 +92,7 @@ export default function OrderDetailsScreen() {
             />
           </View>
         );
-      case 'accepted':
+      case 'confirmed':
         return (
           <Button
             title="Mark as Ready"
@@ -103,10 +103,10 @@ export default function OrderDetailsScreen() {
         return (
           <Button
             title="Mark as Delivered"
-            onPress={() => handleStatusUpdate('delivered')}
+            onPress={() => handleStatusUpdate('completed')}
           />
         );
-      case 'delivered':
+      case 'completed':
         return (
           <Button
             title="Mark as Completed"
@@ -180,14 +180,14 @@ export default function OrderDetailsScreen() {
       <View style={styles.card}>
         <View style={styles.dishContainer}>
           <Image
-            source={{ uri: order.listingSnapshot.image }}
+            source={{ uri: order.listingSnapshot?.image }}
             style={styles.dishImage}
             contentFit="cover"
           />
           
           <View style={styles.dishInfo}>
-            <Text style={styles.dishName}>{order.listingSnapshot.dishName}</Text>
-            <Text style={styles.dishPrice}>₹{order.listingSnapshot.price} x {order.quantity}</Text>
+            <Text style={styles.dishName}>{order.listingSnapshot?.dishName}</Text>
+            <Text style={styles.dishPrice}>₹{order.listingSnapshot?.price} x {order.quantity}</Text>
             <Text style={styles.totalPrice}>Total: ₹{order.totalPrice}</Text>
           </View>
         </View>
@@ -198,7 +198,7 @@ export default function OrderDetailsScreen() {
         >
           <View style={styles.sellerInfo}>
             <Text style={styles.sellerLabel}>Seller</Text>
-            <Text style={styles.sellerName}>{order.listingSnapshot.sellerName}</Text>
+            <Text style={styles.sellerName}>{order.listingSnapshot?.sellerName}</Text>
           </View>
           <ChevronRight size={20} color={colors.textLight} />
         </TouchableOpacity>
@@ -213,7 +213,7 @@ export default function OrderDetailsScreen() {
             <MapPin size={16} color={colors.primary} />
             <Text style={styles.addressText}>
               {order.deliveryMethod === 'pickup' 
-                ? order.listingSnapshot.location.address 
+                ? order.listingSnapshot?.location?.address || order.sellerAddress 
                 : order.deliveryAddress || 'No address provided'}
             </Text>
           </View>
@@ -293,11 +293,11 @@ export default function OrderDetailsScreen() {
         </View>
       </View>
       
-      {order.status === 'canceled' && (
+      {order.status === 'cancelled' && (
         <View style={styles.cancelledCard}>
           <AlertTriangle size={20} color={colors.error} />
           <Text style={styles.cancelledText}>
-            This order was cancelled on {formatDateTime(order.canceledAt || '')}
+            This order was cancelled on {formatDateTime(order.cancelledAt || '')}
           </Text>
         </View>
       )}

@@ -469,23 +469,23 @@ export default function ProfileScreen() {
                 onPress={() => router.push(`/order/${order.id}`)}
               >
                 <Image
-                  source={{ uri: order.listingSnapshot.image }}
+                  source={{ uri: order.listingSnapshot?.image }}
                   style={styles.orderImage}
                   contentFit="cover"
                 />
                 <View style={styles.orderInfo}>
                   <Text style={styles.orderName} numberOfLines={1}>
-                    {order.listingSnapshot.dishName}
+                    {order.listingSnapshot?.dishName}
                   </Text>
                   <Text style={styles.orderDetails}>
-                    {order.quantity} x ₹{order.listingSnapshot.price} = ₹{order.totalPrice}
+                    {order.quantity} x ₹{order.listingSnapshot?.price} = ₹{order.totalPrice}
                   </Text>
                   <View style={[
                     styles.orderStatus,
                     { 
                       backgroundColor: order.status === 'completed' 
                         ? `${colors.success}20` 
-                        : order.status === 'canceled' 
+                        : order.status === 'cancelled' 
                           ? `${colors.error}20` 
                           : `${colors.primary}20` 
                     }
@@ -495,7 +495,7 @@ export default function ProfileScreen() {
                       { 
                         color: order.status === 'completed' 
                           ? colors.success 
-                          : order.status === 'canceled' 
+                          : order.status === 'cancelled' 
                             ? colors.error 
                             : colors.primary 
                       }

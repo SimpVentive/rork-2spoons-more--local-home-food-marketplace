@@ -289,7 +289,7 @@ export default function MoreScreen() {
             
             <TouchableOpacity 
               style={styles.menuItem}
-              onPress={() => router.push('/(tabs)' as any)}
+              onPress={() => router.push('/' as any)}
             >
               <Home size={22} color={colors.secondary} />
               <Text style={styles.menuItemText}>Home</Text>

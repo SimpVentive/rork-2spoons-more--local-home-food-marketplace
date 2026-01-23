@@ -178,12 +178,14 @@ export interface Order {
     price: number;
     image: string;
     sellerName: string;
-    sellerImage: string;
+    sellerImage?: string;
     location: {
       latitude: number;
       longitude: number;
+      address?: string;
     };
   };
+  cancelledAt?: string;
   deliveryAddress?: string;
   deliveryInstructions?: string;
   paymentStatus?: string;
@@ -353,6 +355,10 @@ export type OrderStatus =
   | 'accepted'
   | 'in_delivery'
   | 'delivered';
+
+export type DeliveryMethod = 'pickup' | 'delivery';
+
+export type PaymentMethod = 'cash' | 'upi' | 'online' | 'card';
 
 export interface AdminConversation {
   id: string;

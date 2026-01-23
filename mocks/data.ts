@@ -111,6 +111,20 @@ export const ESSENTIAL_SOUTH_INDIAN = {
   'Karnataka': ['Udupi']
 };
 
+// South Indian subcuisines mapping
+export const SOUTH_INDIAN_SUBCUISINES: Record<string, string[]> = {
+  'Tamil': ['Chettinad', 'Kongunadu', 'Madurai', 'Chennai'],
+  'Kerala': ['Malabar', 'Syrian Christian', 'Travancore'],
+  'Andhra': ['Coastal Andhra', 'Rayalaseema', 'Telangana'],
+  'Karnataka': ['Udupi', 'Mangalorean', 'Coorg', 'North Karnataka'],
+};
+
+// Flat list of all South Indian cuisines
+export const SOUTH_INDIAN_CUISINES_FLAT = [
+  'Tamil', 'Kerala', 'Andhra', 'Karnataka',
+  ...Object.values(SOUTH_INDIAN_SUBCUISINES).flat()
+];
+
 // Payment Methods
 export const PAYMENT_METHODS = [
   'UPI',

@@ -899,9 +899,14 @@ export default function CreateListingScreen() {
       
       {showLocationPicker && (
         <LocationPicker
+          visible={showLocationPicker}
           initialLocation={formData.pickupLocation}
-          onSelectLocation={handleLocationSelect}
+          onLocationSelect={handleLocationSelect}
           onClose={() => setShowLocationPicker(false)}
+          title="Select Pickup Location"
+          showRoute={false}
+          routeStart={null}
+          routeEnd={null}
         />
       )}
 
