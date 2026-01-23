@@ -61,7 +61,7 @@ export default function MoreScreen() {
           try {
             await logout();
             setTimeout(() => {
-              router.replace('/(auth)');
+              router.replace('/(auth)' as any);
             }, 100); 
           } catch (error) {
             console.error('Logout error:', error);
@@ -225,7 +225,7 @@ export default function MoreScreen() {
         
         <TouchableOpacity 
           style={styles.menuItem}
-          onPress={() => router.push('/scan')}
+          onPress={() => router.push('/scan' as any)}
         >
           <QrCode size={22} color={colors.primary} />
           <Text style={styles.menuItemText}>Scan QR Code</Text>
@@ -233,7 +233,7 @@ export default function MoreScreen() {
         
         <TouchableOpacity 
           style={styles.menuItem}
-          onPress={() => router.push('/(tabs)/search')}
+          onPress={() => router.push('/(tabs)/search' as any)}
         >
           <Search size={22} color={colors.primary} />
           <Text style={styles.menuItemText}>Search</Text>
@@ -241,7 +241,7 @@ export default function MoreScreen() {
         
         <TouchableOpacity 
           style={styles.menuItem}
-          onPress={() => router.push('/edit-profile')}
+          onPress={() => router.push('/edit-profile' as any)}
         >
           <User size={22} color={colors.primary} />
           <Text style={styles.menuItemText}>Edit Profile</Text>
@@ -256,7 +256,7 @@ export default function MoreScreen() {
             
             <TouchableOpacity 
               style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/create')}
+              onPress={() => router.push('/(tabs)/create' as any)}
             >
               <PlusCircle size={22} color={colors.secondary} />
               <Text style={styles.menuItemText}>Create Listing</Text>
@@ -264,7 +264,7 @@ export default function MoreScreen() {
             
             <TouchableOpacity 
               style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/analytics')}
+              onPress={() => router.push('/(tabs)/analytics' as any)}
             >
               <TrendingUp size={22} color={colors.secondary} />
               <Text style={styles.menuItemText}>Analytics</Text>
@@ -272,7 +272,7 @@ export default function MoreScreen() {
             
             <TouchableOpacity 
               style={styles.menuItem}
-              onPress={() => router.push('/seller-onboarding')}
+              onPress={() => router.push('/seller-onboarding' as any)}
             >
               <ChefHat size={22} color={colors.secondary} />
               <Text style={styles.menuItemText}>Seller Settings</Text>
@@ -289,7 +289,7 @@ export default function MoreScreen() {
             
             <TouchableOpacity 
               style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/index')}
+              onPress={() => router.push('/(tabs)' as any)}
             >
               <Home size={22} color={colors.secondary} />
               <Text style={styles.menuItemText}>Home</Text>
@@ -297,7 +297,7 @@ export default function MoreScreen() {
             
             <TouchableOpacity 
               style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/route-settings')}
+              onPress={() => router.push('/(tabs)/route-settings' as any)}
             >
               <Route size={22} color={colors.secondary} />
               <Text style={styles.menuItemText}>Route Settings</Text>
@@ -305,7 +305,7 @@ export default function MoreScreen() {
             
             <TouchableOpacity 
               style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/orders')}
+              onPress={() => router.push('/(tabs)/orders' as any)}
             >
               <ShoppingBag size={22} color={colors.secondary} />
               <Text style={styles.menuItemText}>My Orders</Text>
@@ -313,7 +313,7 @@ export default function MoreScreen() {
             
             <TouchableOpacity 
               style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/finances')}
+              onPress={() => router.push('/(tabs)/finances' as any)}
             >
               <Wallet size={22} color={colors.secondary} />
               <Text style={styles.menuItemText}>Wallet & Payments</Text>
@@ -328,7 +328,7 @@ export default function MoreScreen() {
         
         <TouchableOpacity 
           style={styles.menuItem}
-          onPress={() => router.push('/file-complaint')}
+          onPress={() => router.push('/file-complaint' as any)}
         >
           <FileText size={22} color={colors.warning} />
           <Text style={styles.menuItemText}>File a Complaint</Text>

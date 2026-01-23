@@ -117,19 +117,19 @@ export default function HomeScreen() {
   };
 
   const handleExplorePress = () => {
-    router.push('/(tabs)/search');
+    router.push('/(tabs)/search' as any);
   };
 
   const handleRouteSettingsPress = () => {
-    router.push('/(tabs)/route-settings');
+    router.push('/(tabs)/route-settings' as any);
   };
 
   const handleSearchPress = () => {
-    router.push('/(tabs)/search');
+    router.push('/(tabs)/search' as any);
   };
 
   const handleExploreNowPress = () => {
-    router.push('/(tabs)/search');
+    router.push('/(tabs)/search' as any);
   };
   
   const getTimeOfDay = () => {
@@ -163,7 +163,7 @@ export default function HomeScreen() {
           <View style={styles.headerActions}>
             <TouchableOpacity 
               style={styles.notifyButton}
-              onPress={() => router.push('/(tabs)/notifications')}
+              onPress={() => router.push('/(tabs)/notifications' as any)}
             >
               <Bell size={20} color={colors.primary} />
               <View style={styles.notificationBadge}>
@@ -171,7 +171,7 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
             
-            <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/profile' as any)}>
               <Image
                 source={{ uri: user?.profileImage || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167' }}
                 style={styles.profileImage}
@@ -250,7 +250,7 @@ export default function HomeScreen() {
           </View>
           <TouchableOpacity 
             style={styles.seeAllButton}
-            onPress={() => router.push('/(tabs)/search')}
+            onPress={() => router.push('/(tabs)/search' as any)}
           >
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
@@ -302,7 +302,7 @@ export default function HomeScreen() {
           </View>
           <TouchableOpacity 
             style={styles.seeAllButton}
-            onPress={() => router.push('/(tabs)/following')}
+            onPress={() => router.push('/(tabs)/following' as any)}
           >
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>

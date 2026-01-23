@@ -116,10 +116,10 @@ export default function NotificationsScreen() {
     // Navigate based on notification type
     switch (notification.type) {
       case 'order':
-        router.push(`/order/${notification.relatedId}`);
+        router.push(`/order/${notification.relatedId}` as any);
         break;
       case 'review':
-        router.push(`/profile/${user?.id}`);
+        router.push(`/profile/${user?.id}` as any);
         break;
       case 'promotion':
         // Handle promotion notifications
