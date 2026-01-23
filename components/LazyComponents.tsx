@@ -15,7 +15,7 @@ const LoadingFallback = () => (
 );
 
 interface LazyComponentType {
-  (props: Record<string, any>): JSX.Element;
+  (props: Record<string, any>): React.ReactElement;
   displayName?: string;
 }
 
@@ -24,7 +24,7 @@ const withLazyLoading = <T extends ComponentType<any>>(
 ): LazyComponentType => {
   const LazyComponent = lazy(importFn);
   
-  const WrappedComponent = (props: Record<string, any>): JSX.Element => (
+  const WrappedComponent = (props: Record<string, any>): React.ReactElement => (
     <Suspense fallback={<LoadingFallback />}>
       <LazyComponent {...(props as any)} />
     </Suspense>
