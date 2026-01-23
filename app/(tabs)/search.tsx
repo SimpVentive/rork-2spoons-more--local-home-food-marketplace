@@ -79,7 +79,6 @@ export default function SearchScreen() {
     <FoodCard
       listing={item}
       onPress={() => handleListingPress(item)}
-      userLocation={user?.location}
     />
   );
 
@@ -169,7 +168,6 @@ export default function SearchScreen() {
         onClose={() => setFilterModalVisible(false)}
         onApply={handleApplyFilters}
         initialFilters={filters}
-        userLocation={user?.location}
       />
     </View>
   );

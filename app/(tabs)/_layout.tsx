@@ -29,17 +29,17 @@ export default function TabLayout(): React.ReactElement {
         const state = useAuthStore.getState();
         
         if (!state.isAuthenticated) {
-          router.replace('/(auth)' as any);
+          router.replace('/(auth)' as never);
           return;
         }
         
         if (state.user?.isAdmin === true) {
-          router.replace('/(admin)' as any);
+          router.replace('/(admin)' as never);
           return;
         }
         
         if (!state.userPreference) {
-          router.replace('/user-preference' as any);
+          router.replace('/user-preference' as never);
           return;
         }
         

@@ -53,7 +53,7 @@ export default function MoreScreen() {
             try {
               await logout();
               setTimeout(() => {
-                router.replace('/(auth)' as any);
+                router.replace('/(auth)' as never);
               }, 100); 
             } catch (error) {
               console.error('Logout error:', error);
@@ -202,7 +202,7 @@ export default function MoreScreen() {
         
         <TouchableOpacity 
           style={styles.menuItem}
-          onPress={() => router.push('/(tabs)/search' as any)}
+          onPress={() => router.push('/(tabs)/search' as never)}
         >
           <Search size={22} color={colors.primary} />
           <Text style={styles.menuItemText}>Search</Text>
@@ -210,7 +210,7 @@ export default function MoreScreen() {
         
         <TouchableOpacity 
           style={styles.menuItem}
-          onPress={() => router.push('/edit-profile' as any)}
+          onPress={() => router.push('/edit-profile' as never)}
         >
           <User size={22} color={colors.primary} />
           <Text style={styles.menuItemText}>Edit Profile</Text>
@@ -223,7 +223,7 @@ export default function MoreScreen() {
           
           <TouchableOpacity 
             style={styles.menuItem}
-            onPress={() => router.push('/(tabs)/create' as any)}
+            onPress={() => router.push('/(tabs)/create' as never)}
           >
             <PlusCircle size={22} color={colors.secondary} />
             <Text style={styles.menuItemText}>Create Listing</Text>
