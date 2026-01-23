@@ -19,11 +19,13 @@ const withLazyLoading = <T extends ComponentType<any>>(
 ) => {
   const LazyComponent = lazy(importFn);
   
-  return React.forwardRef<any, any>((props, ref) => (
+  const WrappedComponent = (props: Record<string, any>) => (
     <Suspense fallback={<LoadingFallback />}>
-      <LazyComponent {...props} ref={ref} />
+      <LazyComponent {...props} />
     </Suspense>
-  ));
+  );
+  
+  return WrappedComponent;
 };
 
 export const LazyQRCodeScanner = withLazyLoading(

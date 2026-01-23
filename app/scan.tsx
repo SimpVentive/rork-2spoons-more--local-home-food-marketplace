@@ -104,11 +104,11 @@ This app only supports scanning order and listing QR codes.`,
               [
                 { 
                   text: 'Order', 
-                  onPress: () => router.replace(`/order/${parsedData.id}`)
+                  onPress: () => router.replace(`/order/${parsedData.id}` as any)
                 },
                 { 
                   text: 'Listing', 
-                  onPress: () => router.replace(`/listing/${parsedData.id}`)
+                  onPress: () => router.replace(`/listing/${parsedData.id}` as any)
                 },
                 {
                   text: 'Cancel',

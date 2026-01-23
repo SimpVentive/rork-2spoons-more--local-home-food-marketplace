@@ -6,376 +6,375 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  Platform,
+  ActivityIndicator,
 } from 'react-native';
-import Slider from '@react-native-community/slider';
 import { useRouter } from 'expo-router';
-import { 
-  MapPin, 
-  Home, 
-  Building, 
-  Route, 
-  Clock, 
-  Save,
-  Plus,
-  Trash2,
+import {
+  MapPin,
   Navigation,
-  Settings,
+  Plus,
+  X,
+  Home,
+  Building,
+  Map,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
-import LocationPicker from '@/components/LocationPicker';
+import { useListingsStore } from '@/store/listings-store';
+import Input from '@/components/Input';
 import Button from '@/components/Button';
+import LocationPicker from '@/components/LocationPicker';
+import RouteMapView from '@/components/RouteMapView';
 import colors from '@/constants/colors';
-import { RoutePoint } from '@/types';
-import type { User } from '@/types';
+import { RouteLocation } from '@/types';
 
 export default function RouteSettingsScreen() {
   const { user, updateProfile } = useAuthStore();
+  const { listings } = useListingsStore();
   const router = useRouter();
-  
-  const [homeLocation, setHomeLocation] = useState<RoutePoint | null>(null);
-  const [officeLocation, setOfficeLocation] = useState<RoutePoint | null>(null);
-  const [customLocations, setCustomLocations] = useState<RoutePoint[]>([]);
+
+  const [officeAddress, setOfficeAddress] = useState(user?.officeAddress || '');
+  const [homeToOfficeRoute, setHomeToOfficeRoute] = useState<RouteLocation[]>(user?.homeToOfficeRoute || []);
+  const [officeToHomeRoute, setOfficeToHomeRoute] = useState<RouteLocation[]>(user?.officeToHomeRoute || []);
+  const [routesSameAsHomeToOffice, setRoutesSameAsHomeToOffice] = useState(user?.routesSameAsHomeToOffice !== false);
+  const [detourPreference, setDetourPreference] = useState(user?.detourPreference?.toString() || '500');
   const [isLoading, setIsLoading] = useState(false);
-  const [showLocationPicker, setShowLocationPicker] = useState(false);
-  const [locationPickerType, setLocationPickerType] = useState<'home' | 'office' | 'custom'>('home');
+  const [locationPickerVisible, setLocationPickerVisible] = useState(false);
+  const [pickingLocationFor, setPickingLocationFor] = useState<'home' | 'office' | 'homeToOffice' | 'officeToHome' | null>(null);
   const [showRouteMap, setShowRouteMap] = useState(false);
-  const [selectedLocations, setSelectedLocations] = useState<RoutePoint[]>([]);
-  const [searchRadius, setSearchRadius] = useState<number>(user?.detourPreference ? user.detourPreference / 1000 : 2); // Convert meters to km
-  
-  const MAX_CUSTOM_LOCATIONS = 3; // Total of 5 locations including home and office
-  const MAX_TOTAL_LOCATIONS = 5;
-  
+  const [newLocationName, setNewLocationName] = useState('');
+  const [addingToRoute, setAddingToRoute] = useState<'homeToOffice' | 'officeToHome' | null>(null);
+
   useEffect(() => {
-    loadUserLocations();
+    if (!user) {
+      router.replace('/(auth)' as any);
+    }
   }, [user]);
-  
-  const loadUserLocations = () => {
-    if (!user) return;
-    
-    // Load home location from user address
-    if (user.address && user.location) {
-      setHomeLocation({
-        id: 'home',
-        name: 'Home',
-        address: user.address,
-        latitude: user.location.latitude,
-        longitude: user.location.longitude,
-        type: 'home',
-      });
+
+  const handleSave = async () => {
+    if (!officeAddress.trim()) {
+      Alert.alert('Error', 'Please enter your office address');
+      return;
     }
-    
-    // Load office location
-    if (user.officeAddress && user.officeLocation) {
-      setOfficeLocation({
-        id: 'office',
-        name: 'Office',
-        address: user.officeAddress,
-        latitude: user.officeLocation.latitude,
-        longitude: user.officeLocation.longitude,
-        type: 'office',
-      });
-    }
-    
-    // Load custom locations (if they exist in user data)
-    if (user.customLocations) {
-      setCustomLocations(user.customLocations);
-    }
-  };
-  
-  const handleLocationSelect = (location: any) => {
-    const routePoint: RoutePoint = {
-      id: locationPickerType === 'custom' ? Date.now().toString() : locationPickerType,
-      name: locationPickerType === 'home' ? 'Home' : locationPickerType === 'office' ? 'Office' : 'Custom Location',
-      address: location.address,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      type: locationPickerType,
-    };
-    
-    if (locationPickerType === 'home') {
-      setHomeLocation(routePoint);
-    } else if (locationPickerType === 'office') {
-      setOfficeLocation(routePoint);
-    } else {
-      setCustomLocations(prev => [...prev, routePoint]);
-    }
-    
-    setShowLocationPicker(false);
-  };
-  
-  const handleSaveRoute = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    
+
     try {
-      const updates = {
-        officeAddress: officeLocation?.address || '',
-        officeLocation: officeLocation ? {
-          latitude: officeLocation.latitude,
-          longitude: officeLocation.longitude,
-        } : undefined,
-        customLocations: customLocations,
-        detourPreference: searchRadius * 1000, // Convert km to meters
+      setIsLoading(true);
+      
+      const officeLocation = {
+        latitude: 17.4400,
+        longitude: 78.3800,
       };
-      
-      await updateProfile(updates);
-      
-      Alert.alert(
-        'Success',
-        'Your route settings have been saved successfully!',
-        [{ text: 'OK' }]
-      );
+
+      const success = await updateProfile({
+        officeAddress,
+        officeLocation,
+        homeToOfficeRoute,
+        officeToHomeRoute: routesSameAsHomeToOffice ? homeToOfficeRoute : officeToHomeRoute,
+        routesSameAsHomeToOffice,
+        detourPreference: parseInt(detourPreference) || 500,
+      });
+
+      if (success) {
+        Alert.alert('Success', 'Route settings updated successfully');
+      } else {
+        Alert.alert('Error', 'Failed to update route settings');
+      }
     } catch (error) {
-      console.error('Error saving route:', error);
-      Alert.alert(
-        'Error',
-        'Failed to save route settings. Please try again.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Error', 'An unexpected error occurred');
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
-  
-  const handleRemoveCustomLocation = (locationId: string) => {
-    setCustomLocations(prev => prev.filter(loc => loc.id !== locationId));
+
+  const openLocationPicker = (type: 'home' | 'office' | 'homeToOffice' | 'officeToHome') => {
+    setPickingLocationFor(type);
+    setLocationPickerVisible(true);
   };
-  
-  const openLocationPicker = (type: 'home' | 'office' | 'custom') => {
-    const totalLocations = (homeLocation ? 1 : 0) + (officeLocation ? 1 : 0) + customLocations.length;
-    
-    if (type === 'custom' && (customLocations.length >= MAX_CUSTOM_LOCATIONS || totalLocations >= MAX_TOTAL_LOCATIONS)) {
-      Alert.alert(
-        'Location Limit Reached',
-        `You can only select up to ${MAX_TOTAL_LOCATIONS} locations total. You currently have ${totalLocations} locations selected.`,
-        [{ text: 'OK' }]
-      );
+
+  const handleLocationSelected = async (location: { latitude: number; longitude: number; address: string }) => {
+    if (pickingLocationFor === 'office') {
+      setOfficeAddress(location.address);
+    } else if (pickingLocationFor === 'homeToOffice' || pickingLocationFor === 'officeToHome') {
+      const newLocation: RouteLocation = {
+        id: `location-${Date.now()}`,
+        name: newLocationName.trim() || 'Route Point',
+        address: location.address,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      };
+
+      if (pickingLocationFor === 'homeToOffice') {
+        setHomeToOfficeRoute([...homeToOfficeRoute, newLocation]);
+      } else {
+        setOfficeToHomeRoute([...officeToHomeRoute, newLocation]);
+      }
+
+      setNewLocationName('');
+      setAddingToRoute(null);
+    }
+
+    setLocationPickerVisible(false);
+    setPickingLocationFor(null);
+  };
+
+  const addRouteLocation = () => {
+    if (!newLocationName.trim()) {
+      Alert.alert('Error', 'Please enter a location name');
       return;
     }
-    setLocationPickerType(type);
-    setShowLocationPicker(true);
+    openLocationPicker(addingToRoute!);
   };
-  
-  const handleViewRoute = () => {
-    if (!homeLocation || !officeLocation) {
-      Alert.alert(
-        'Missing Locations',
-        'Please set both home and office locations to view your route.',
-        [{ text: 'OK' }]
-      );
-      return;
+
+  const removeRouteLocation = (routeType: 'homeToOffice' | 'officeToHome', locationId: string) => {
+    if (routeType === 'homeToOffice') {
+      setHomeToOfficeRoute(homeToOfficeRoute.filter(loc => loc.id !== locationId));
+    } else {
+      setOfficeToHomeRoute(officeToHomeRoute.filter(loc => loc.id !== locationId));
     }
-    
-    const allLocations = [homeLocation, officeLocation, ...customLocations];
-    setSelectedLocations(allLocations);
-    setShowRouteMap(true);
   };
-  
+
+  const renderRouteLocation = (location: RouteLocation, routeType: 'homeToOffice' | 'officeToHome') => (
+    <View key={location.id} style={styles.routeLocationItem}>
+      <View style={styles.routeLocationInfo}>
+        <Text style={styles.routeLocationName}>{location.name}</Text>
+        <Text style={styles.routeLocationAddress}>{location.address}</Text>
+      </View>
+      <TouchableOpacity
+        style={styles.removeLocationButton}
+        onPress={() => removeRouteLocation(routeType, location.id)}
+      >
+        <X size={20} color={colors.error} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  if (!user) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  const routePoints = user ? [
+    { latitude: user.location.latitude, longitude: user.location.longitude, name: 'Home' },
+    ...homeToOfficeRoute,
+    ...(user.officeLocation ? [{ ...user.officeLocation, name: 'Office' }] : []),
+  ] : [];
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerIcon}>
-            <Settings size={28} color={colors.primary} />
+    <>
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        {isLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
-          <View>
-            <Text style={styles.title}>Route Settings</Text>
-            <Text style={styles.subtitle}>
-              Set up your daily routes to discover food along the way
-            </Text>
+        )}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Home Location</Text>
+          <Text style={styles.sectionDescription}>Your current home address</Text>
+          
+          <View style={styles.locationDisplay}>
+            <Home size={20} color={colors.primary} />
+            <Text style={styles.locationText}>{user.address}</Text>
           </View>
         </View>
-      </View>
-      
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Primary Locations</Text>
-        
-        {/* Home Location */}
-        <TouchableOpacity 
-          style={styles.locationCard}
-          onPress={() => openLocationPicker('home')}
-        >
-          <View style={styles.locationIconContainer}>
-            <Home size={24} color={colors.primary} />
-          </View>
-          <View style={styles.locationInfo}>
-            <Text style={styles.locationName}>Home</Text>
-            <Text style={styles.locationAddress}>
-              {homeLocation?.address || 'Tap to set your home location'}
-            </Text>
-          </View>
-          <MapPin size={20} color={colors.textLight} />
-        </TouchableOpacity>
-        
-        {/* Office Location */}
-        <TouchableOpacity 
-          style={styles.locationCard}
-          onPress={() => openLocationPicker('office')}
-        >
-          <View style={styles.locationIconContainer}>
-            <Building size={24} color={colors.secondary} />
-          </View>
-          <View style={styles.locationInfo}>
-            <Text style={styles.locationName}>Office</Text>
-            <Text style={styles.locationAddress}>
-              {officeLocation?.address || 'Tap to set your office location'}
-            </Text>
-          </View>
-          <MapPin size={20} color={colors.textLight} />
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Custom Locations ({customLocations.length}/{MAX_CUSTOM_LOCATIONS})</Text>
-          <TouchableOpacity 
-            style={[
-              styles.addButton,
-              customLocations.length >= MAX_CUSTOM_LOCATIONS && styles.addButtonDisabled
-            ]}
-            onPress={() => openLocationPicker('custom')}
-            disabled={customLocations.length >= MAX_CUSTOM_LOCATIONS}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Office Location</Text>
+          <Text style={styles.sectionDescription}>
+            Set your office address to enable route-based food discovery
+          </Text>
+          
+          <Input
+            label="Office Address"
+            value={officeAddress}
+            onChangeText={setOfficeAddress}
+            placeholder="Enter your office address"
+            leftIcon={<Building size={20} color={colors.textLight} />}
+          />
+          
+          <TouchableOpacity
+            style={styles.selectLocationButton}
+            onPress={() => openLocationPicker('office')}
           >
-            <Plus size={16} color={customLocations.length >= MAX_CUSTOM_LOCATIONS ? colors.textLight : colors.white} />
-            <Text style={[
-              styles.addButtonText,
-              customLocations.length >= MAX_CUSTOM_LOCATIONS && styles.addButtonTextDisabled
-            ]}>Add</Text>
+            <MapPin size={20} color={colors.primary} />
+            <Text style={styles.selectLocationText}>Select on Map</Text>
           </TouchableOpacity>
         </View>
-        
-        {customLocations.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Navigation size={48} color={colors.textLight} />
-            <Text style={styles.emptyStateText}>
-              No custom locations added yet
-            </Text>
-            <Text style={styles.emptyStateSubtext}>
-              Add up to {MAX_CUSTOM_LOCATIONS} frequently visited places to find food along those routes (total {MAX_TOTAL_LOCATIONS} locations including home and office)
-            </Text>
-          </View>
-        ) : (
-          customLocations.map((location) => (
-            <View key={location.id} style={styles.locationCard}>
-              <View style={styles.locationIconContainer}>
-                <MapPin size={24} color={colors.info} />
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Home to Office Route</Text>
+          <Text style={styles.sectionDescription}>
+            Add stops along your route from home to office
+          </Text>
+          
+          {homeToOfficeRoute.map(location => renderRouteLocation(location, 'homeToOffice'))}
+          
+          {addingToRoute === 'homeToOffice' ? (
+            <View style={styles.addLocationForm}>
+              <Input
+                label="Location Name"
+                value={newLocationName}
+                onChangeText={setNewLocationName}
+                placeholder="e.g., Metro Station, Shopping Mall"
+              />
+              <View style={styles.addLocationButtons}>
+                <Button
+                  title="Select on Map"
+                  onPress={addRouteLocation}
+                  style={styles.addButton}
+                />
+                <Button
+                  title="Cancel"
+                  onPress={() => {
+                    setAddingToRoute(null);
+                    setNewLocationName('');
+                  }}
+                  variant="outline"
+                  style={styles.cancelButton}
+                />
               </View>
-              <View style={styles.locationInfo}>
-                <Text style={styles.locationName}>{location.name}</Text>
-                <Text style={styles.locationAddress}>{location.address}</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.addLocationButton}
+              onPress={() => setAddingToRoute('homeToOffice')}
+            >
+              <Plus size={20} color={colors.primary} />
+              <Text style={styles.addLocationButtonText}>Add Stop</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Office to Home Route</Text>
+            <TouchableOpacity
+              style={styles.sameRouteButton}
+              onPress={() => setRoutesSameAsHomeToOffice(!routesSameAsHomeToOffice)}
+            >
+              <View style={[styles.checkbox, routesSameAsHomeToOffice && styles.checkboxChecked]}>
+                {routesSameAsHomeToOffice && <Text style={styles.checkmark}>✓</Text>}
               </View>
-              <TouchableOpacity 
-                style={styles.removeButton}
-                onPress={() => handleRemoveCustomLocation(location.id)}
-              >
-                <Trash2 size={16} color={colors.error} />
-              </TouchableOpacity>
-            </View>
-          ))
-        )}
-      </View>
-      
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Route Preferences</Text>
-        
-        <View style={styles.preferenceCard}>
-          <View style={styles.preferenceHeader}>
-            <View style={styles.preferenceIconContainer}>
-              <Route size={24} color={colors.primary} />
-            </View>
-            <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceName}>Search Radius</Text>
-              <Text style={styles.preferenceDescription}>
-                Find food within {searchRadius.toFixed(1)}km of your route
-              </Text>
-            </View>
+              <Text style={styles.sameRouteText}>Same as home to office</Text>
+            </TouchableOpacity>
           </View>
           
-          <View style={styles.sliderContainer}>
-            <View style={styles.sliderLabels}>
-              <Text style={styles.sliderLabel}>0km</Text>
-              <Text style={styles.sliderValue}>{searchRadius.toFixed(1)}km</Text>
-              <Text style={styles.sliderLabel}>2km</Text>
-            </View>
-            <Slider
-              style={styles.slider}
-              minimumValue={0}
-              maximumValue={2}
-              value={searchRadius}
-              onValueChange={setSearchRadius}
-              minimumTrackTintColor={colors.primary}
-              maximumTrackTintColor={colors.border}
-              thumbTintColor={colors.primary}
-              step={0.1}
-            />
-          </View>
+          {!routesSameAsHomeToOffice && (
+            <>
+              <Text style={styles.sectionDescription}>
+                Add stops along your route from office to home
+              </Text>
+              
+              {officeToHomeRoute.map(location => renderRouteLocation(location, 'officeToHome'))}
+              
+              {addingToRoute === 'officeToHome' ? (
+                <View style={styles.addLocationForm}>
+                  <Input
+                    label="Location Name"
+                    value={newLocationName}
+                    onChangeText={setNewLocationName}
+                    placeholder="e.g., Metro Station, Shopping Mall"
+                  />
+                  <View style={styles.addLocationButtons}>
+                    <Button
+                      title="Select on Map"
+                      onPress={addRouteLocation}
+                      style={styles.addButton}
+                    />
+                    <Button
+                      title="Cancel"
+                      onPress={() => {
+                        setAddingToRoute(null);
+                        setNewLocationName('');
+                      }}
+                      variant="outline"
+                      style={styles.cancelButton}
+                    />
+                  </View>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.addLocationButton}
+                  onPress={() => setAddingToRoute('officeToHome')}
+                >
+                  <Plus size={20} color={colors.primary} />
+                  <Text style={styles.addLocationButtonText}>Add Stop</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
         </View>
-        
-        <View style={styles.preferenceCard}>
-          <View style={styles.preferenceIconContainer}>
-            <Clock size={24} color={colors.info} />
-          </View>
-          <View style={styles.preferenceInfo}>
-            <Text style={styles.preferenceName}>Time Window</Text>
-            <Text style={styles.preferenceDescription}>
-              Show food available during your commute hours
-            </Text>
-          </View>
-        </View>
-      </View>
-      
-      <View style={styles.actionContainer}>
-        {homeLocation && officeLocation && (
-          <Button
-            title="View Route on Map"
-            onPress={handleViewRoute}
-            variant="outline"
-            icon={<Navigation size={16} color={colors.primary} />}
-            style={styles.viewRouteButton}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Detour Preference</Text>
+          <Text style={styles.sectionDescription}>
+            Maximum distance you're willing to detour from your route (in meters)
+          </Text>
+          
+          <Input
+            label="Maximum Detour (meters)"
+            value={detourPreference}
+            onChangeText={setDetourPreference}
+            placeholder="500"
+            keyboardType="numeric"
+            leftIcon={<Navigation size={20} color={colors.textLight} />}
           />
+        </View>
+
+        {(homeToOfficeRoute.length > 0 || user?.officeLocation) && (
+          <View style={styles.section}>
+            <View style={styles.mapHeader}>
+              <Text style={styles.sectionTitle}>Route Map</Text>
+              <TouchableOpacity
+                style={styles.viewMapButton}
+                onPress={() => setShowRouteMap(!showRouteMap)}
+              >
+                <Map size={20} color={colors.primary} />
+                <Text style={styles.viewMapText}>
+                  {showRouteMap ? 'Hide Map' : 'View Map'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            
+            {showRouteMap && (
+              <View style={styles.mapContainer}>
+                <RouteMapView
+                  routePoints={routePoints}
+                  dishesOnRoute={[]}
+                  onDishPress={() => {}}
+                />
+              </View>
+            )}
+          </View>
         )}
-        
+
         <Button
           title="Save Route Settings"
-          onPress={handleSaveRoute}
-          loading={isLoading}
-          icon={<Save size={16} color={colors.white} />}
+          onPress={handleSave}
           style={styles.saveButton}
         />
-      </View>
-      
-      {showLocationPicker && (
+      </ScrollView>
+
+      {locationPickerVisible && (
         <LocationPicker
-          visible={showLocationPicker}
-          onLocationSelect={handleLocationSelect}
-          onClose={() => setShowLocationPicker(false)}
-          title={`Select ${locationPickerType === 'home' ? 'Home' : locationPickerType === 'office' ? 'Office' : 'Custom'} Location`}
-          showRoute={false}
-          routeStart={homeLocation}
-          routeEnd={officeLocation}
+          initialLocation={
+            pickingLocationFor === 'office' && user.officeLocation
+              ? { ...user.officeLocation, address: officeAddress }
+              : undefined
+          }
+          onSelectLocation={handleLocationSelected}
+          onClose={() => {
+            setLocationPickerVisible(false);
+            setPickingLocationFor(null);
+          }}
+          routePoints={routePoints}
+          dishesOnRoute={[]}
         />
       )}
-      
-      {showRouteMap && (
-        <LocationPicker
-          visible={showRouteMap}
-          onLocationSelect={() => {}}
-          onClose={() => setShowRouteMap(false)}
-          title="Your Route with Selected Locations"
-          showRoute={true}
-          routeStart={homeLocation}
-          routeEnd={officeLocation}
-          routePoints={selectedLocations.map(loc => ({
-            latitude: loc.latitude,
-            longitude: loc.longitude,
-            name: loc.name,
-          }))}
-          dishesOnRoute={[]} // This would be populated with actual dishes from the store
-        />
-      )}
-    </ScrollView>
+    </>
   );
 }
 
@@ -384,213 +383,196 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    padding: 20,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+  contentContainer: {
+    paddingBottom: 120,
   },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: `${colors.primary}15`,
+  loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    backgroundColor: colors.background,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: 4,
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.textLight,
-    lineHeight: 22,
-    fontWeight: '500',
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
   },
   section: {
+    padding: 16,
     backgroundColor: colors.white,
-    marginTop: 16,
-    paddingVertical: 20,
-    marginHorizontal: 16,
-    borderRadius: 16,
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    marginBottom: 12,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-  },
-  locationCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  locationIconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.card,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  locationInfo: {
-    flex: 1,
-  },
-  locationName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  locationAddress: {
-    fontSize: 14,
-    color: colors.textLight,
-    lineHeight: 20,
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  addButtonDisabled: {
-    backgroundColor: colors.border,
-  },
-  addButtonText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  addButtonTextDisabled: {
-    color: colors.textLight,
-  },
-  removeButton: {
-    padding: 8,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 16,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyStateSubtext: {
-    fontSize: 14,
-    color: colors.textLight,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  preferenceCard: {
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  preferenceHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  preferenceIconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: `${colors.primary}15`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  preferenceInfo: {
-    flex: 1,
-  },
-  preferenceName: {
-    fontSize: 18,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  preferenceDescription: {
-    fontSize: 15,
+  sectionDescription: {
+    fontSize: 14,
     color: colors.textLight,
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  locationDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    padding: 16,
+    borderRadius: 8,
+  },
+  locationText: {
+    fontSize: 16,
+    color: colors.text,
+    marginLeft: 12,
+    flex: 1,
+  },
+  selectLocationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  selectLocationText: {
+    fontSize: 14,
+    color: colors.primary,
+    marginLeft: 8,
     fontWeight: '500',
   },
-  sliderContainer: {
-    paddingHorizontal: 4,
+  routeLocationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.card,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
   },
-  sliderLabels: {
+  routeLocationInfo: {
+    flex: 1,
+  },
+  routeLocationName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  routeLocationAddress: {
+    fontSize: 14,
+    color: colors.textLight,
+  },
+  removeLocationButton: {
+    padding: 8,
+  },
+  addLocationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderStyle: 'dashed',
+  },
+  addLocationButtonText: {
+    fontSize: 16,
+    color: colors.primary,
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  addLocationForm: {
+    backgroundColor: colors.card,
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  addLocationButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  addButton: {
+    flex: 1,
+    marginRight: 8,
+  },
+  cancelButton: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  sameRouteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 4,
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  checkmark: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  sameRouteText: {
+    fontSize: 14,
+    color: colors.text,
+  },
+  mapHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
   },
-  sliderLabel: {
+  viewMapButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  viewMapText: {
     fontSize: 14,
-    color: colors.textLight,
+    color: colors.primary,
+    marginLeft: 8,
     fontWeight: '500',
   },
-  sliderValue: {
-    fontSize: 16,
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  slider: {
-    width: '100%',
-    height: 40,
-  },
-
-  actionContainer: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  viewRouteButton: {
-    marginBottom: 12,
+  mapContainer: {
+    height: 300,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginTop: 8,
   },
   saveButton: {
-    marginTop: 8,
+    margin: 16,
   },
 });

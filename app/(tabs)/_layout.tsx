@@ -13,14 +13,12 @@ import {
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
 import { Platform, StyleSheet, View, ActivityIndicator, TouchableOpacity, Text, Alert } from 'react-native';
-// Haptics removed for Android compatibility
 
 export default function TabLayout(): React.ReactElement {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const { user, isAuthenticated, userPreference, isInitialized, switchRole, initialize } = useAuthStore();
   
-  // Initialize auth store on mount
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -28,7 +26,6 @@ export default function TabLayout(): React.ReactElement {
           await initialize();
         }
         
-        // Check auth state and redirect if needed
         const state = useAuthStore.getState();
         
         if (!state.isAuthenticated) {
@@ -56,7 +53,6 @@ export default function TabLayout(): React.ReactElement {
     initAuth();
   }, []);
 
-  // Show loading while initializing
   if (isLoading || !isAuthenticated || !userPreference || user?.isAdmin) {
     return (
       <View style={styles.loadingContainer}>
@@ -74,7 +70,6 @@ export default function TabLayout(): React.ReactElement {
     }
   };
 
-  // Simple tab icon without complex animations for better Android compatibility
   const TabIcon = ({ icon, badgeCount }: { 
     icon: React.ReactNode; 
     badgeCount?: number;
@@ -95,7 +90,6 @@ export default function TabLayout(): React.ReactElement {
     );
   };
 
-  // Simplified screen configuration for better Android compatibility
   const isChef = user?.isChef;
   return (
     <Tabs
@@ -133,7 +127,6 @@ export default function TabLayout(): React.ReactElement {
         tabBarHideOnKeyboard: Platform.OS === 'android',
       }}
     >
-      {/* Chef/Seller Tabs */}
       {isChef && (
         <>
           <Tabs.Screen
@@ -169,7 +162,6 @@ export default function TabLayout(): React.ReactElement {
         </>
       )}
       
-      {/* Buyer Tabs */}
       {!isChef && (
         <>
           <Tabs.Screen
@@ -196,7 +188,6 @@ export default function TabLayout(): React.ReactElement {
         </>
       )}
       
-      {/* Common Tabs */}
       <Tabs.Screen
         name="following"
         options={{
@@ -216,7 +207,6 @@ export default function TabLayout(): React.ReactElement {
         }}
       />
       
-      {/* Hidden screens */}
       <Tabs.Screen
         name="search"
         options={{
@@ -235,6 +225,20 @@ export default function TabLayout(): React.ReactElement {
         name="create"
         options={{
           title: 'Create',
+          tabBarButton: () => null,
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Notifications',
+          tabBarButton: () => null,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
           tabBarButton: () => null,
         }}
       />

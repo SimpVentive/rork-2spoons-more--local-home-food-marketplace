@@ -14,27 +14,19 @@ import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import {
   User,
-  Settings,
   ShoppingBag,
-  PieChart,
   Wallet,
   LogOut,
   ChefHat,
   Route,
   FileText,
-  Bell,
   HelpCircle,
   Star,
   Share2,
   PlusCircle,
-  Users,
   Search,
   TrendingUp,
-  Heart,
-  MapPin,
-  CreditCard,
   Shield,
-  Gift,
   Home,
   RefreshCw,
   QrCode,
@@ -47,31 +39,31 @@ export default function MoreScreen() {
   const router = useRouter();
   
   const handleLogout = () => {
-  Alert.alert(
-    'Logout',
-    'Are you sure you want to logout?',
-    [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'Logout',
-        onPress: async () => {
-          try {
-            await logout();
-            setTimeout(() => {
-              router.replace('/(auth)' as any);
-            }, 100); 
-          } catch (error) {
-            console.error('Logout error:', error);
-          }
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
         },
-        style: 'destructive',
-      },
-    ]
-  );
-};
+        {
+          text: 'Logout',
+          onPress: async () => {
+            try {
+              await logout();
+              setTimeout(() => {
+                router.replace('/(auth)' as any);
+              }, 100); 
+            } catch (error) {
+              console.error('Logout error:', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
+  };
 
   const handleSwitchRole = async () => {
     try {
@@ -84,7 +76,6 @@ export default function MoreScreen() {
   const handleShareApp = async () => {
     try {
       if (Platform.OS === 'web') {
-        // For web, use Web Share API if available, otherwise fallback
         if (navigator.share) {
           await navigator.share({
             title: 'Home Food App',
@@ -92,7 +83,6 @@ export default function MoreScreen() {
             url: 'https://homefood.app',
           });
         } else {
-          // Fallback for web browsers without Web Share API
           const url = 'https://homefood.app';
           const text = 'Check out this amazing home food app! Get delicious homemade food from local chefs.';
           const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
@@ -111,15 +101,7 @@ export default function MoreScreen() {
         }),
       };
       
-      const result = await Share.share(shareOptions);
-      
-      if (result.action === Share.sharedAction) {
-        // Successfully shared
-        console.log('App shared successfully');
-      } else if (result.action === Share.dismissedAction) {
-        // User dismissed the share dialog
-        console.log('Share dismissed');
-      }
+      await Share.share(shareOptions);
     } catch (error: any) {
       console.error('Share error:', error);
       Alert.alert(
@@ -133,7 +115,6 @@ export default function MoreScreen() {
   const handleRateApp = async () => {
     try {
       if (Platform.OS === 'web') {
-        // For web, show a message
         Alert.alert(
           'Rate Our App',
           'Thank you for your interest! Please visit our app on the App Store or Google Play Store to leave a rating.',
@@ -143,8 +124,8 @@ export default function MoreScreen() {
       }
       
       const appStoreUrl = Platform.select({
-        ios: 'https://apps.apple.com/app/id123456789', // Replace with actual App Store ID
-        android: 'market://details?id=com.homefood.app', // Use market:// for better Android support
+        ios: 'https://apps.apple.com/app/id123456789',
+        android: 'market://details?id=com.homefood.app',
         default: 'https://homefood.app',
       });
       
@@ -160,16 +141,10 @@ export default function MoreScreen() {
           if (supported) {
             await Linking.openURL(appStoreUrl);
           } else if (fallbackUrl) {
-            // Try fallback URL
             await Linking.openURL(fallbackUrl);
-          } else {
-            throw new Error('No URL available');
           }
-        } else {
-          throw new Error('No URL available');
         }
       } catch (linkingError) {
-        // If both fail, show a message
         Alert.alert(
           'Rate Our App',
           'Thank you for using our app! Please visit your device\'s app store to rate us.',
@@ -178,11 +153,6 @@ export default function MoreScreen() {
       }
     } catch (error) {
       console.error('Rate app error:', error);
-      Alert.alert(
-        'Rate Our App',
-        'Thank you for your feedback! Please visit your app store to rate us.',
-        [{ text: 'OK' }]
-      );
     }
   };
   
@@ -219,7 +189,6 @@ export default function MoreScreen() {
         </TouchableOpacity>
       </View>
       
-      {/* Quick Access Section */}
       <View style={styles.menuSection}>
         <Text style={styles.menuSectionTitle}>Quick Access</Text>
         
@@ -248,81 +217,74 @@ export default function MoreScreen() {
         </TouchableOpacity>
       </View>
       
-      {/* Seller-specific menu items */}
       {isSeller && (
-        <>
-          <View style={styles.menuSection}>
-            <Text style={styles.menuSectionTitle}>Business Tools</Text>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/create' as any)}
-            >
-              <PlusCircle size={22} color={colors.secondary} />
-              <Text style={styles.menuItemText}>Create Listing</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/analytics' as any)}
-            >
-              <TrendingUp size={22} color={colors.secondary} />
-              <Text style={styles.menuItemText}>Analytics</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/seller-onboarding' as any)}
-            >
-              <ChefHat size={22} color={colors.secondary} />
-              <Text style={styles.menuItemText}>Seller Settings</Text>
-            </TouchableOpacity>
-          </View>
-        </>
+        <View style={styles.menuSection}>
+          <Text style={styles.menuSectionTitle}>Business Tools</Text>
+          
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/(tabs)/create' as any)}
+          >
+            <PlusCircle size={22} color={colors.secondary} />
+            <Text style={styles.menuItemText}>Create Listing</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/(tabs)/analytics' as any)}
+          >
+            <TrendingUp size={22} color={colors.secondary} />
+            <Text style={styles.menuItemText}>Analytics</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/seller-onboarding' as any)}
+          >
+            <ChefHat size={22} color={colors.secondary} />
+            <Text style={styles.menuItemText}>Seller Settings</Text>
+          </TouchableOpacity>
+        </View>
       )}
       
-      {/* Buyer-specific menu items */}
       {!isSeller && (
-        <>
-          <View style={styles.menuSection}>
-            <Text style={styles.menuSectionTitle}>Discover</Text>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/' as any)}
-            >
-              <Home size={22} color={colors.secondary} />
-              <Text style={styles.menuItemText}>Home</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/route-settings' as any)}
-            >
-              <Route size={22} color={colors.secondary} />
-              <Text style={styles.menuItemText}>Route Settings</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/orders' as any)}
-            >
-              <ShoppingBag size={22} color={colors.secondary} />
-              <Text style={styles.menuItemText}>My Orders</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={() => router.push('/(tabs)/finances' as any)}
-            >
-              <Wallet size={22} color={colors.secondary} />
-              <Text style={styles.menuItemText}>Wallet & Payments</Text>
-            </TouchableOpacity>
-          </View>
-        </>
+        <View style={styles.menuSection}>
+          <Text style={styles.menuSectionTitle}>Discover</Text>
+          
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/' as any)}
+          >
+            <Home size={22} color={colors.secondary} />
+            <Text style={styles.menuItemText}>Home</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/(tabs)/route-settings' as any)}
+          >
+            <Route size={22} color={colors.secondary} />
+            <Text style={styles.menuItemText}>Route Settings</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/(tabs)/orders' as any)}
+          >
+            <ShoppingBag size={22} color={colors.secondary} />
+            <Text style={styles.menuItemText}>My Orders</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/(tabs)/finances' as any)}
+          >
+            <Wallet size={22} color={colors.secondary} />
+            <Text style={styles.menuItemText}>Wallet & Payments</Text>
+          </TouchableOpacity>
+        </View>
       )}
       
-      {/* Common sections for both */}
       <View style={styles.menuSection}>
         <Text style={styles.menuSectionTitle}>Support</Text>
         

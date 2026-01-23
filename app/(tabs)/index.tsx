@@ -6,7 +6,6 @@ import {
   RefreshControl,
   TouchableOpacity,
   ScrollView,
-  Platform,
   ImageBackground,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -19,23 +18,20 @@ import {
   Star,
   Route,
 } from 'lucide-react-native';
-import { useAuthStore } from '../../store/auth-store';
-import { useListingsStore } from '../../store/listings-store';
-import { useReviewsStore } from '../../store/reviews-store';
-import { LoadingState } from '../../components/LoadingState';
-import { NotifyMeModal } from '../../components/NotifyMeModal';
-import { FoodListing, User, Review } from '../../types';
-import colors from '../../constants/colors';
-import { mockUsers } from '../../mocks/data';
+import { useAuthStore } from '@/store/auth-store';
+import { useListingsStore } from '@/store/listings-store';
+import { useReviewsStore } from '@/store/reviews-store';
+import { LoadingState } from '@/components/LoadingState';
+import { NotifyMeModal } from '@/components/NotifyMeModal';
+import { FoodListing, User, Review } from '@/types';
+import colors from '@/constants/colors';
+import { mockUsers } from '@/mocks/data';
 
 export default function HomeScreen() {
   const { user, isInitialized } = useAuthStore();
   const { 
     listings, 
-    filteredListings, 
     fetchListings, 
-    searchListings, 
-    isLoading,
     getTopSellingItems
   } = useListingsStore();
   
@@ -58,7 +54,6 @@ export default function HomeScreen() {
     }
   }, [isInitialized]);
   
-  // Show loading if auth is not initialized
   if (!isInitialized) {
     return (
       <LoadingState 
@@ -70,18 +65,15 @@ export default function HomeScreen() {
   
   const loadTopSellingItems = async () => {
     try {
-      // Use the getTopSellingItems from the store
       const items = await getTopSellingItems(5);
       setTopSellingItems(items);
     } catch (error) {
       console.error("Error loading top selling items:", error);
-      // Fallback to first 5 listings if there's an error
       setTopSellingItems(listings.slice(0, 5));
     }
   };
   
   const loadTopChefs = () => {
-    // Get top 5 chefs based on rating
     const chefs = [...mockUsers]
       .filter(user => user.isChef && user.allowProfileDisplay)
       .sort((a, b) => (b.rating || 0) - (a.rating || 0))
@@ -114,10 +106,6 @@ export default function HomeScreen() {
 
   const handleChefPress = (chefId: string) => {
     router.push(`/profile/${chefId}` as any);
-  };
-
-  const handleExplorePress = () => {
-    router.push('/(tabs)/search' as any);
   };
 
   const handleRouteSettingsPress = () => {
@@ -181,7 +169,6 @@ export default function HomeScreen() {
           </View>
         </View>
         
-        {/* Search Bar */}
         <TouchableOpacity 
           style={styles.searchBar}
           onPress={handleSearchPress}
@@ -193,7 +180,6 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
       
-      {/* Hero Section with Indian Woman Cooking */}
       <View style={styles.heroCard}>
         <ImageBackground
           source={{ uri: 'https://images.unsplash.com/photo-1627662168223-7df99068099a' }}
@@ -215,7 +201,6 @@ export default function HomeScreen() {
         </ImageBackground>
       </View>
 
-      {/* Route Settings Banner */}
       {(!user?.officeAddress) && (
         <View style={styles.bannerSection}>
           <TouchableOpacity 
@@ -236,7 +221,6 @@ export default function HomeScreen() {
         </View>
       )}
       
-      {/* Top Selling Items Section */}
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
@@ -288,7 +272,6 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
       
-      {/* Top Chefs Section */}
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
@@ -358,10 +341,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 20,
     shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
@@ -433,10 +413,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 8,
@@ -501,10 +478,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     alignSelf: 'flex-start',
     shadowColor: colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
@@ -563,10 +537,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 24,
     shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
@@ -698,10 +669,7 @@ const styles = StyleSheet.create({
   },
   chefImageContainer: {
     shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
