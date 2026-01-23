@@ -21,7 +21,9 @@ import {
   DollarSign
 } from 'lucide-react-native';
 import { mockOrders } from '@/mocks/data';
-import { Order, OrderStatus } from '@/types';
+import { Order } from '@/types';
+
+type OrderStatusType = Order['status'] | 'canceled' | 'refunded' | 'refund_requested' | 'accepted' | 'in_delivery' | 'delivered';
 import colors from '@/constants/colors';
 
 export default function ManageOrders() {
@@ -63,7 +65,7 @@ export default function ManageOrders() {
     } else if (filter === 'completed') {
       result = result.filter(order => order.status === 'completed');
     } else if (filter === 'canceled') {
-      result = result.filter(order => order.status === 'canceled');
+      result = result.filter(order => order.status === 'cancelled');
     }
     
     // Apply search query
@@ -72,8 +74,8 @@ export default function ManageOrders() {
       result = result.filter(
         order => 
           order.id.toLowerCase().includes(query) ||
-          order.listingSnapshot.dishName.toLowerCase().includes(query) ||
-          order.listingSnapshot.sellerName.toLowerCase().includes(query)
+          order.listingSnapshot?.dishName.toLowerCase().includes(query) ||
+          order.listingSnapshot?.sellerName.toLowerCase().includes(query)
       );
     }
     
@@ -103,7 +105,7 @@ export default function ManageOrders() {
                 if (item.id === order.id) {
                   return {
                     ...item,
-                    status: 'completed' as OrderStatus,
+                    status: 'completed' as Order['status'],
                     updatedAt: new Date().toISOString(),
                     completedAt: new Date().toISOString()
                   };
@@ -134,7 +136,7 @@ export default function ManageOrders() {
                 if (item.id === order.id) {
                   return {
                     ...item,
-                    status: 'refunded' as OrderStatus,
+                    status: 'cancelled' as Order['status'],
                     paymentStatus: 'refunded' as const,
                     updatedAt: new Date().toISOString()
                   };
@@ -150,7 +152,7 @@ export default function ManageOrders() {
     }
   };
 
-  const getStatusColor = (status: OrderStatus) => {
+  const getStatusColor = (status: OrderStatusType) => {
     switch (status) {
       case 'completed':
         return '#43A047';
@@ -172,7 +174,7 @@ export default function ManageOrders() {
     }
   };
 
-  const getStatusIcon = (status: OrderStatus) => {
+  const getStatusIcon = (status: OrderStatusType) => {
     switch (status) {
       case 'completed':
         return <CheckCircle size={16} color="#43A047" />;
@@ -192,15 +194,15 @@ export default function ManageOrders() {
       onPress={() => handleOrderAction(item, 'view')}
     >
       <Image
-        source={{ uri: item.listingSnapshot.image }}
+        source={{ uri: item.listingSnapshot?.image }}
         style={styles.orderImage}
         contentFit="cover"
       />
       
       <View style={styles.orderInfo}>
         <Text style={styles.orderId}>Order #{item.id}</Text>
-        <Text style={styles.orderName}>{item.listingSnapshot.dishName}</Text>
-        <Text style={styles.orderSeller}>Seller: {item.listingSnapshot.sellerName}</Text>
+        <Text style={styles.orderName}>{item.listingSnapshot?.dishName || 'Unknown'}</Text>
+        <Text style={styles.orderSeller}>Seller: {item.listingSnapshot?.sellerName || 'Unknown'}</Text>
         
         <View style={styles.orderDetails}>
           <View style={styles.orderPrice}>

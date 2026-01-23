@@ -405,16 +405,16 @@ export default function ManageListings() {
         <View style={styles.listingActions}>
           <TouchableOpacity 
             style={styles.actionButton}
-            onPress={() => router.push(`/admin/listing-details/${listing.id}`)}
+            onPress={() => router.push(`/admin/listing-details/${listing.id}` as any)}
           >
             <Eye size={20} color={colors.adminPrimary} />
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.actionButton}
-            onPress={() => router.push(`/admin/edit-listing/${listing.id}`)}
+            onPress={() => router.push(`/admin/edit-listing/${listing.id}` as any)}
           >
-            <Edit size={20} color={colors.adminInfo} />
+            <Edit size={20} color={colors.info} />
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -477,7 +477,7 @@ export default function ManageListings() {
         
         <TouchableOpacity 
           style={styles.addButton}
-          onPress={() => router.push('/admin/add-listing')}
+          onPress={() => router.push('/admin/add-listing' as any)}
         >
           <Plus size={20} color={colors.white} />
           <Text style={styles.addButtonText}>Add Listing</Text>
@@ -749,7 +749,7 @@ export default function ManageListings() {
             {!searchQuery && (
               <TouchableOpacity 
                 style={styles.emptyStateButton}
-                onPress={() => router.push('/admin/add-listing')}
+                onPress={() => router.push('/admin/add-listing' as any)}
               >
                 <Plus size={20} color={colors.white} />
                 <Text style={styles.emptyStateButtonText}>Add Listing</Text>

@@ -764,11 +764,11 @@ export default function AdminDashboard() {
               <RecentActivityItem
                 key={`order-${index}`}
                 title={`New Order #${order.id}`}
-                subtitle={`${order.listingSnapshot.dishName} by ${order.listingSnapshot.sellerName}`}
+                subtitle={`${order.listingSnapshot?.dishName || 'Unknown'} by ${order.listingSnapshot?.sellerName || 'Unknown'}`}
                 time={formatDate(order.createdAt)}
                 icon={<ShoppingBag size={20} color={colors.adminWarning} />}
                 color={colors.adminWarning}
-                onPress={() => router.push(`/admin/order-details/${order.id}`)}
+                onPress={() => router.push(`/admin/order-details/${order.id}` as any)}
               />
             ))
           ) : (
@@ -784,7 +784,7 @@ export default function AdminDashboard() {
                 time={formatDate(listing.createdAt)}
                 icon={<Tag size={20} color={colors.adminSuccess} />}
                 color={colors.adminSuccess}
-                onPress={() => router.push(`/admin/listing-details/${listing.id}`)}
+                onPress={() => router.push(`/admin/listing-details/${listing.id}` as any)}
               />
             ))
           ) : null}
@@ -798,7 +798,7 @@ export default function AdminDashboard() {
                 time={formatDate(complaint.createdAt)}
                 icon={<AlertTriangle size={20} color={colors.adminError} />}
                 color={colors.adminError}
-                onPress={() => router.push(`/admin/complaint-details/${complaint.id}`)}
+                onPress={() => router.push(`/admin/complaint-details/${complaint.id}` as any)}
               />
             ))
           ) : null}
@@ -806,7 +806,7 @@ export default function AdminDashboard() {
         
         <TouchableOpacity 
           style={styles.viewAllButton}
-          onPress={() => router.push('/admin/activity-log')}
+          onPress={() => router.push('/admin/activity-log' as any)}
         >
           <Text style={styles.viewAllButtonText}>View All Activity</Text>
         </TouchableOpacity>
@@ -826,7 +826,7 @@ export default function AdminDashboard() {
                 key={`seller-${index}`}
                 seller={seller}
                 index={index}
-                onPress={() => router.push(`/admin/user-details/${seller.sellerId}`)}
+                onPress={() => router.push(`/admin/user-details/${seller.sellerId}` as any)}
               />
             ))
           ) : (

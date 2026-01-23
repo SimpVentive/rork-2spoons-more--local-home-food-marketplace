@@ -19,6 +19,12 @@ interface ListingsState {
   getListingById: (id: string) => FoodListing | undefined;
   getSellerListings: (sellerId: string) => FoodListing[];
   getTopSellingItems: (limit?: number) => Promise<FoodListing[]>;
+  toggleListingApproval: (id: string) => Promise<void>;
+  toggleListingActive: (id: string) => Promise<void>;
+  toggleListingFeatured: (id: string) => Promise<void>;
+  bulkUpdateListings: (ids: string[], updates: Partial<FoodListing>) => Promise<void>;
+  bulkDeleteListings: (ids: string[]) => Promise<void>;
+  exportListings: (format: 'csv' | 'json') => Promise<string>;
 }
 
 export const useListingsStore = create<ListingsState>((set, get) => ({
@@ -437,6 +443,66 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       console.error('Error getting top selling items:', error);
       return [];
     }
+  },
+
+  toggleListingApproval: async (id: string) => {
+    const state = get();
+    const listing = state.listings.find(l => l.id === id);
+    if (listing) {
+      const updatedListing = { ...listing, isApproved: !listing.isApproved };
+      set(state => ({
+        listings: state.listings.map(l => l.id === id ? updatedListing : l),
+        filteredListings: state.filteredListings.map(l => l.id === id ? updatedListing : l),
+      }));
+    }
+  },
+
+  toggleListingActive: async (id: string) => {
+    const state = get();
+    const listing = state.listings.find(l => l.id === id);
+    if (listing) {
+      const updatedListing = { ...listing, isActive: !listing.isActive };
+      set(state => ({
+        listings: state.listings.map(l => l.id === id ? updatedListing : l),
+        filteredListings: state.filteredListings.map(l => l.id === id ? updatedListing : l),
+      }));
+    }
+  },
+
+  toggleListingFeatured: async (id: string) => {
+    const state = get();
+    const listing = state.listings.find(l => l.id === id);
+    if (listing) {
+      const updatedListing = { ...listing, isFeatured: !listing.isFeatured };
+      set(state => ({
+        listings: state.listings.map(l => l.id === id ? updatedListing : l),
+        filteredListings: state.filteredListings.map(l => l.id === id ? updatedListing : l),
+      }));
+    }
+  },
+
+  bulkUpdateListings: async (ids: string[], updates: Partial<FoodListing>) => {
+    set(state => ({
+      listings: state.listings.map(l => ids.includes(l.id) ? { ...l, ...updates } : l),
+      filteredListings: state.filteredListings.map(l => ids.includes(l.id) ? { ...l, ...updates } : l),
+    }));
+  },
+
+  bulkDeleteListings: async (ids: string[]) => {
+    set(state => ({
+      listings: state.listings.filter(l => !ids.includes(l.id)),
+      filteredListings: state.filteredListings.filter(l => !ids.includes(l.id)),
+    }));
+  },
+
+  exportListings: async (format: 'csv' | 'json') => {
+    const state = get();
+    if (format === 'json') {
+      return JSON.stringify(state.listings, null, 2);
+    }
+    const headers = ['id', 'dishName', 'sellerName', 'price', 'isActive', 'isApproved'];
+    const rows = state.listings.map(l => [l.id, l.dishName, l.sellerName, l.price, l.isActive, l.isApproved].join(','));
+    return [headers.join(','), ...rows].join('\n');
   },
 }));
 

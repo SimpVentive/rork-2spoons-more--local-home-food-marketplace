@@ -339,3 +339,36 @@ export interface DishNotification {
   isActive: boolean;
   createdAt: string;
 }
+
+export type OrderStatus = 
+  | 'pending'
+  | 'confirmed'
+  | 'preparing'
+  | 'ready'
+  | 'completed'
+  | 'cancelled'
+  | 'canceled'
+  | 'refunded'
+  | 'refund_requested'
+  | 'accepted'
+  | 'in_delivery'
+  | 'delivered';
+
+export interface AdminConversation {
+  id: string;
+  userId: string;
+  userName: string;
+  userImage: string;
+  lastMessage: string;
+  unreadCount: number;
+  updatedAt: string;
+}
+
+export interface AdminMessage {
+  id: string;
+  senderId: string;
+  recipientId: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+}

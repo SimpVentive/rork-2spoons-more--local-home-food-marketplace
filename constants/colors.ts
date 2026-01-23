@@ -6,6 +6,7 @@ export default {
   adminSuccess: '#00B894',
   adminWarning: '#FDCB6E',
   adminError: '#E17055',
+  adminInfo: '#74B9FF',
   background: '#F8F9FA',
   white: '#FFFFFF',
   black: '#000000',

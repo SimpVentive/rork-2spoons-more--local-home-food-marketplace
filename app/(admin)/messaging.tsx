@@ -23,7 +23,7 @@ import {
   Mail,
   Info
 } from 'lucide-react-native';
-import { AdminConversation, AdminMessage, User as UserType } from '@/types';
+import type { AdminConversation, AdminMessage, User as UserType } from '@/types';
 import { mockUsers } from '@/mocks/data';
 import colors from '@/constants/colors';
 
@@ -414,7 +414,7 @@ export default function AdminMessagingScreen() {
               style={styles.infoButton}
               onPress={() => {
                 if (userDetails) {
-                  router.push(`/admin/user-details/${userDetails.id}`);
+                  router.push(`/admin/user-details/${userDetails.id}` as any);
                 }
               }}
             >
