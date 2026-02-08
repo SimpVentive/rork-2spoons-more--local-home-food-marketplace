@@ -1,12 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
 
 export default function WelcomeScreen() {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -33,24 +35,20 @@ export default function WelcomeScreen() {
           </Text>
           
           <View style={styles.buttonContainer}>
-            <Link href={"/(auth)/login" as any} asChild>
-              <Button
-                title="Login"
-                onPress={() => {}}
-                variant="primary"
-                style={styles.button}
-              />
-            </Link>
+            <Button
+              title="Login"
+              onPress={() => router.push('/(auth)/login' as any)}
+              variant="primary"
+              style={styles.button}
+            />
             
-            <Link href={"/(auth)/register" as any} asChild>
-              <Button
-                title="Create Account"
-                onPress={() => {}}
-                variant="outline"
-                style={styles.registerButton}
-                textStyle={styles.registerButtonText}
-              />
-            </Link>
+            <Button
+              title="Create Account"
+              onPress={() => router.push('/(auth)/register' as any)}
+              variant="outline"
+              style={styles.registerButton}
+              textStyle={styles.registerButtonText}
+            />
           </View>
         </View>
       </View>

@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import {
   TouchableOpacity,
   Text,
-  StyleSheet,
   ActivityIndicator,
   ViewStyle,
   TextStyle,
@@ -26,7 +25,7 @@ interface ButtonProps {
   icon?: React.ReactNode;
 }
 
-const Button: React.FC<ButtonProps> = ({
+const Button = forwardRef<any, ButtonProps>(({
   title,
   onPress,
   variant = 'primary',
@@ -37,7 +36,7 @@ const Button: React.FC<ButtonProps> = ({
   style,
   textStyle,
   icon,
-}) => {
+}, ref) => {
   const actualLoading = isLoading || loading;
   const getButtonStyle = () => {
     const baseStyle: ViewStyle = {
@@ -135,6 +134,7 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <ButtonComponent
+      ref={ref}
       style={[getButtonStyle(), getSizeStyle(), getDisabledStyle(), style]}
       hitSlop={{ 
         top: hitSlopValue, 
@@ -154,6 +154,8 @@ const Button: React.FC<ButtonProps> = ({
       )}
     </ButtonComponent>
   );
-};
+});
+
+Button.displayName = 'Button';
 
 export default Button;
