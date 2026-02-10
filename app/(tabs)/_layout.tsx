@@ -14,6 +14,8 @@ import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
 import { Platform, StyleSheet, View, ActivityIndicator, TouchableOpacity, Text, Alert } from 'react-native';
 
+const HiddenTab = () => null;
+
 export default function TabLayout(): React.ReactElement {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -90,7 +92,8 @@ export default function TabLayout(): React.ReactElement {
     );
   };
 
-  const isChef = user?.isChef;
+  const isChef = user?.isChef === true;
+
   return (
     <Tabs
       screenOptions={{
@@ -127,67 +130,51 @@ export default function TabLayout(): React.ReactElement {
         tabBarHideOnKeyboard: Platform.OS === 'android',
       }}
     >
-      {isChef && (
-        <>
-          <Tabs.Screen
-            name="home"
-            options={{
-              title: 'Home',
-              tabBarIcon: ({ color }) => (
-                <TabIcon icon={<ChefHat size={24} color={color} />} />
-              ),
-            }}
-          />
-          <Tabs.Screen
-            name="orders"
-            options={{
-              title: 'Orders',
-              tabBarIcon: ({ color }) => (
-                <TabIcon 
-                  icon={<UtensilsCrossed size={24} color={color} />} 
-                  badgeCount={3}
-                />
-              ),
-            }}
-          />
-          <Tabs.Screen
-            name="finances"
-            options={{
-              title: 'Wallet',
-              tabBarIcon: ({ color }) => (
-                <TabIcon icon={<CreditCard size={24} color={color} />} />
-              ),
-            }}
-          />
-        </>
-      )}
-      
-      {!isChef && (
-        <>
-          <Tabs.Screen
-            name="home"
-            options={{
-              title: 'Explore',
-              tabBarIcon: ({ color }) => (
-                <TabIcon icon={<Home size={24} color={color} />} />
-              ),
-            }}
-          />
-          <Tabs.Screen
-            name="route-settings"
-            options={{
-              title: 'Routes',
-              tabBarIcon: ({ color }) => (
-                <TabIcon 
-                  icon={<MapPin size={24} color={color} />} 
-                  badgeCount={1}
-                />
-              ),
-            }}
-          />
-        </>
-      )}
-      
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: isChef ? 'Home' : 'Explore',
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={isChef ? <ChefHat size={24} color={color} /> : <Home size={24} color={color} />} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="orders"
+        options={{
+          title: 'Orders',
+          tabBarIcon: ({ color }) => (
+            <TabIcon 
+              icon={<UtensilsCrossed size={24} color={color} />} 
+              badgeCount={3}
+            />
+          ),
+          tabBarButton: isChef ? undefined : HiddenTab,
+        }}
+      />
+      <Tabs.Screen
+        name="finances"
+        options={{
+          title: 'Wallet',
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={<CreditCard size={24} color={color} />} />
+          ),
+          tabBarButton: isChef ? undefined : HiddenTab,
+        }}
+      />
+      <Tabs.Screen
+        name="route-settings"
+        options={{
+          title: 'Routes',
+          tabBarIcon: ({ color }) => (
+            <TabIcon 
+              icon={<MapPin size={24} color={color} />} 
+              badgeCount={1}
+            />
+          ),
+          tabBarButton: !isChef ? undefined : HiddenTab,
+        }}
+      />
       <Tabs.Screen
         name="following"
         options={{
@@ -206,40 +193,39 @@ export default function TabLayout(): React.ReactElement {
           ),
         }}
       />
-      
       <Tabs.Screen
         name="search"
         options={{
           title: 'Search',
-          tabBarButton: () => null,
+          tabBarButton: HiddenTab,
         }}
       />
       <Tabs.Screen
         name="analytics"
         options={{
           title: 'Analytics',
-          tabBarButton: () => null,
+          tabBarButton: HiddenTab,
         }}
       />
       <Tabs.Screen
         name="create"
         options={{
           title: 'Create',
-          tabBarButton: () => null,
+          tabBarButton: HiddenTab,
         }}
       />
       <Tabs.Screen
         name="notifications"
         options={{
           title: 'Notifications',
-          tabBarButton: () => null,
+          tabBarButton: HiddenTab,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarButton: () => null,
+          tabBarButton: HiddenTab,
         }}
       />
     </Tabs>
