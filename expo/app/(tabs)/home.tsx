@@ -144,7 +144,7 @@ export default function HomeScreen() {
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.greeting}>
-              Good {getTimeOfDay()}, {user?.name ? user.name.split(' ')[0] : 'Guest'}! 👋
+              {isChef ? '👨‍🍳' : '👋'} {user?.name ? user.name.split(' ')[0] : 'Guest'}
             </Text>
             <View style={styles.locationContainer}>
               <MapPin size={16} color={colors.primary} />
@@ -184,21 +184,37 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
       
+      {/* Hero section - different content for buyer vs seller */}
       <View style={styles.heroCard}>
         <ImageBackground
-          source={{ uri: 'https://images.unsplash.com/photo-1627662168223-7df99068099a' }}
+          source={{ uri: isChef 
+            ? 'https://images.unsplash.com/photo-1556910103-1c02745aae4d' 
+            : 'https://images.unsplash.com/photo-1627662168223-7df99068099a' 
+          }}
           style={styles.heroImage}
           imageStyle={styles.heroImageStyle}
         >
           <View style={styles.heroOverlay}>
             <View style={styles.heroContent}>
-              <Text style={styles.heroTitle}>Homemade Food</Text>
-              <Text style={styles.heroSubtitle}>From local kitchens to your plate</Text>
+              <Text style={styles.heroTitle}>
+                {isChef ? 'Share Your Food' : 'Homemade Food'}
+              </Text>
+              <Text style={styles.heroSubtitle}>
+                {isChef ? 'Cook, share, and earn from your kitchen' : 'From local kitchens to your plate'}
+              </Text>
               <TouchableOpacity 
                 style={styles.exploreButton}
-                onPress={handleExploreNowPress}
+                onPress={() => {
+                  if (isChef) {
+                    router.push('/create-listing' as never);
+                  } else {
+                    handleExploreNowPress();
+                  }
+                }}
               >
-                <Text style={styles.exploreButtonText}>Explore Now</Text>
+                <Text style={styles.exploreButtonText}>
+                  {isChef ? 'Create Listing' : 'Explore Now'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -238,12 +254,17 @@ export default function HomeScreen() {
           </View>
           <TouchableOpacity 
             style={styles.seeAllButton}
-            onPress={() => router.push('/(tabs)/search' as any)}
+            onPress={() => router.push('/(tabs)/search' as never)}
           >
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
         
+        {topSellingItems.length === 0 ? (
+          <View style={styles.emptyTopItems}>
+            <Text style={styles.emptyTopItemsText}>No dishes available right now</Text>
+          </View>
+        ) : (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -274,6 +295,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
           ))}
         </ScrollView>
+        )}
       </View>
       
       <View style={styles.sectionCard}>
@@ -357,10 +379,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   greeting: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: '700',
     color: colors.text,
-    marginBottom: 6,
+    marginBottom: 4,
     letterSpacing: -0.3,
   },
   locationContainer: {
@@ -368,9 +390,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   locationText: {
-    fontSize: 15,
+    fontSize: 13,
     color: colors.textLight,
-    marginLeft: 6,
+    marginLeft: 4,
     fontWeight: '500',
   },
   headerActions: {
@@ -442,9 +464,10 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     fontWeight: '500',
     flex: 1,
+    fontSize: 14,
   },
   heroImage: {
-    height: 260,
+    height: 200,
     width: '100%',
     justifyContent: 'flex-end',
   },
@@ -459,27 +482,27 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   heroTitle: {
-    fontSize: 32,
-    fontWeight: '900',
+    fontSize: 26,
+    fontWeight: '800',
     color: colors.white,
-    marginBottom: 8,
-    letterSpacing: -0.8,
+    marginBottom: 6,
+    letterSpacing: -0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
   heroSubtitle: {
-    fontSize: 17,
+    fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: 20,
+    marginBottom: 16,
     fontWeight: '500',
-    lineHeight: 24,
+    lineHeight: 20,
   },
   exploreButton: {
     backgroundColor: colors.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 20,
     alignSelf: 'flex-start',
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
@@ -489,9 +512,9 @@ const styles = StyleSheet.create({
   },
   exploreButtonText: {
     color: colors.white,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   bannerSection: {
     paddingHorizontal: 20,
@@ -501,8 +524,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.secondary,
-    padding: 20,
-    borderRadius: 16,
+    padding: 16,
+    borderRadius: 14,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
@@ -522,16 +545,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   routeBannerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '700',
     color: colors.white,
-    marginBottom: 6,
-    letterSpacing: -0.3,
+    marginBottom: 4,
+    letterSpacing: -0.2,
   },
   routeBannerText: {
-    fontSize: 15,
+    fontSize: 13,
     color: 'rgba(255, 255, 255, 0.85)',
-    lineHeight: 22,
+    lineHeight: 18,
     fontWeight: '500',
   },
   sectionCard: {
@@ -568,17 +591,17 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   sectionTitle: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.text,
     marginBottom: 4,
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
   },
   sectionSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textLight,
     fontWeight: '500',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   seeAllButton: {
     paddingVertical: 8,
@@ -596,8 +619,8 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   topItemCard: {
-    width: 170,
-    marginRight: 16,
+    width: 150,
+    marginRight: 14,
     borderRadius: 16,
     backgroundColor: colors.card,
     overflow: 'hidden',
@@ -612,7 +635,7 @@ const styles = StyleSheet.create({
   },
   topItemImage: {
     width: '100%',
-    height: 130,
+    height: 110,
     backgroundColor: colors.border,
   },
   vegIndicator: {
@@ -641,17 +664,17 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   topItemName: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 6,
-    lineHeight: 20,
+    marginBottom: 4,
+    lineHeight: 18,
   },
   topItemPrice: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 14,
+    fontWeight: '700',
     color: colors.primary,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   topItemRating: {
     flexDirection: 'row',
@@ -667,8 +690,8 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   chefCard: {
-    width: 110,
-    marginRight: 20,
+    width: 90,
+    marginRight: 16,
     alignItems: 'center',
   },
   chefImageContainer: {
@@ -713,5 +736,15 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 140,
+  },
+  emptyTopItems: {
+    paddingHorizontal: 20,
+    paddingVertical: 30,
+    alignItems: 'center',
+  },
+  emptyTopItemsText: {
+    fontSize: 14,
+    color: colors.textLight,
+    fontWeight: '500',
   },
 });

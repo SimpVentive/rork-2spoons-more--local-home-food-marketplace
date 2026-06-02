@@ -84,9 +84,6 @@ export default function LoginScreen() {
     }
   };
 
-  const handleAdminLogin = () => {
-    router.push('/admin-login' as any);
-  };
 
   return (
     <KeyboardAvoidingView
@@ -157,13 +154,7 @@ export default function LoginScreen() {
             isLoading={isLoading}
           />
 
-          <TouchableOpacity 
-            style={styles.adminLoginButton}
-            onPress={handleAdminLogin}
-          >
-            <Text style={styles.adminLoginText}>Sign In as Admin</Text>
-          </TouchableOpacity>
-          
+
           <View style={styles.dividerContainer}>
             <View style={styles.divider} />
             <Text style={styles.dividerText}>OR</Text>
@@ -177,12 +168,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
           
-          <View style={styles.demoCredentials}>
-            <Text style={styles.demoTitle}>Demo Credentials:</Text>
-            <Text style={styles.demoText}>User: john@example.com (any password)</Text>
-            <Text style={styles.demoText}>Admin: admin@example.com (any password)</Text>
-            <Text style={styles.demoText}>Chef: jane@example.com (any password)</Text>
-          </View>
+
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -255,15 +241,7 @@ const styles = StyleSheet.create({
   loginButton: {
     marginBottom: 16,
   },
-  adminLoginButton: {
-    alignItems: 'center',
-    padding: 12,
-  },
-  adminLoginText: {
-    color: colors.primary,
-    fontSize: 14,
-    fontWeight: '500',
-  },
+
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -293,24 +271,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  demoCredentials: {
-    marginTop: 32,
-    padding: 16,
-    backgroundColor: `${colors.primary}10`,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  demoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary,
-    marginBottom: 8,
-  },
-  demoText: {
-    fontSize: 14,
-    color: colors.text,
-    marginBottom: 4,
-  },
+
   eyeIconButton: {
     padding: 8,
   },

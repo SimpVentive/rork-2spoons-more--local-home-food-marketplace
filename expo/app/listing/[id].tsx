@@ -77,11 +77,19 @@ export default function ListingDetailScreen() {
     setIsFavorite(!isFavorite);
   };
   
-  const handleShare = () => {
+  const handleShare = async () => {
     if (Platform.OS !== 'web') {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    Alert.alert('Share', 'Sharing functionality would be implemented here');
+    try {
+      const { Share } = require('react-native');
+      await Share.share({
+        message: `Check out ${listing?.dishName} on HomeCook! 🍳 Only ₹${listing?.price} - homemade with love.`,
+        title: listing?.dishName,
+      });
+    } catch (error) {
+      console.error('Share error:', error);
+    }
   };
   
   const handleFollowToggle = async () => {
@@ -101,8 +109,13 @@ export default function ListingDetailScreen() {
   };
   
   const handleViewProfile = () => {
-    if (listing) {
-      router.push(`/profile/${listing.sellerId}` as any);
+    if (listing && listing.sellerId) {
+      try {
+        router.push(`/profile/${listing.sellerId}` as never);
+      } catch (e) {
+        console.error('Navigation error:', e);
+        Alert.alert('Error', 'Could not open seller profile');
+      }
     }
   };
   
@@ -450,7 +463,7 @@ export default function ListingDetailScreen() {
         ) : (
           <Button
             title="Edit Listing"
-            onPress={() => {}}
+            onPress={() => router.push('/create-listing' as never)}
             variant="outline"
             style={styles.editButton}
           />

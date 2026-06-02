@@ -157,7 +157,7 @@ export const NotifyMeModal: React.FC<NotifyMeModalProps> = ({
                 Get notified when this dish or similar dishes become available in your area or on your route.
               </Text>
               
-              <ScrollView style={styles.scrollContent}>
+              <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContentInner} showsVerticalScrollIndicator={true} bounces={false}>
                 <View style={styles.form}>
                   <Input
                     label="Dish Name (Optional if cuisine is selected)"
@@ -359,7 +359,11 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   scrollContent: {
-    maxHeight: 500,
+    flexGrow: 0,
+  },
+  scrollContentInner: {
+    flexGrow: 1,
+    paddingBottom: 20,
   },
   form: {
     padding: 16,

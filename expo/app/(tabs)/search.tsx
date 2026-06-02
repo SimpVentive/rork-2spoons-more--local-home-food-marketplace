@@ -13,11 +13,12 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, SlidersHorizontal, X, Leaf, Flame, Clock, Star } from 'lucide-react-native';
+import { Search, SlidersHorizontal, X, Leaf, Flame, Clock, Star, Route } from 'lucide-react-native';
 import { Image } from 'expo-image';
 
 import { useListingsStore } from '@/store/listings-store';
 import { FilterModal } from '@/components/FilterModal';
+import { RouteSearchModal } from '@/components/RouteSearchModal';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
 import { FoodListing, FilterOptions } from '@/types';
@@ -43,6 +44,7 @@ export default function SearchScreen() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [routeSearchVisible, setRouteSearchVisible] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>({});
   const [refreshing, setRefreshing] = useState(false);
   const [activeQuickFilter, setActiveQuickFilter] = useState('all');
@@ -97,6 +99,12 @@ export default function SearchScreen() {
     setSearchQuery('');
     setActiveQuickFilter('all');
     setSelectedCuisine(null);
+  }, []);
+
+  const handleApplyRouteSearch = useCallback((params: any) => {
+    const { searchListingsOnRoute } = useListingsStore.getState();
+    searchListingsOnRoute(params);
+    setRouteSearchVisible(false);
   }, []);
 
   const handleQuickFilter = useCallback((filterId: string) => {
@@ -397,6 +405,12 @@ export default function SearchScreen() {
         onApply={handleApplyFilters}
         initialFilters={filters}
       />
+
+      <RouteSearchModal
+        visible={routeSearchVisible}
+        onClose={() => setRouteSearchVisible(false)}
+        onApply={handleApplyRouteSearch}
+      />
     </View>
   );
 }
@@ -470,6 +484,14 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 10,
     fontWeight: '700' as const,
+  },
+  routeSearchButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: `${colors.secondary}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cuisineScroll: {
     marginTop: 12,

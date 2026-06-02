@@ -255,66 +255,77 @@ export default function CreateListingScreen() {
       return;
     }
 
-    // Check if user is eligible to post
-    const eligibility = checkPostingEligibility();
-    if (!eligibility.eligible) {
-      Alert.alert(
-        'Subscription Required',
-        eligibility.message,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Subscribe', onPress: () => setShowSubscriptionModal(true) }
-        ]
-      );
-      return;
-    }
-    
-    const quantity = parseInt(formData.quantity);
-    
-    const newListing = {
-      sellerId: user.id,
-      sellerName: user.name,
-      sellerImage: user.profileImage,
-      sellerRating: user.rating ?? 5, // Provide default rating of 5 if undefined
-      dishName: formData.isLunchBox ? 'Lunch Box' : formData.dishName,
-      description: formData.description,
-      image: formData.isLunchBox 
-        ? (formData.lunchBoxItems[0]?.image || '') 
-        : formData.image,
-      ingredients: [], // Empty array as default
-      allergens: [], // Empty array as default
-      availableQuantity: quantity,
-      quantity: quantity,
-      remainingQuantity: quantity, // Initialize with full quantity
-      servings: parseInt(formData.servings),
-      price: parseFloat(formData.price),
-      packaging: formData.packaging,
-      availableFrom: formData.availableFrom.toISOString(),
-      availableUntil: formData.availableUntil.toISOString(),
-      cuisineType: formData.cuisineType,
-      subcuisineType: formData.subcuisineType,
-      isVegetarian: formData.isVegetarian,
-      isLunchBox: formData.isLunchBox,
-      lunchBoxItems: formData.isLunchBox ? formData.lunchBoxItems : [],
-      location: formData.pickupLocation,
-      isActive: true,
-      address: formData.pickupLocation.address || 'Default Address',
-      spiceLevel: 'mild' as const,
-      preparationTime: 30,
-      pickupTime: formData.availableFrom.toISOString(),
-    };
-    
-    const success = await addListing(newListing);
-    
-    if (success) {
-      // Increment post count
-      await incrementPostCount();
+    try {
+      // Check if user is eligible to post
+      const eligibility = checkPostingEligibility();
+      if (!eligibility.eligible) {
+        Alert.alert(
+          'Subscription Required',
+          eligibility.message,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Subscribe', onPress: () => setShowSubscriptionModal(true) }
+          ]
+        );
+        return;
+      }
       
-      Alert.alert('Success', 'Your listing has been created', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
-    } else {
-      Alert.alert('Error', 'Failed to create listing');
+      const quantity = parseInt(formData.quantity);
+      
+      const newListing = {
+        sellerId: user.id,
+        sellerName: user.name,
+        sellerImage: user.profileImage,
+        sellerRating: user.rating ?? 5,
+        dishName: formData.isLunchBox ? 'Lunch Box' : formData.dishName,
+        description: formData.description,
+        image: formData.isLunchBox 
+          ? (formData.lunchBoxItems[0]?.image || '') 
+          : formData.image,
+        ingredients: [],
+        allergens: [],
+        availableQuantity: quantity,
+        quantity: quantity,
+        remainingQuantity: quantity,
+        servings: parseInt(formData.servings),
+        price: parseFloat(formData.price),
+        packaging: formData.packaging,
+        availableFrom: formData.availableFrom.toISOString(),
+        availableUntil: formData.availableUntil.toISOString(),
+        cuisineType: formData.cuisineType,
+        subcuisineType: formData.subcuisineType,
+        isVegetarian: formData.isVegetarian,
+        isLunchBox: formData.isLunchBox,
+        lunchBoxItems: formData.isLunchBox ? formData.lunchBoxItems : [],
+        location: formData.pickupLocation,
+        isActive: true,
+        address: formData.pickupLocation.address || 'Default Address',
+        spiceLevel: 'mild' as const,
+        preparationTime: 30,
+        pickupTime: formData.availableFrom.toISOString(),
+      };
+      
+      const result = await addListing(newListing);
+      
+      if (result) {
+        // Increment post count (non-blocking)
+        incrementPostCount().catch(e => console.error('Post count error:', e));
+        
+        Alert.alert('Success', 'Your listing has been created successfully!', [
+          { text: 'OK', onPress: () => {
+            try {
+              router.back();
+            } catch (e) {
+              router.replace('/(tabs)/home' as never);
+            }
+          }}
+        ]);
+      } else {
+        Alert.alert('Error', 'Failed to create listing');
+      }
+    } catch (error) {
+      console.error('Create listing error:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
     }
   };
   
