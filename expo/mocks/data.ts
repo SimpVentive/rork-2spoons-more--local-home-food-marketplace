@@ -92,7 +92,7 @@ export const mockUsers: User[] = [
 ];
 
 // Essential cuisine types only - load more on demand
-export const ESSENTIAL_CUISINE_TYPES = ['Indian', 'Chinese', 'Italian', 'Mexican'];
+export const ESSENTIAL_CUISINE_TYPES = ['Indian', 'Chinese', 'Italian', 'Mexican', 'South Indian', 'North Indian', 'Thai', 'Japanese', 'Continental', 'Middle Eastern', 'Desserts', 'Fast Food', 'Healthy', 'Beverages'];
 
 // For backwards compatibility
 export const CUISINE_TYPES = ESSENTIAL_CUISINE_TYPES;

@@ -197,7 +197,7 @@ export default function SearchScreen() {
             </View>
           )}
           <View style={styles.cardPriceBadge}>
-            <Text style={styles.cardPriceText}>₹{item.price}</Text>
+            <Text style={styles.cardPriceText}>from ₹{item.price}</Text>
           </View>
           <View style={item.isVegetarian ? styles.vegDot : styles.nonVegDot} />
         </View>

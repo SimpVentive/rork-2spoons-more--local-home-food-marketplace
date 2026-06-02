@@ -117,7 +117,11 @@ export default function HomeScreen() {
   };
 
   const handleExploreNowPress = () => {
-    router.push('/(tabs)/search' as never);
+    try {
+      router.push('/(tabs)/search' as never);
+    } catch (e) {
+      router.navigate('/(tabs)/search');
+    }
   };
   
   const getTimeOfDay = () => {

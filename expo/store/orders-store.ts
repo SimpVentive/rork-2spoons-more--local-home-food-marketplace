@@ -45,9 +45,14 @@ export const useOrdersStore = create<OrdersState>()(
           // Simulate API call
           await new Promise(resolve => setTimeout(resolve, 500));
           
-          // In a real app, we would fetch from an API
+          // Deduplicate orders by id to prevent duplicates from persisted state
+          const currentOrders = get().orders || [];
+          const uniqueOrders = [...mockOrders];
+          const existingIds = new Set(uniqueOrders.map(o => o.id));
+          const additionalOrders = currentOrders.filter(o => !existingIds.has(o.id));
+          
           set({ 
-            orders: [...mockOrders], 
+            orders: [...uniqueOrders, ...additionalOrders], 
             isLoading: false 
           });
         } catch (error) {

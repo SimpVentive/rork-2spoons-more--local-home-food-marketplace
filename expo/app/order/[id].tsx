@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   ChevronRight,
   Star,
+  ArrowLeft,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { useOrdersStore } from '@/store/orders-store';
@@ -166,6 +167,10 @@ export default function OrderDetailsScreen() {
   
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <ArrowLeft size={22} color={colors.text} />
+        <Text style={styles.backButtonText}>Back</Text>
+      </TouchableOpacity>
       <View style={styles.header}>
         <View style={styles.orderStatusContainer}>
           <Text style={styles.orderIdText}>Order #{order.id.slice(0, 8)}</Text>
@@ -344,6 +349,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: colors.white,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.primary,
+    marginLeft: 6,
   },
   contentContainer: {
     paddingBottom: 32,

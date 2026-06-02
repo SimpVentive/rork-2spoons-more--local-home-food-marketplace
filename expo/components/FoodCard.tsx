@@ -135,7 +135,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
             </Text>
           </View>
           
-          <Text style={styles.price}>₹{listing.price}</Text>
+          <Text style={styles.price}>starts at ₹{listing.price}</Text>
         </View>
       </View>
     </TouchableOpacity>

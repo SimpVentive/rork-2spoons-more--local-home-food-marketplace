@@ -115,6 +115,7 @@ export default function OrdersScreen() {
           )}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
+          extraData={displayOrders}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }

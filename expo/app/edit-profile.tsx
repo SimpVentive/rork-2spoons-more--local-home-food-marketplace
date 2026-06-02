@@ -94,8 +94,14 @@ export default function EditProfileScreen() {
 
   const handlePickImage = async () => {
     try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Required', 'Please allow access to your photo library to upload images.');
+        return;
+      }
+      
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
@@ -176,14 +182,16 @@ export default function EditProfileScreen() {
       </View>
 
       <View style={styles.profileImageContainer}>
-        <Image
-          source={{ uri: profileImage || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167' }}
-          style={styles.profileImage}
-          contentFit="cover"
-        />
-        <TouchableOpacity style={styles.editImageButton} onPress={handlePickImage}>
-          <Camera size={20} color={colors.white} />
-        </TouchableOpacity>
+        <View style={styles.profileImageWrapper}>
+          <Image
+            source={{ uri: profileImage || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167' }}
+            style={styles.profileImage}
+            contentFit="cover"
+          />
+          <TouchableOpacity style={styles.editImageButton} onPress={handlePickImage}>
+            <Camera size={20} color={colors.white} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.formContainer}>
@@ -354,6 +362,13 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 16,
   },
+  profileImageWrapper: {
+    position: 'relative',
+    width: 120,
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   profileImage: {
     width: 120,
     height: 120,
@@ -363,7 +378,7 @@ const styles = StyleSheet.create({
   editImageButton: {
     position: 'absolute',
     bottom: 0,
-    right: Platform.OS === 'web' ? '35%' : '30%',
+    right: 0,
     backgroundColor: colors.primary,
     width: 36,
     height: 36,

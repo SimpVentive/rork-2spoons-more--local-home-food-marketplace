@@ -332,7 +332,12 @@ export default function ManageOrders() {
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No orders found</Text>
+              <Text style={styles.emptyTitle}>
+                {filter === 'completed' ? 'No completed orders' : filter === 'canceled' ? 'No cancelled orders' : filter === 'pending' ? 'No pending orders' : 'No orders found'}
+              </Text>
+              <Text style={styles.emptySubtext}>
+                {filter === 'completed' ? 'Completed orders will appear here' : filter === 'canceled' ? 'Cancelled orders will appear here' : 'Orders will appear here once created'}
+              </Text>
             </View>
           }
         />
@@ -492,8 +497,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 32,
   },
-  emptyText: {
-    fontSize: 16,
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
     color: colors.textLight,
     textAlign: 'center',
   },
