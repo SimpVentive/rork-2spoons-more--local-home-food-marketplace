@@ -7,9 +7,9 @@ import {
   TouchableOpacity,
   ScrollView,
   ImageBackground,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Image } from 'react-native';
 import { 
   MapPin, 
   Bell, 
@@ -29,6 +29,7 @@ import { mockUsers } from '@/mocks/data';
 
 export default function HomeScreen() {
   const { user, isInitialized } = useAuthStore();
+  const isChef = user?.isChef ?? false;
   const { 
     listings, 
     fetchListings, 
