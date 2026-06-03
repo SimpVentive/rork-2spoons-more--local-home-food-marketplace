@@ -418,29 +418,20 @@ export default function RouteSettingsScreen() {
             </Text>
             
             {showRouteMap && (
-              <View style={styles.mapContainer}>
+              <View style={styles.mapWrapper}>
                 <RouteMapView
                   routePoints={routePoints}
                   dishesOnRoute={dishesOnRoute}
                   onDishPress={(dish) => {
-                    // Navigate to dish details or show more info
-                    Alert.alert(
-                      dish.dishName,
-                      `Available from ${dish.sellerName} until ${new Date(dish.availableUntil).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}`,
-                      [
-                        { text: 'OK' },
-                        { text: 'View Details', onPress: () => {
-                          // Find the listing and navigate to it
-                          const listing = listings.find(l => l.dishName === dish.dishName && l.sellerName === dish.sellerName);
-                          if (listing) {
-                            router.push(`/listing/${listing.id}` as any);
-                          }
-                        }}
-                      ]
-                    );
+                    const listing = listings.find(l => l.dishName === dish.dishName && l.sellerName === dish.sellerName);
+                    if (listing) {
+                      router.push(`/listing/${listing.id}` as any);
+                    } else {
+                      Alert.alert(
+                        dish.dishName,
+                        `Available from ${dish.sellerName} until ${new Date(dish.availableUntil).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                      );
+                    }
                   }}
                 />
               </View>
@@ -666,8 +657,8 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: '500',
   },
-  mapContainer: {
-    height: 300,
+  mapWrapper: {
+    height: 350,
     borderRadius: 8,
     overflow: 'hidden',
     marginTop: 8,

@@ -271,38 +271,54 @@ export default function CreateListingScreen() {
       }
       
       const quantity = parseInt(formData.quantity);
+      const priceNum = parseFloat(formData.price);
+      const servingsNum = parseInt(formData.servings) || 2;
+      
+      if (isNaN(quantity) || isNaN(priceNum)) {
+        Alert.alert('Error', 'Please enter valid quantity and price');
+        return;
+      }
+      
+      const pickupLoc = formData.pickupLocation || {
+        latitude: user.location?.latitude || 0,
+        longitude: user.location?.longitude || 0,
+        address: user.address || '',
+      };
       
       const newListing = {
         sellerId: user.id,
-        sellerName: user.name,
-        sellerImage: user.profileImage,
+        sellerName: user.name || 'Unknown Seller',
+        sellerImage: user.profileImage || '',
         sellerRating: user.rating ?? 5,
-        dishName: formData.isLunchBox ? 'Lunch Box' : formData.dishName,
-        description: formData.description,
+        dishName: formData.isLunchBox ? 'Lunch Box' : (formData.dishName || 'Homemade Dish'),
+        description: formData.description || '',
         image: formData.isLunchBox 
           ? (formData.lunchBoxItems[0]?.image || '') 
-          : formData.image,
+          : (formData.image || ''),
         ingredients: [],
         allergens: [],
         availableQuantity: quantity,
         quantity: quantity,
         remainingQuantity: quantity,
-        servings: parseInt(formData.servings),
-        price: parseFloat(formData.price),
-        packaging: formData.packaging,
-        availableFrom: formData.availableFrom.toISOString(),
-        availableUntil: formData.availableUntil.toISOString(),
-        cuisineType: formData.cuisineType,
-        subcuisineType: formData.subcuisineType,
+        servings: servingsNum,
+        price: priceNum,
+        packaging: formData.packaging || 'Basic Container',
+        availableFrom: (formData.availableFrom || new Date()).toISOString(),
+        availableUntil: (formData.availableUntil || new Date(Date.now() + 24 * 60 * 60 * 1000)).toISOString(),
+        cuisineType: formData.cuisineType || 'Home Cooked',
+        subcuisineType: formData.subcuisineType || '',
         isVegetarian: formData.isVegetarian,
         isLunchBox: formData.isLunchBox,
         lunchBoxItems: formData.isLunchBox ? formData.lunchBoxItems : [],
-        location: formData.pickupLocation,
+        location: {
+          latitude: pickupLoc.latitude || 0,
+          longitude: pickupLoc.longitude || 0,
+        },
         isActive: true,
-        address: formData.pickupLocation.address || 'Default Address',
+        address: pickupLoc.address || 'Default Address',
         spiceLevel: 'mild' as const,
         preparationTime: 30,
-        pickupTime: formData.availableFrom.toISOString(),
+        pickupTime: (formData.availableFrom || new Date()).toISOString(),
       };
       
       const result = await addListing(newListing);
@@ -311,15 +327,17 @@ export default function CreateListingScreen() {
         // Increment post count (non-blocking)
         incrementPostCount().catch(e => console.error('Post count error:', e));
         
-        Alert.alert('Success', 'Your listing has been created successfully!', [
-          { text: 'OK', onPress: () => {
-            try {
-              router.back();
-            } catch (e) {
-              router.replace('/(tabs)/home' as never);
-            }
-          }}
-        ]);
+        // Navigate away immediately, then show success
+        try {
+          router.back();
+        } catch (e) {
+          router.replace('/(tabs)/home' as never);
+        }
+        
+        // Show success alert after navigation starts
+        setTimeout(() => {
+          Alert.alert('Success', 'Your listing has been created successfully!');
+        }, 300);
       } else {
         Alert.alert('Error', 'Failed to create listing');
       }

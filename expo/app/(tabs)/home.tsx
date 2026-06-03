@@ -255,7 +255,12 @@ export default function HomeScreen() {
           </View>
           <TouchableOpacity 
             style={styles.seeAllButton}
-            onPress={() => router.push('/(tabs)/search' as never)}
+            onPress={() => {
+              // Navigate to search with all items sorted by rating
+              const { searchListings } = useListingsStore.getState();
+              searchListings({ sortBy: 'rating' });
+              router.push('/(tabs)/search' as never);
+            }}
           >
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
@@ -264,6 +269,12 @@ export default function HomeScreen() {
         {topSellingItems.length === 0 ? (
           <View style={styles.emptyTopItems}>
             <Text style={styles.emptyTopItemsText}>No dishes available right now</Text>
+            <TouchableOpacity 
+              style={styles.browseButton}
+              onPress={() => router.push('/(tabs)/search' as never)}
+            >
+              <Text style={styles.browseButtonText}>Browse All Dishes</Text>
+            </TouchableOpacity>
           </View>
         ) : (
         <ScrollView
@@ -380,10 +391,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   greeting: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 2,
     letterSpacing: -0.3,
   },
   locationContainer: {
@@ -461,14 +472,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   searchPlaceholder: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textLight,
     fontWeight: '500',
     flex: 1,
-    fontSize: 14,
   },
   heroImage: {
-    height: 200,
+    height: 180,
     width: '100%',
     justifyContent: 'flex-end',
   },
@@ -483,10 +493,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   heroTitle: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '800',
     color: colors.white,
-    marginBottom: 6,
+    marginBottom: 4,
     letterSpacing: -0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
@@ -592,10 +602,10 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 2,
     letterSpacing: -0.3,
   },
   sectionSubtitle: {
@@ -620,8 +630,8 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   topItemCard: {
-    width: 150,
-    marginRight: 14,
+    width: 140,
+    marginRight: 12,
     borderRadius: 16,
     backgroundColor: colors.card,
     overflow: 'hidden',
@@ -636,7 +646,7 @@ const styles = StyleSheet.create({
   },
   topItemImage: {
     width: '100%',
-    height: 110,
+    height: 100,
     backgroundColor: colors.border,
   },
   vegIndicator: {
@@ -665,11 +675,11 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   topItemName: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 4,
-    lineHeight: 18,
+    marginBottom: 2,
+    lineHeight: 16,
   },
   topItemPrice: {
     fontSize: 14,
@@ -691,8 +701,8 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   chefCard: {
-    width: 90,
-    marginRight: 16,
+    width: 80,
+    marginRight: 14,
     alignItems: 'center',
   },
   chefImageContainer: {
@@ -705,20 +715,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   chefImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: colors.border,
     borderWidth: 3,
     borderColor: colors.white,
   },
   chefName: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 6,
-    lineHeight: 20,
+    marginBottom: 4,
+    lineHeight: 18,
   },
   chefRating: {
     flexDirection: 'row',
@@ -747,5 +757,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textLight,
     fontWeight: '500',
+    marginBottom: 12,
+  },
+  browseButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+  },
+  browseButtonText: {
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
