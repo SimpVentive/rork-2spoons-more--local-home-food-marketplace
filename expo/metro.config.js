@@ -4,30 +4,29 @@ const { withRorkMetro } = require("@rork-ai/toolkit-sdk/metro");
 
 const config = getDefaultConfig(__dirname);
 
-// The toolkit SDK (v0.2.54) requires inspector modules from the old
-// RN path, but RN 0.79.1 moved them from devsupport/devmenu/elementinspector
-// to src/private/inspector. Alias them so Metro resolves correctly.
-const inspectorSrc = path.resolve(
-  __dirname,
-  "node_modules/react-native/src/private/inspector",
-);
-
-const originalResolveRequest = config.resolver?.resolveRequest;
+// Redirect old devsupport/devmenu/elementinspector paths to the new
+// inspector/ location. RN 0.79.1 moved these files, but the Rork
+// toolkit SDK still references the old path. This runs as the
+// fallback when withRorkMetro's own resolveRequest doesn't match.
 config.resolver = {
   ...config.resolver,
   resolveRequest: (context, moduleName, platform) => {
-    const prefix = "react-native/src/private/devsupport/devmenu/elementinspector/";
-    if (moduleName.startsWith(prefix)) {
-      const file = moduleName.slice(prefix.length);
-      return {
-        filePath: path.join(inspectorSrc, `${file}.js`),
-        type: "sourceFile",
-      };
+    // Matches e.g. react-native/src/private/devsupport/devmenu/elementinspector/InspectorOverlay
+    const oldPrefix = "react-native/src/private/devsupport/devmenu/elementinspector/";
+    if (moduleName.startsWith(oldPrefix)) {
+      const fileName = moduleName.slice(oldPrefix.length);
+      const newPath = path.join(
+        __dirname,
+        "node_modules",
+        "react-native",
+        "src",
+        "private",
+        "inspector",
+        fileName,
+      );
+      return { filePath: newPath, type: "sourceFile" };
     }
 
-    if (originalResolveRequest) {
-      return originalResolveRequest(context, moduleName, platform);
-    }
     return context.resolveRequest(context, moduleName, platform);
   },
 };
