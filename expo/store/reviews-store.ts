@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { mockReviews } from '@/mocks/data';
+import { supabase } from '@/lib/supabase';
 import { Review } from '@/types';
 
 interface ReviewsState {
@@ -18,208 +18,211 @@ interface ReviewsState {
   deleteReview: (id: string) => Promise<void>;
 }
 
+function rowToReview(row: Record<string, unknown>): Review {
+  return {
+    id: row.id as string,
+    orderId: row.order_id as string,
+    listingId: row.listing_id as string,
+    buyerId: row.buyer_id as string,
+    sellerId: row.seller_id as string,
+    rating: row.rating as number,
+    comment: (row.comment as string) || '',
+    createdAt: row.created_at as string,
+    buyerName: (row.buyer_name as string) || '',
+    buyerImage: (row.buyer_image as string) || undefined,
+    sellerName: (row.seller_name as string) || '',
+    dishName: (row.dish_name as string) || '',
+  };
+}
+
 export const useReviewsStore = create<ReviewsState>()(
   persist(
     (set, get) => ({
-      reviews: [...mockReviews],
+      reviews: [],
       isLoading: false,
       error: null,
-      
+
       fetchReviews: async () => {
-        set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // In a real app, we would fetch from an API
-          set({ 
-            reviews: [...mockReviews], 
-            isLoading: false 
-          });
+          set({ isLoading: true, error: null });
+          const { data, error } = await supabase
+            .from('reviews')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            console.error('Fetch reviews error:', error.message);
+            set({ error: error.message, isLoading: false });
+            return;
+          }
+
+          set({ reviews: (data || []).map(rowToReview), isLoading: false });
         } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          set({ error: 'Failed to fetch reviews', isLoading: false });
         }
       },
-      
-      fetchSellerReviews: async (sellerId: string) => {
-        set({ isLoading: true, error: null });
-        
+
+      fetchSellerReviews: async (sellerId) => {
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const { reviews } = get();
-          const sellerReviews = reviews.filter(review => review.sellerId === sellerId);
-          
-          set({ isLoading: false });
-          
-          return sellerReviews;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          const { data, error } = await supabase
+            .from('reviews')
+            .select('*')
+            .eq('seller_id', sellerId)
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            console.error('Fetch seller reviews error:', error.message);
+            return [];
+          }
+          return (data || []).map(rowToReview);
+        } catch {
           return [];
         }
       },
-      
-      fetchListingReviews: async (listingId: string) => {
-        set({ isLoading: true, error: null });
-        
+
+      fetchListingReviews: async (listingId) => {
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const { reviews } = get();
-          const listingReviews = reviews.filter(review => review.listingId === listingId);
-          
-          set({ isLoading: false });
-          
-          return listingReviews;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          const { data, error } = await supabase
+            .from('reviews')
+            .select('*')
+            .eq('listing_id', listingId)
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            console.error('Fetch listing reviews error:', error.message);
+            return [];
+          }
+          return (data || []).map(rowToReview);
+        } catch {
           return [];
         }
       },
-      
-      fetchBuyerReviews: async (buyerId: string) => {
-        set({ isLoading: true, error: null });
-        
+
+      fetchBuyerReviews: async (buyerId) => {
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const { reviews } = get();
-          const buyerReviews = reviews.filter(review => review.buyerId === buyerId);
-          
-          set({ isLoading: false });
-          
-          return buyerReviews;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          const { data, error } = await supabase
+            .from('reviews')
+            .select('*')
+            .eq('buyer_id', buyerId)
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            console.error('Fetch buyer reviews error:', error.message);
+            return [];
+          }
+          return (data || []).map(rowToReview);
+        } catch {
           return [];
         }
       },
-      
+
       fetchRecentReviews: async (limit = 5) => {
-        set({ isLoading: true, error: null });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const { reviews } = get();
-          // Sort by date (newest first) and take the specified limit
-          const recentReviews = [...reviews]
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, limit);
-          
-          set({ isLoading: false });
-          
-          return recentReviews;
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          const { data, error } = await supabase
+            .from('reviews')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+          if (error) {
+            console.error('Fetch recent reviews error:', error.message);
+            return [];
+          }
+          return (data || []).map(rowToReview);
+        } catch {
           return [];
         }
       },
-      
-      addReview: async (reviewData: Omit<Review, 'id' | 'createdAt'>) => {
-        set({ isLoading: true, error: null });
-        
+
+      addReview: async (reviewData) => {
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const newReview: Review = {
-            id: `review-${Date.now()}`,
-            ...reviewData,
-            createdAt: new Date().toISOString(),
-          };
-          
-          set(state => ({
-            reviews: [...state.reviews, newReview],
-            isLoading: false,
-          }));
-          
+          set({ isLoading: true, error: null });
+
+          const { data, error } = await supabase
+            .from('reviews')
+            .insert({
+              order_id: reviewData.orderId,
+              listing_id: reviewData.listingId,
+              buyer_id: reviewData.buyerId,
+              seller_id: reviewData.sellerId,
+              rating: reviewData.rating,
+              comment: reviewData.comment,
+              buyer_name: reviewData.buyerName,
+              buyer_image: reviewData.buyerImage,
+              seller_name: reviewData.sellerName,
+              dish_name: reviewData.dishName,
+            })
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Add review error:', error.message);
+            set({ error: error.message, isLoading: false });
+            throw error;
+          }
+
+          const newReview = rowToReview(data);
+          set(state => ({ reviews: [...state.reviews, newReview], isLoading: false }));
           return newReview;
         } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          set({ error: 'Failed to add review', isLoading: false });
           throw error;
         }
       },
-      
-      updateReview: async (id: string, data: Partial<Review>) => {
-        set({ isLoading: true, error: null });
-        
+
+      updateReview: async (id, updates) => {
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const { reviews } = get();
-          const reviewIndex = reviews.findIndex(review => review.id === id);
-          
-          if (reviewIndex === -1) {
-            throw new Error('Review not found');
+          set({ isLoading: true, error: null });
+
+          const dbUpdates: Record<string, unknown> = {};
+          if (updates.rating !== undefined) dbUpdates.rating = updates.rating;
+          if (updates.comment !== undefined) dbUpdates.comment = updates.comment;
+
+          const { error } = await supabase
+            .from('reviews')
+            .update(dbUpdates)
+            .eq('id', id);
+
+          if (error) {
+            console.error('Update review error:', error.message);
+            set({ error: error.message, isLoading: false });
+            throw error;
           }
-          
-          const updatedReview = { 
-            ...reviews[reviewIndex], 
-            ...data 
-          };
-          
-          const updatedReviews = [...reviews];
+
+          const state = get();
+          const reviewIndex = state.reviews.findIndex(r => r.id === id);
+          if (reviewIndex === -1) throw new Error('Review not found');
+
+          const updatedReview = { ...state.reviews[reviewIndex], ...updates };
+          const updatedReviews = [...state.reviews];
           updatedReviews[reviewIndex] = updatedReview;
-          
-          set({
-            reviews: updatedReviews,
-            isLoading: false,
-          });
-          
+
+          set({ reviews: updatedReviews, isLoading: false });
           return updatedReview;
         } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          set({ error: 'Failed to update review', isLoading: false });
           throw error;
         }
       },
-      
-      deleteReview: async (id: string) => {
-        set({ isLoading: true, error: null });
-        
+
+      deleteReview: async (id) => {
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const { reviews } = get();
-          const updatedReviews = reviews.filter(review => review.id !== id);
-          
-          set({
-            reviews: updatedReviews,
-            isLoading: false,
-          });
+          set({ isLoading: true, error: null });
+
+          const { error } = await supabase
+            .from('reviews')
+            .delete()
+            .eq('id', id);
+
+          if (error) {
+            console.error('Delete review error:', error.message);
+            set({ error: error.message, isLoading: false });
+            throw error;
+          }
+
+          set(state => ({ reviews: state.reviews.filter(r => r.id !== id), isLoading: false }));
         } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'An error occurred', 
-            isLoading: false 
-          });
+          set({ error: 'Failed to delete review', isLoading: false });
           throw error;
         }
       },

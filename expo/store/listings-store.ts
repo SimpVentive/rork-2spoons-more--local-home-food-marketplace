@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { mockFoodListings } from '@/mocks/data';
+import { supabase } from '@/lib/supabase';
 import { FoodListing, FilterOptions, RouteSearchParams } from '@/types';
 import { useAuthStore } from './auth-store';
 
@@ -27,44 +27,87 @@ interface ListingsState {
   exportListings: (format: 'csv' | 'json') => Promise<string>;
 }
 
+/** Map a Supabase food_listings row to our FoodListing type */
+function rowToListing(row: Record<string, unknown>): FoodListing {
+  return {
+    id: row.id as string,
+    sellerId: row.seller_id as string,
+    sellerName: row.seller_name as string,
+    sellerImage: (row.seller_image as string) || '',
+    sellerRating: (row.seller_rating as number) || 0,
+    dishName: row.dish_name as string,
+    description: (row.description as string) || '',
+    image: (row.image as string) || '',
+    ingredients: (row.ingredients as string[]) || [],
+    allergens: (row.allergens as string[]) || [],
+    quantity: (row.quantity as number) || 0,
+    remainingQuantity: (row.remaining_quantity as number) || 0,
+    availableQuantity: (row.quantity as number) || 0,
+    price: row.price as number,
+    isVegetarian: (row.is_vegetarian as boolean) || false,
+    cuisineType: (row.cuisine_type as string) || '',
+    subcuisineType: (row.subcuisine_type as string) || undefined,
+    spiceLevel: (row.spice_level as 'mild' | 'medium' | 'hot') || 'medium',
+    preparationTime: (row.preparation_time as number) || 30,
+    pickupTime: (row.pickup_time as string) || new Date().toISOString(),
+    location: {
+      latitude: (row.location_lat as number) || 0,
+      longitude: (row.location_lng as number) || 0,
+    },
+    address: (row.address as string) || '',
+    isActive: (row.is_active as boolean) ?? true,
+    createdAt: (row.created_at as string) || new Date().toISOString(),
+    rating: (row.rating as number) || 0,
+    reviewCount: (row.review_count as number) || 0,
+    orderCount: (row.order_count as number) || 0,
+    availableFrom: (row.available_from as string) || new Date().toISOString(),
+    availableUntil: (row.available_until as string) || new Date().toISOString(),
+    servings: (row.servings as number) || 1,
+    packaging: (row.packaging as string) || 'Eco-friendly container',
+    isFeatured: (row.is_featured as boolean) || false,
+    isApproved: (row.is_approved as boolean) || false,
+  };
+}
+
 export const useListingsStore = create<ListingsState>((set, get) => ({
   listings: [],
   filteredListings: [],
   isLoading: false,
   error: null,
-  
+
   fetchListings: async () => {
     try {
       set({ isLoading: true, error: null });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In a real app, we would fetch from an API
-      // For demo purposes, we'll use mock data
-      set({ 
-        listings: mockFoodListings,
-        filteredListings: mockFoodListings,
-        isLoading: false 
-      });
+
+      const { data, error } = await supabase
+        .from('food_listings')
+        .select('*')
+        .eq('is_approved', true)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Fetch listings error:', error.message);
+        set({ error: 'Failed to fetch listings. Please try again.', isLoading: false });
+        return;
+      }
+
+      const listings = (data || []).map(rowToListing);
+      set({ listings, filteredListings: listings, isLoading: false });
     } catch (error) {
       console.error('Error fetching listings:', error);
-      set({ 
-        error: 'Failed to fetch listings. Please try again.',
-        isLoading: false 
-      });
+      set({ error: 'Failed to fetch listings. Please try again.', isLoading: false });
     }
   },
-  
+
   searchListings: (options: FilterOptions) => {
     const state = get();
     const listings = state.listings || [];
     let filtered = [...listings];
-    
-    // Apply search query filter
+
     if (options.query) {
       const query = options.query.toLowerCase();
-      filtered = filtered.filter(listing => 
+      filtered = filtered.filter(listing =>
         listing.dishName.toLowerCase().includes(query) ||
         listing.description.toLowerCase().includes(query) ||
         listing.cuisineType.toLowerCase().includes(query) ||
@@ -72,8 +115,7 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
         listing.sellerName.toLowerCase().includes(query)
       );
     }
-    
-    // Apply food type filter
+
     if (options.foodType) {
       if (options.foodType === 'vegetarian') {
         filtered = filtered.filter(listing => listing.isVegetarian);
@@ -81,50 +123,38 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
         filtered = filtered.filter(listing => !listing.isVegetarian);
       }
     }
-    
-    // Apply cuisine type filter
+
     if (options.cuisineTypes && options.cuisineTypes.length > 0) {
-      filtered = filtered.filter(listing => 
-        options.cuisineTypes!.includes(listing.cuisineType)
-      );
+      filtered = filtered.filter(listing => options.cuisineTypes!.includes(listing.cuisineType));
     }
-    
-    // Apply subcuisine type filter
+
     if (options.subcuisineTypes && options.subcuisineTypes.length > 0) {
-      filtered = filtered.filter(listing => 
+      filtered = filtered.filter(listing =>
         listing.subcuisineType && options.subcuisineTypes!.includes(listing.subcuisineType)
       );
     }
-    
-    // Apply price range filter
+
     if (options.minPrice !== undefined) {
       filtered = filtered.filter(listing => listing.price >= options.minPrice!);
     }
     if (options.maxPrice !== undefined) {
       filtered = filtered.filter(listing => listing.price <= options.maxPrice!);
     }
-    
-    // Apply rating filter
+
     if (options.minRating !== undefined) {
-      filtered = filtered.filter(listing => 
-        (listing.rating || 0) >= options.minRating!
-      );
+      filtered = filtered.filter(listing => (listing.rating || 0) >= options.minRating!);
     }
-    
-    // Apply distance filter
+
     if (options.maxDistance !== undefined && options.userLocation) {
       filtered = filtered.filter(listing => {
         const distance = calculateDistance(
-          options.userLocation!.latitude,
-          options.userLocation!.longitude,
-          listing.location.latitude,
-          listing.location.longitude
+          options.userLocation!.latitude, options.userLocation!.longitude,
+          listing.location.latitude, listing.location.longitude
         );
         return distance <= options.maxDistance!;
       });
     }
-    
-    // Apply availability filter
+
     if (options.availableNow) {
       const now = new Date();
       filtered = filtered.filter(listing => {
@@ -133,35 +163,29 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
         return now >= availableFrom && now <= availableUntil && listing.remainingQuantity > 0;
       });
     }
-    
-    // Apply servings filter
+
     if (options.minServings !== undefined) {
       filtered = filtered.filter(listing => listing.servings >= options.minServings!);
     }
-    
-    // Apply sorting
+
     if (options.sortBy) {
       filtered.sort((a, b) => {
         switch (options.sortBy) {
           case 'price':
             return options.sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
           case 'rating':
-            return options.sortOrder === 'asc' 
-              ? (a.rating || 0) - (b.rating || 0) 
+            return options.sortOrder === 'asc'
+              ? (a.rating || 0) - (b.rating || 0)
               : (b.rating || 0) - (a.rating || 0);
           case 'distance':
             if (options.userLocation) {
               const distanceA = calculateDistance(
-                options.userLocation.latitude,
-                options.userLocation.longitude,
-                a.location.latitude,
-                a.location.longitude
+                options.userLocation.latitude, options.userLocation.longitude,
+                a.location.latitude, a.location.longitude
               );
               const distanceB = calculateDistance(
-                options.userLocation.latitude,
-                options.userLocation.longitude,
-                b.location.latitude,
-                b.location.longitude
+                options.userLocation.latitude, options.userLocation.longitude,
+                b.location.latitude, b.location.longitude
               );
               return options.sortOrder === 'asc' ? distanceA - distanceB : distanceB - distanceA;
             }
@@ -175,55 +199,47 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
         }
       });
     }
-    
+
     set({ filteredListings: filtered });
   },
-  
+
   searchListingsOnRoute: (params: RouteSearchParams) => {
     const state = get();
     const listings = state.listings || [];
     const user = useAuthStore.getState().user;
-    
+
     if (!user) {
       set({ filteredListings: [], error: 'User not found' });
       return;
     }
-    
-    // Get the appropriate route based on the route type
-    const route = params.routeType === 'homeToOffice' 
-      ? user.homeToOfficeRoute 
+
+    const route = params.routeType === 'homeToOffice'
+      ? user.homeToOfficeRoute
       : (user.routesSameAsHomeToOffice && params.routeType === 'officeToHome')
         ? [...(user.homeToOfficeRoute || [])].reverse()
         : user.officeToHomeRoute;
-    
+
     if (!route || route.length === 0) {
       set({ filteredListings: [], error: 'Route not set up' });
       return;
     }
-    
-    // Create a path of points along the route
+
     const routePoints = [
-      { latitude: user.location.latitude, longitude: user.location.longitude }, // Home
+      { latitude: user.location.latitude, longitude: user.location.longitude },
       ...route.map(loc => ({ latitude: loc.latitude, longitude: loc.longitude })),
-      { latitude: user.officeLocation?.latitude || 0, longitude: user.officeLocation?.longitude || 0 }, // Office
+      { latitude: user.officeLocation?.latitude || 0, longitude: user.officeLocation?.longitude || 0 },
     ];
-    
-    // Filter listings based on proximity to the route
-    let filtered = listings.filter(listing => {
-      // Check if listing is within the maximum detour distance from any point on the route
-      return routePoints.some(point => {
+
+    let filtered = listings.filter(listing =>
+      routePoints.some(point => {
         const distance = calculateDistance(
-          point.latitude,
-          point.longitude,
-          listing.location.latitude,
-          listing.location.longitude
-        ) * 1000; // Convert to meters
-        
+          point.latitude, point.longitude,
+          listing.location.latitude, listing.location.longitude
+        ) * 1000;
         return distance <= params.maxDetour;
-      });
-    });
-    
-    // Apply food type filter
+      })
+    );
+
     if (params.foodType !== 'both') {
       if (params.foodType === 'vegetarian') {
         filtered = filtered.filter(listing => listing.isVegetarian);
@@ -231,271 +247,296 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
         filtered = filtered.filter(listing => !listing.isVegetarian);
       }
     }
-    
-    // Apply dish name filter if provided
+
     if (params.dishName) {
       const query = params.dishName.toLowerCase();
-      filtered = filtered.filter(listing => 
+      filtered = filtered.filter(listing =>
         listing.dishName.toLowerCase().includes(query) ||
         listing.description.toLowerCase().includes(query)
       );
     }
-    
-    // Apply cuisine types filter if provided
+
     if (params.cuisineTypes && params.cuisineTypes.length > 0) {
-      filtered = filtered.filter(listing => 
-        params.cuisineTypes!.includes(listing.cuisineType)
-      );
+      filtered = filtered.filter(listing => params.cuisineTypes!.includes(listing.cuisineType));
     }
-    
-    // Apply subcuisine types filter if provided
+
     if (params.subcuisineTypes && params.subcuisineTypes.length > 0) {
-      filtered = filtered.filter(listing => 
+      filtered = filtered.filter(listing =>
         listing.subcuisineType && params.subcuisineTypes!.includes(listing.subcuisineType)
       );
     }
-    
-    // Sort by distance from the route (closest first)
+
     filtered.sort((a, b) => {
-      const minDistanceA = Math.min(...routePoints.map(point => 
-        calculateDistance(
-          point.latitude,
-          point.longitude,
-          a.location.latitude,
-          a.location.longitude
-        ) * 1000 // Convert to meters
+      const minDistanceA = Math.min(...routePoints.map(point =>
+        calculateDistance(point.latitude, point.longitude, a.location.latitude, a.location.longitude) * 1000
       ));
-      
-      const minDistanceB = Math.min(...routePoints.map(point => 
-        calculateDistance(
-          point.latitude,
-          point.longitude,
-          b.location.latitude,
-          b.location.longitude
-        ) * 1000 // Convert to meters
+      const minDistanceB = Math.min(...routePoints.map(point =>
+        calculateDistance(point.latitude, point.longitude, b.location.latitude, b.location.longitude) * 1000
       ));
-      
       return minDistanceA - minDistanceB;
     });
-    
+
     set({ filteredListings: filtered });
   },
-  
-  addListing: async (listing: Omit<FoodListing, 'id' | 'createdAt'>) => {
+
+  addListing: async (listing) => {
     try {
       set({ isLoading: true, error: null });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Generate a new ID and creation date
-      const newListing: FoodListing = {
-        ...listing,
-        id: `listing-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-      };
-      
-      // Update the store
+
+      const user = useAuthStore.getState().user;
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('food_listings')
+        .insert({
+          seller_id: user.id,
+          seller_name: user.name,
+          seller_image: user.profileImage,
+          seller_rating: user.rating || 0,
+          dish_name: listing.dishName,
+          description: listing.description,
+          image: listing.image,
+          ingredients: listing.ingredients,
+          allergens: listing.allergens,
+          quantity: listing.quantity,
+          remaining_quantity: listing.remainingQuantity,
+          price: listing.price,
+          is_vegetarian: listing.isVegetarian,
+          cuisine_type: listing.cuisineType,
+          subcuisine_type: listing.subcuisineType,
+          spice_level: listing.spiceLevel,
+          preparation_time: listing.preparationTime,
+          pickup_time: listing.pickupTime,
+          location_lat: listing.location.latitude,
+          location_lng: listing.location.longitude,
+          address: listing.address,
+          servings: listing.servings,
+          packaging: listing.packaging,
+          available_from: listing.availableFrom,
+          available_until: listing.availableUntil,
+          is_active: true,
+          is_approved: false,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Add listing error:', error.message);
+        set({ error: 'Failed to add listing. Please try again.', isLoading: false });
+        throw error;
+      }
+
+      const newListing = rowToListing(data);
       set(state => ({
         listings: [newListing, ...(state.listings || [])],
         filteredListings: [newListing, ...(state.filteredListings || [])],
         isLoading: false,
       }));
-      
+
       return newListing;
     } catch (error) {
       console.error('Error adding listing:', error);
-      set({ 
-        error: 'Failed to add listing. Please try again.',
-        isLoading: false 
-      });
+      set({ error: 'Failed to add listing. Please try again.', isLoading: false });
       throw error;
     }
   },
-  
-  updateListing: async (id: string, updates: Partial<FoodListing>) => {
+
+  updateListing: async (id, updates) => {
     try {
       set({ isLoading: true, error: null });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Find the listing to update
-      const state = get();
-      const listings = state.listings || [];
-      const listing = listings.find(l => l.id === id);
-      
-      if (!listing) {
-        throw new Error('Listing not found');
+
+      const dbUpdates: Record<string, unknown> = {};
+      if (updates.dishName !== undefined) dbUpdates.dish_name = updates.dishName;
+      if (updates.description !== undefined) dbUpdates.description = updates.description;
+      if (updates.price !== undefined) dbUpdates.price = updates.price;
+      if (updates.image !== undefined) dbUpdates.image = updates.image;
+      if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+      if (updates.remainingQuantity !== undefined) dbUpdates.remaining_quantity = updates.remainingQuantity;
+      if (updates.isVegetarian !== undefined) dbUpdates.is_vegetarian = updates.isVegetarian;
+      if (updates.cuisineType !== undefined) dbUpdates.cuisine_type = updates.cuisineType;
+      if (updates.spiceLevel !== undefined) dbUpdates.spice_level = updates.spiceLevel;
+      if (updates.availableUntil !== undefined) dbUpdates.available_until = updates.availableUntil;
+      dbUpdates.updated_at = new Date().toISOString();
+
+      const { error } = await supabase
+        .from('food_listings')
+        .update(dbUpdates)
+        .eq('id', id);
+
+      if (error) {
+        console.error('Update listing error:', error.message);
+        set({ error: 'Failed to update listing.', isLoading: false });
+        throw error;
       }
-      
-      // Update the listing
-      const updatedListing: FoodListing = {
-        ...listing,
-        ...updates,
-      };
-      
-      // Update the store
+
+      const state = get();
+      const listing = state.listings.find(l => l.id === id);
+      if (!listing) throw new Error('Listing not found');
+      const updatedListing = { ...listing, ...updates };
+
       set(state => ({
-        listings: (state.listings || []).map(l => l.id === id ? updatedListing : l),
-        filteredListings: (state.filteredListings || []).map(l => l.id === id ? updatedListing : l),
+        listings: state.listings.map(l => l.id === id ? updatedListing : l),
+        filteredListings: state.filteredListings.map(l => l.id === id ? updatedListing : l),
         isLoading: false,
       }));
-      
+
       return updatedListing;
     } catch (error) {
       console.error('Error updating listing:', error);
-      set({ 
-        error: 'Failed to update listing. Please try again.',
-        isLoading: false 
-      });
+      set({ error: 'Failed to update listing.', isLoading: false });
       throw error;
     }
   },
-  
-  updateListingQuantity: async (id: string, newQuantity: number) => {
-    try {
-      // Find the listing to update
-      const state = get();
-      const listings = state.listings || [];
-      const listing = listings.find(l => l.id === id);
-      
-      if (!listing) {
-        throw new Error('Listing not found');
-      }
-      
-      // Update the listing quantity
-      const updatedListing: FoodListing = {
-        ...listing,
-        remainingQuantity: newQuantity,
-      };
-      
-      // Update the store
-      set(state => ({
-        listings: (state.listings || []).map(l => l.id === id ? updatedListing : l),
-        filteredListings: (state.filteredListings || []).map(l => l.id === id ? updatedListing : l),
-      }));
-    } catch (error) {
-      console.error('Error updating listing quantity:', error);
-      throw error;
-    }
+
+  updateListingQuantity: async (id, newQuantity) => {
+    const state = get();
+    const listing = state.listings.find(l => l.id === id);
+    if (!listing) throw new Error('Listing not found');
+
+    const updatedListing = { ...listing, remainingQuantity: newQuantity };
+    set(state => ({
+      listings: state.listings.map(l => l.id === id ? updatedListing : l),
+      filteredListings: state.filteredListings.map(l => l.id === id ? updatedListing : l),
+    }));
+
+    await supabase
+      .from('food_listings')
+      .update({ remaining_quantity: newQuantity })
+      .eq('id', id);
   },
-  
-  deleteListing: async (id: string) => {
+
+  deleteListing: async (id) => {
     try {
       set({ isLoading: true, error: null });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Update the store
+
+      const { error } = await supabase
+        .from('food_listings')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Delete listing error:', error.message);
+        set({ error: 'Failed to delete listing.', isLoading: false });
+        return false;
+      }
+
       set(state => ({
-        listings: (state.listings || []).filter(l => l.id !== id),
-        filteredListings: (state.filteredListings || []).filter(l => l.id !== id),
+        listings: state.listings.filter(l => l.id !== id),
+        filteredListings: state.filteredListings.filter(l => l.id !== id),
         isLoading: false,
       }));
-      
       return true;
     } catch (error) {
       console.error('Error deleting listing:', error);
-      set({ 
-        error: 'Failed to delete listing. Please try again.',
-        isLoading: false 
-      });
+      set({ error: 'Failed to delete listing.', isLoading: false });
       return false;
     }
   },
-  
-  getListing: (id: string) => {
-    const state = get();
-    const listings = state.listings || [];
-    return listings.find(l => l.id === id);
-  },
-  
-  getListingById: (id: string) => {
-    const state = get();
-    const listings = state.listings || [];
-    return listings.find(l => l.id === id);
-  },
-  
-  getSellerListings: (sellerId: string) => {
-    const state = get();
-    const listings = state.listings || [];
-    return listings.filter(l => l.sellerId === sellerId);
-  },
-  
+
+  getListing: (id) => get().listings.find(l => l.id === id),
+  getListingById: (id) => get().listings.find(l => l.id === id),
+  getSellerListings: (sellerId) => get().listings.filter(l => l.sellerId === sellerId),
+
   getTopSellingItems: async (limit = 10) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Get current listings safely
-      const state = get();
-      const listings = state.listings || [];
-      
-      // Sort listings by order count (descending)
-      const topItems = [...listings]
-        .sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0))
-        .slice(0, limit);
-      
-      return topItems;
+      const { data, error } = await supabase
+        .from('food_listings')
+        .select('*')
+        .eq('is_approved', true)
+        .eq('is_active', true)
+        .order('order_count', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error('Get top selling error:', error.message);
+        return [];
+      }
+
+      return (data || []).map(rowToListing);
     } catch (error) {
       console.error('Error getting top selling items:', error);
       return [];
     }
   },
 
-  toggleListingApproval: async (id: string) => {
+  toggleListingApproval: async (id) => {
     const state = get();
     const listing = state.listings.find(l => l.id === id);
-    if (listing) {
-      const updatedListing = { ...listing, isApproved: !listing.isApproved };
-      set(state => ({
-        listings: state.listings.map(l => l.id === id ? updatedListing : l),
-        filteredListings: state.filteredListings.map(l => l.id === id ? updatedListing : l),
-      }));
-    }
+    if (!listing) return;
+
+    const newApproved = !listing.isApproved;
+    const updatedListing = { ...listing, isApproved: newApproved };
+    set(state => ({
+      listings: state.listings.map(l => l.id === id ? updatedListing : l),
+      filteredListings: state.filteredListings.map(l => l.id === id ? updatedListing : l),
+    }));
+
+    await supabase
+      .from('food_listings')
+      .update({ is_approved: newApproved })
+      .eq('id', id);
   },
 
-  toggleListingActive: async (id: string) => {
+  toggleListingActive: async (id) => {
     const state = get();
     const listing = state.listings.find(l => l.id === id);
-    if (listing) {
-      const updatedListing = { ...listing, isActive: !listing.isActive };
-      set(state => ({
-        listings: state.listings.map(l => l.id === id ? updatedListing : l),
-        filteredListings: state.filteredListings.map(l => l.id === id ? updatedListing : l),
-      }));
-    }
+    if (!listing) return;
+
+    const newActive = !listing.isActive;
+    const updatedListing = { ...listing, isActive: newActive };
+    set(state => ({
+      listings: state.listings.map(l => l.id === id ? updatedListing : l),
+      filteredListings: state.filteredListings.map(l => l.id === id ? updatedListing : l),
+    }));
+
+    await supabase
+      .from('food_listings')
+      .update({ is_active: newActive })
+      .eq('id', id);
   },
 
-  toggleListingFeatured: async (id: string) => {
+  toggleListingFeatured: async (id) => {
     const state = get();
     const listing = state.listings.find(l => l.id === id);
-    if (listing) {
-      const updatedListing = { ...listing, isFeatured: !listing.isFeatured };
-      set(state => ({
-        listings: state.listings.map(l => l.id === id ? updatedListing : l),
-        filteredListings: state.filteredListings.map(l => l.id === id ? updatedListing : l),
-      }));
-    }
+    if (!listing) return;
+
+    const newFeatured = !listing.isFeatured;
+    const updatedListing = { ...listing, isFeatured: newFeatured };
+    set(state => ({
+      listings: state.listings.map(l => l.id === id ? updatedListing : l),
+      filteredListings: state.filteredListings.map(l => l.id === id ? updatedListing : l),
+    }));
+
+    await supabase
+      .from('food_listings')
+      .update({ is_featured: newFeatured })
+      .eq('id', id);
   },
 
-  bulkUpdateListings: async (ids: string[], updates: Partial<FoodListing>) => {
+  bulkUpdateListings: async (ids, updates) => {
     set(state => ({
       listings: state.listings.map(l => ids.includes(l.id) ? { ...l, ...updates } : l),
       filteredListings: state.filteredListings.map(l => ids.includes(l.id) ? { ...l, ...updates } : l),
     }));
+
+    const dbUpdates: Record<string, unknown> = {};
+    if (updates.isApproved !== undefined) dbUpdates.is_approved = updates.isApproved;
+    if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+    if (updates.isFeatured !== undefined) dbUpdates.is_featured = updates.isFeatured;
+    if (Object.keys(dbUpdates).length > 0) {
+      await supabase.from('food_listings').update(dbUpdates).in('id', ids);
+    }
   },
 
-  bulkDeleteListings: async (ids: string[]) => {
+  bulkDeleteListings: async (ids) => {
     set(state => ({
       listings: state.listings.filter(l => !ids.includes(l.id)),
       filteredListings: state.filteredListings.filter(l => !ids.includes(l.id)),
     }));
+    await supabase.from('food_listings').delete().in('id', ids);
   },
 
-  exportListings: async (format: 'csv' | 'json') => {
+  exportListings: async (format) => {
     const state = get();
     if (format === 'json') {
       return JSON.stringify(state.listings, null, 2);
@@ -506,20 +547,18 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
   },
 }));
 
-// Helper function to calculate distance between two coordinates in kilometers
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Radius of the earth in km
+  const R = 6371;
   const dLat = deg2rad(lat2 - lat1);
   const dLon = deg2rad(lon2 - lon1);
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2); 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-  const distance = R * c; // Distance in km
-  return distance;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 function deg2rad(deg: number): number {
-  return deg * (Math.PI/180);
+  return deg * (Math.PI / 180);
 }

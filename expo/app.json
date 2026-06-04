@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frontend2",
+    "scheme": "rork-qdaa774o7eqpdpj79w327",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -97,7 +97,9 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "expo-font"
+      "expo-font",
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

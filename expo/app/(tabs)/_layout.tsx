@@ -10,6 +10,7 @@ import {
   ChefHat,
   CreditCard,
 } from 'lucide-react-native';
+import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
 import { Platform, StyleSheet, View, ActivityIndicator, TouchableOpacity, Text, Alert } from 'react-native';
@@ -19,23 +20,28 @@ const HiddenTab = () => null;
 export default function TabLayout(): React.ReactElement {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const { user, isAuthenticated, userPreference, isInitialized, switchRole, initialize } = useAuthStore();
+  const { user: authUser, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, userPreference, isAdmin, syncProfile, switchRole, initialize } = useAuthStore();
   
   useEffect(() => {
     const initAuth = async () => {
       try {
-        if (!isInitialized) {
-          await initialize();
-        }
+        // Wait for Rork Auth to finish loading
+        if (authLoading) return;
         
-        const state = useAuthStore.getState();
-        
-        if (!state.isAuthenticated) {
+        // If not signed in via Rork Auth, redirect to auth screen
+        if (!authUser) {
           router.replace('/(auth)' as never);
           return;
         }
         
-        if (state.user?.isAdmin === true) {
+        // Sync the Supabase profile
+        await syncProfile(authUser.id, authUser.email, authUser.name, authUser.picture);
+        
+        // Re-check store state after sync
+        const state = useAuthStore.getState();
+        
+        if (state.user?.isAdmin === true || state.isAdmin) {
           router.replace('/(admin)' as never);
           return;
         }
@@ -53,9 +59,9 @@ export default function TabLayout(): React.ReactElement {
     };
     
     initAuth();
-  }, []);
+  }, [authUser, authLoading]);
 
-  if (isLoading || !isAuthenticated || !userPreference || user?.isAdmin) {
+  if (authLoading || isLoading || !authUser || !isAuthenticated || !userPreference || isAdmin) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />

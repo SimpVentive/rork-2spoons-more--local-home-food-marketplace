@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,83 +7,43 @@ import {
   ScrollView, 
   KeyboardAvoidingView, 
   Platform,
-  Alert
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Eye, EyeOff } from 'lucide-react-native';
 import { Image } from 'expo-image';
+import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/auth-store';
-import Input from '@/components/Input';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('john@example.com');
-  const [password, setPassword] = useState('password');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const login = useAuthStore(state => state.login);
+  const { user, isSigningIn, error, signIn, clearError, isLoading: authLoading } = useAuth();
+  const { syncProfile } = useAuthStore();
   const router = useRouter();
-  
-  // Debug: Log component mount
-  React.useEffect(() => {
-    console.log('LoginScreen mounted');
-  }, []);
 
-  const handleLogin = async () => {
-    if (!email) {
-      Alert.alert('Error', 'Please enter your email');
-      return;
+  // Redirect when authenticated
+  useEffect(() => {
+    if (user && !authLoading) {
+      syncProfile(user.id, user.email, user.name, user.picture).then(() => {
+        const state = useAuthStore.getState();
+        if (state.isAdmin) {
+          router.replace('/(admin)' as never);
+        } else if (!state.userPreference) {
+          router.replace('/user-preference' as never);
+        } else {
+          router.replace('/(tabs)/home' as never);
+        }
+      });
     }
-    
-    try {
-      setIsLoading(true);
-      setError('');
-      
-      console.log('Starting login process for:', email);
-      
-      // Call login function from auth store
-      const success = await login(email, password);
-      
-      if (!success) {
-        setError('Invalid email or password. Try using john@example.com');
-        console.log('Login failed for:', email);
-      } else {
-        console.log('Login successful, checking user state...');
-        
-        // If login is successful, use setTimeout to ensure navigation happens after state update
-        setTimeout(() => {
-          const { isAuthenticated, userPreference, user, isAdmin } = useAuthStore.getState();
-          
-          console.log('Post-login state:', { isAuthenticated, userPreference, isAdmin, userName: user?.name });
-          
-          if (isAuthenticated) {
-            // Admin users should go to admin panel
-            if (isAdmin) {
-              console.log('Redirecting admin user to admin panel');
-              router.replace('/(admin)' as any);
-            } else if (!userPreference) {
-              console.log('Redirecting to user preference selection');
-              router.replace('/user-preference' as any);
-            } else {
-              console.log('Redirecting to main tabs');
-              router.replace('/(tabs)/home' as any);
-            }
-          } else {
-            console.log('User not authenticated after login');
-            setError('Authentication failed. Please try again.');
-          }
-        }, 100);
-      }
-    } catch (error) {
-      console.log('Login error:', error);
-      setError('Login failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [user, authLoading]);
 
+  if (authLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -100,60 +60,46 @@ export default function LoginScreen() {
             source={{ uri: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1' }}
             style={styles.logo}
           />
-          <Text style={styles.appName}>HomeCook</Text>
+          <Text style={styles.appName}>2Spoons More</Text>
           <Text style={styles.tagline}>Homemade food, delivered with love</Text>
         </View>
         
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
+          <Text style={styles.title}>Welcome</Text>
+          <Text style={styles.subtitle}>Sign in to continue</Text>
           
           {error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity onPress={clearError} style={styles.errorDismiss}>
+                <Text style={styles.errorDismissText}>Dismiss</Text>
+              </TouchableOpacity>
             </View>
           ) : null}
           
-          <Input
-            label="Email"
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+          {isSigningIn && (
+            <ActivityIndicator size="small" color={colors.primary} style={styles.signingInIndicator} />
+          )}
           
-          <Input
-            label="Password"
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            rightIcon={
-              <TouchableOpacity 
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeIconButton}
-              >
-                {showPassword ? (
-                  <EyeOff size={20} color={colors.textLight} />
-                ) : (
-                  <Eye size={20} color={colors.textLight} />
-                )}
-              </TouchableOpacity>
-            }
-          />
-          
-          <TouchableOpacity style={styles.forgotPasswordContainer}>
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          <TouchableOpacity
+            style={[styles.googleButton, isSigningIn && styles.buttonDisabled]}
+            onPress={() => signIn('google')}
+            disabled={isSigningIn}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.googleButtonText}>G</Text>
+            <Text style={styles.googleButtonLabel}>Continue with Google</Text>
           </TouchableOpacity>
           
-          <Button
-            title="Sign In"
-            onPress={handleLogin}
-            style={styles.loginButton}
-            isLoading={isLoading}
-          />
-
+          <TouchableOpacity
+            style={[styles.appleButton, isSigningIn && styles.buttonDisabled]}
+            onPress={() => signIn('apple')}
+            disabled={isSigningIn}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.appleButtonText}></Text>
+            <Text style={styles.appleButtonLabel}>Continue with Apple</Text>
+          </TouchableOpacity>
 
           <View style={styles.dividerContainer}>
             <View style={styles.divider} />
@@ -161,14 +107,13 @@ export default function LoginScreen() {
             <View style={styles.divider} />
           </View>
           
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>Do not have an account? </Text>
-            <TouchableOpacity onPress={() => router.push('/register' as any)}>
-              <Text style={styles.registerLink}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
-          
-
+          <TouchableOpacity 
+            style={styles.emailButton}
+            onPress={() => router.push('/(auth)/register' as never)}
+            disabled={isSigningIn}
+          >
+            <Text style={styles.emailButtonText}>Sign up with email</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -178,6 +123,12 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: colors.background,
   },
   scrollContent: {
@@ -220,28 +171,81 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   errorContainer: {
-    backgroundColor: `${colors.error}20`,
+    backgroundColor: '#FEE2E2',
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   errorText: {
-    color: colors.error,
+    color: '#DC2626',
     fontSize: 14,
+    flex: 1,
   },
-  forgotPasswordContainer: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
+  errorDismiss: {
+    marginLeft: 8,
     padding: 4,
   },
-  forgotPasswordText: {
-    color: colors.primary,
+  errorDismissText: {
+    color: '#DC2626',
+    fontWeight: '600',
     fontSize: 14,
   },
-  loginButton: {
+  signingInIndicator: {
     marginBottom: 16,
   },
-
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4285F4',
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  googleButtonText: {
+    color: '#4285F4',
+    backgroundColor: colors.white,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    textAlign: 'center',
+    lineHeight: 28,
+    fontSize: 16,
+    fontWeight: '700',
+    marginRight: 12,
+    overflow: 'hidden',
+  },
+  googleButtonLabel: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  appleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000',
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  appleButtonText: {
+    color: colors.white,
+    fontSize: 22,
+    marginRight: 12,
+    lineHeight: 28,
+  },
+  appleButtonLabel: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -257,22 +261,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 14,
   },
-  registerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 8,
+  emailButton: {
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  registerText: {
-    color: colors.textLight,
-    fontSize: 14,
-  },
-  registerLink: {
-    color: colors.primary,
-    fontSize: 14,
+  emailButtonText: {
+    color: colors.text,
+    fontSize: 16,
     fontWeight: '600',
-  },
-
-  eyeIconButton: {
-    padding: 8,
   },
 });

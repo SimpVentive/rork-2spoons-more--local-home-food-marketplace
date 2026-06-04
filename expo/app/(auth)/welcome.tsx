@@ -1,13 +1,41 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, Platform, Image, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/auth-store';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
+  const { syncProfile } = useAuthStore();
+
+  // If already authenticated, redirect to main app
+  React.useEffect(() => {
+    if (user && !authLoading) {
+      syncProfile(user.id, user.email, user.name, user.picture).then(() => {
+        const state = useAuthStore.getState();
+        if (state.isAdmin) {
+          router.replace('/(admin)' as never);
+        } else if (!state.userPreference) {
+          router.replace('/user-preference' as never);
+        } else {
+          router.replace('/(tabs)/home' as never);
+        }
+      });
+    }
+  }, [user, authLoading]);
+
+  if (authLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.white} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -36,15 +64,14 @@ export default function WelcomeScreen() {
           
           <View style={styles.buttonContainer}>
             <Button
-              title="Login"
-              onPress={() => router.push('/(auth)/login' as any)}
+              title="Continue with Google"
+              onPress={() => router.push('/(auth)/login' as never)}
               variant="primary"
               style={styles.button}
             />
-            
             <Button
-              title="Create Account"
-              onPress={() => router.push('/(auth)/register' as any)}
+              title="Continue with Apple"
+              onPress={() => router.push('/(auth)/login' as never)}
               variant="outline"
               style={styles.registerButton}
               textStyle={styles.registerButtonText}
@@ -59,6 +86,12 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.black,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: colors.black,
   },
   backgroundImage: {

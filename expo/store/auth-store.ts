@@ -1,20 +1,24 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { mockUsers } from '@/mocks/data';
+import { supabase } from '@/lib/supabase';
 import { User, UserPreference, RouteLocation } from '@/types';
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  token: string | null;
   isAdmin: boolean;
   userPreference: UserPreference | null;
   isInitialized: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  adminLogin: (email: string, password: string) => Promise<boolean>;
+  isLoading: boolean;
+
+  /** Called after Rork Auth sign-in to sync the Supabase profile */
+  syncProfile: (authUserId: string, authEmail?: string, authName?: string, authPicture?: string) => Promise<User>;
+  /** Fetch profile from Supabase by user ID */
+  fetchProfile: (userId: string) => Promise<User | null>;
+  /** Logout — clears local state (token clearing is handled by useAuth hook) */
   logout: () => void;
-  register: (userData: Partial<User>) => Promise<boolean>;
+
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
   updateUser: (updates: Partial<User>) => Promise<boolean>;
   updateUserPreference: (preference: 'buyer' | 'seller') => Promise<void>;
@@ -24,7 +28,6 @@ interface AuthState {
   updateDetourPreference: (meters: number) => Promise<void>;
   updateOfficeAddress: (address: string, location: { latitude: number; longitude: number }) => Promise<void>;
   setRoutesSameAsHomeToOffice: (value: boolean) => Promise<void>;
-  // Chef subscription methods
   updateSubscription: (plan: string, expiryDate: string) => Promise<void>;
   incrementPostCount: () => Promise<boolean>;
   checkPostingEligibility: () => { eligible: boolean; message: string };
@@ -32,238 +35,194 @@ interface AuthState {
   initialize: () => Promise<void>;
 }
 
+/** Map a Supabase profile row to our app User type */
+function rowToUser(row: Record<string, unknown>): User {
+  return {
+    id: row.id as string,
+    name: (row.name as string) || '',
+    email: (row.email as string) || '',
+    phone: (row.phone as string) || '',
+    address: (row.address as string) || '',
+    profileImage: (row.avatar_url as string) || '',
+    experience: (row.experience as string) || '',
+    cuisineTypes: (row.cuisine_types as string[]) || [],
+    paymentMethods: (row.payment_methods as string[]) || [],
+    location: {
+      latitude: (row.location_lat as number) || 0,
+      longitude: (row.location_lng as number) || 0,
+    },
+    isChef: (row.is_chef as boolean) || false,
+    allowProfileDisplay: (row.allow_profile_display as boolean) ?? true,
+    isVerified: (row.is_verified as boolean) || false,
+    isAdmin: (row.is_admin as boolean) || false,
+    rating: (row.rating as number) || 0,
+    reviewCount: (row.review_count as number) || 0,
+    officeAddress: (row.office_address as string) || '',
+    officeLocation: {
+      latitude: (row.office_lat as number) || 0,
+      longitude: (row.office_lng as number) || 0,
+    },
+    homeToOfficeRoute: (row.home_to_office_route as RouteLocation[]) || [],
+    officeToHomeRoute: (row.office_to_home_route as RouteLocation[]) || [],
+    routesSameAsHomeToOffice: (row.routes_same_as_home_to_office as boolean) ?? true,
+    detourPreference: (row.detour_preference as number) || 500,
+    subscriptionPlan: (row.subscription_plan as string) || undefined,
+    subscriptionExpiry: (row.subscription_expiry as string) || undefined,
+    firstPostDate: (row.first_post_date as string) || null,
+    postCount: (row.post_count as number) || 0,
+    freePostsRemaining: (row.free_posts_remaining as number) ?? 3,
+  };
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
       isAuthenticated: false,
-      token: null,
       isAdmin: false,
       userPreference: null,
       isInitialized: false,
-      
+      isLoading: false,
+
       initialize: async () => {
         try {
-          console.log('Initializing auth store...');
-          
-          // Clear authentication state to force fresh login on every app start
-          set({
-            user: null,
-            isAuthenticated: false,
-            userPreference: null,
-            token: null,
-            isAdmin: false,
-            isInitialized: true,
-          });
-          
-          console.log('Auth store initialized - cleared state for fresh login');
+          set({ isInitialized: true });
         } catch (error) {
           console.error('Auth store initialization error:', error);
-          set({ 
-            user: null,
-            isAuthenticated: false,
-            userPreference: null,
-            token: null,
-            isAdmin: false,
-            isInitialized: true 
-          });
+          set({ isInitialized: true });
         }
       },
-      
-      login: async (email: string, password: string) => {
+
+      fetchProfile: async (userId: string) => {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+        if (error || !data) {
+          console.error('Fetch profile error:', error?.message);
+          return null;
+        }
+
+        return rowToUser(data);
+      },
+
+      syncProfile: async (authUserId: string, authEmail?: string, authName?: string, authPicture?: string) => {
         try {
-          console.log('Attempting login for:', email);
-          
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Find user with matching email (in a real app, this would be done on the server)
-          const user = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
-          
-          if (!user) {
-            console.log("User not found for email:", email);
-            console.log("Available users:", mockUsers.map(u => u.email));
-            return false;
+          set({ isLoading: true });
+
+          // Check if profile exists
+          const { data: existing } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', authUserId)
+            .single();
+
+          if (!existing) {
+            // Create new profile for first-time sign-in
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: authUserId,
+                email: authEmail || '',
+                name: authName || '',
+                avatar_url: authPicture || '',
+              });
+
+            if (insertError) {
+              console.error('Create profile error:', insertError.message);
+            }
           }
-          
-          console.log('User found:', user.name, 'isAdmin:', user.isAdmin);
-          
-          // In a real app, we would verify the password on the server
-          // For demo purposes, we'll just assume the password is correct
-          
-          set({
-            user,
-            isAuthenticated: true,
-            isAdmin: user.isAdmin === true,
-            token: 'demo-token-' + Math.random().toString(36).substring(2, 15),
-            // Set default user preference based on isChef flag
-            userPreference: user.isChef ? { type: 'seller' } : { type: 'buyer' }
-          });
-          
-          console.log('Login successful, user preference set to:', user.isChef ? 'seller' : 'buyer');
-          return true;
+
+          // Fetch the full profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authUserId)
+            .single();
+
+          if (profile) {
+            const user = rowToUser(profile);
+            set({
+              user,
+              isAuthenticated: true,
+              isAdmin: user.isAdmin === true,
+              userPreference: user.isChef ? { type: 'seller' } : { type: 'buyer' },
+              isLoading: false,
+            });
+            return user;
+          }
+
+          set({ isLoading: false });
+          return null as unknown as User;
         } catch (error) {
-          console.error('Login error:', error);
-          return false;
+          console.error('Sync profile error:', error);
+          set({ isLoading: false });
+          return null as unknown as User;
         }
       },
-      
-      adminLogin: async (email: string, password: string) => {
-        try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Find admin user with matching email
-          const adminUser = mockUsers.find(u => 
-            u.email.toLowerCase() === email.toLowerCase() && u.isAdmin === true
-          );
-          
-          if (!adminUser) {
-            console.log("Admin user not found for email:", email);
-            return false;
-          }
-          
-          // In a real app, we would verify the password on the server
-          // For demo purposes, we'll just assume the password is correct
-          
-          set({
-            user: adminUser,
-            isAuthenticated: true,
-            isAdmin: true,
-            token: 'admin-token-' + Math.random().toString(36).substring(2, 15),
-            userPreference: { type: 'seller' } // Admins are always sellers
-          });
-          
-          return true;
-        } catch (error) {
-          console.error('Admin login error:', error);
-          return false;
-        }
-      },
-      
+
       logout: () => {
         set({
           user: null,
           isAuthenticated: false,
           isAdmin: false,
-          token: null,
           userPreference: null,
         });
       },
-      
-      register: async (userData: Partial<User>) => {
-        try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          
-          // Check if email is already in use
-          const existingUser = mockUsers.find(u => 
-            u.email.toLowerCase() === userData.email?.toLowerCase()
-          );
-          
-          if (existingUser) {
-            throw new Error('Email already in use');
-          }
-          
-          // Create new user
-          const newUser: User = {
-            id: `user-${Date.now()}`,
-            name: userData.name || "",
-            email: userData.email || "",
-            phone: userData.phone || "",
-            address: userData.address || "",
-            profileImage: userData.profileImage || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167',
-            experience: userData.experience || "",
-            cuisineTypes: userData.cuisineTypes || [],
-            paymentMethods: userData.paymentMethods || ['UPI'],
-            location: userData.location || {
-              latitude: 0,
-              longitude: 0,
-            },
-            isChef: userData.isChef || false,
-            allowProfileDisplay: userData.allowProfileDisplay !== undefined ? userData.allowProfileDisplay : true,
-            isVerified: false,
-            isAdmin: false,
-            rating: 0,
-            reviewCount: 0,
-            // New fields
-            officeAddress: "",
-            officeLocation: { latitude: 0, longitude: 0 },
-            homeToOfficeRoute: [],
-            officeToHomeRoute: [],
-            routesSameAsHomeToOffice: true,
-            detourPreference: 500, // Default 500 meters
-            // Chef subscription data
-            firstPostDate: null,
-            postCount: 0,
-            freePostsRemaining: 3, // New users get 3 free posts
-          };
-          
-          // In a real app, we would save this to the database
-          // For demo purposes, we'll just set it in the store
-          
-          set({
-            user: newUser,
-            isAuthenticated: true,
-            isAdmin: false,
-            token: 'demo-token-' + Math.random().toString(36).substring(2, 15),
-          });
-          
-          return true;
-        } catch (error) {
-          console.error('Registration error:', error);
-          return false;
-        }
-      },
-      
+
       updateProfile: async (updates: Partial<User>) => {
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
           const { user } = get();
-          
-          if (!user) {
-            throw new Error('User not found');
+          if (!user) throw new Error('User not found');
+
+          const dbUpdates: Record<string, unknown> = {};
+          if (updates.name !== undefined) dbUpdates.name = updates.name;
+          if (updates.email !== undefined) dbUpdates.email = updates.email;
+          if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+          if (updates.address !== undefined) dbUpdates.address = updates.address;
+          if (updates.profileImage !== undefined) dbUpdates.avatar_url = updates.profileImage;
+          if (updates.experience !== undefined) dbUpdates.experience = updates.experience;
+          if (updates.cuisineTypes !== undefined) dbUpdates.cuisine_types = updates.cuisineTypes;
+          if (updates.paymentMethods !== undefined) dbUpdates.payment_methods = updates.paymentMethods;
+          if (updates.isChef !== undefined) dbUpdates.is_chef = updates.isChef;
+          if (updates.allowProfileDisplay !== undefined) dbUpdates.allow_profile_display = updates.allowProfileDisplay;
+          if (updates.location) {
+            dbUpdates.location_lat = updates.location.latitude;
+            dbUpdates.location_lng = updates.location.longitude;
           }
-          
+
+          const { error } = await supabase
+            .from('profiles')
+            .update({ ...dbUpdates, updated_at: new Date().toISOString() })
+            .eq('id', user.id);
+
+          if (error) {
+            console.error('Update profile error:', error.message);
+            return false;
+          }
+
           const updatedUser = { ...user, ...updates };
-          
-          // In a real app, we would update this in the database
-          // For demo purposes, we'll just update it in the store
-          
-          set({ 
-            user: updatedUser,
-            isAdmin: updatedUser.isAdmin === true
-          });
-          
+          set({ user: updatedUser, isAdmin: updatedUser.isAdmin === true });
           return true;
         } catch (error) {
           console.error('Profile update error:', error);
           return false;
         }
       },
-      
+
       updateUser: async (updates: Partial<User>) => {
         return get().updateProfile(updates);
       },
 
       updateUserPreference: async (preference: 'buyer' | 'seller') => {
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
           set({ userPreference: { type: preference } });
-          
-          // Also update the user object if it exists
           const { user } = get();
           if (user) {
-            await get().updateProfile({ 
-              isChef: preference === 'seller'
-            });
+            await get().updateProfile({ isChef: preference === 'seller' });
           }
-          
-          return;
         } catch (error) {
           console.error('User preference update error:', error);
           throw error;
@@ -273,23 +232,11 @@ export const useAuthStore = create<AuthState>()(
       switchRole: async () => {
         try {
           const { user } = get();
-          
-          if (!user) {
-            throw new Error('User not found');
-          }
-          
-          // Toggle between buyer and seller
+          if (!user) throw new Error('User not found');
+
           const newPreference = user.isChef ? 'buyer' : 'seller';
-          
-          // Update user preference
           set({ userPreference: { type: newPreference } });
-          
-          // Update user object
-          await get().updateProfile({
-            isChef: newPreference === 'seller'
-          });
-          
-          return;
+          await get().updateProfile({ isChef: newPreference === 'seller' });
         } catch (error) {
           console.error('Role switch error:', error);
           throw error;
@@ -299,27 +246,31 @@ export const useAuthStore = create<AuthState>()(
       addRouteLocation: async (type: 'homeToOffice' | 'officeToHome', location: RouteLocation) => {
         try {
           const { user } = get();
-          
-          if (!user) {
-            throw new Error('User not found');
-          }
-          
+          if (!user) throw new Error('User not found');
+
           let updatedUser = { ...user };
-          
+
           if (type === 'homeToOffice') {
             updatedUser.homeToOfficeRoute = [...(user.homeToOfficeRoute || []), location];
-            
-            // If routes are synced, update officeToHome as well
             if (user.routesSameAsHomeToOffice) {
               updatedUser.officeToHomeRoute = [...updatedUser.homeToOfficeRoute].reverse();
             }
           } else {
             updatedUser.officeToHomeRoute = [...(user.officeToHomeRoute || []), location];
           }
-          
+
           set({ user: updatedUser });
-          
-          return;
+
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              home_to_office_route: updatedUser.homeToOfficeRoute,
+              office_to_home_route: updatedUser.officeToHomeRoute,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', user.id);
+
+          if (error) console.error('Add route location error:', error.message);
         } catch (error) {
           console.error('Add route location error:', error);
           throw error;
@@ -329,29 +280,31 @@ export const useAuthStore = create<AuthState>()(
       removeRouteLocation: async (type: 'homeToOffice' | 'officeToHome', locationId: string) => {
         try {
           const { user } = get();
-          
-          if (!user) {
-            throw new Error('User not found');
-          }
-          
+          if (!user) throw new Error('User not found');
+
           let updatedUser = { ...user };
-          
+
           if (type === 'homeToOffice') {
-            updatedUser.homeToOfficeRoute = (user.homeToOfficeRoute || [])
-              .filter(loc => loc.id !== locationId);
-            
-            // If routes are synced, update officeToHome as well
+            updatedUser.homeToOfficeRoute = (user.homeToOfficeRoute || []).filter(loc => loc.id !== locationId);
             if (user.routesSameAsHomeToOffice) {
               updatedUser.officeToHomeRoute = [...updatedUser.homeToOfficeRoute].reverse();
             }
           } else {
-            updatedUser.officeToHomeRoute = (user.officeToHomeRoute || [])
-              .filter(loc => loc.id !== locationId);
+            updatedUser.officeToHomeRoute = (user.officeToHomeRoute || []).filter(loc => loc.id !== locationId);
           }
-          
+
           set({ user: updatedUser });
-          
-          return;
+
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              home_to_office_route: updatedUser.homeToOfficeRoute,
+              office_to_home_route: updatedUser.officeToHomeRoute,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', user.id);
+
+          if (error) console.error('Remove route location error:', error.message);
         } catch (error) {
           console.error('Remove route location error:', error);
           throw error;
@@ -361,15 +314,16 @@ export const useAuthStore = create<AuthState>()(
       updateDetourPreference: async (meters: number) => {
         try {
           const { user } = get();
-          
-          if (!user) {
-            throw new Error('User not found');
-          }
-          
-          const updatedUser = { ...user, detourPreference: meters };
-          set({ user: updatedUser });
-          
-          return;
+          if (!user) throw new Error('User not found');
+
+          set({ user: { ...user, detourPreference: meters } });
+
+          const { error } = await supabase
+            .from('profiles')
+            .update({ detour_preference: meters, updated_at: new Date().toISOString() })
+            .eq('id', user.id);
+
+          if (error) console.error('Update detour preference error:', error.message);
         } catch (error) {
           console.error('Update detour preference error:', error);
           throw error;
@@ -379,20 +333,26 @@ export const useAuthStore = create<AuthState>()(
       updateOfficeAddress: async (address: string, location: { latitude: number; longitude: number }) => {
         try {
           const { user } = get();
-          
-          if (!user) {
-            throw new Error('User not found');
-          }
-          
-          const updatedUser = { 
-            ...user, 
+          if (!user) throw new Error('User not found');
+
+          const updatedUser = {
+            ...user,
             officeAddress: address,
-            officeLocation: location
+            officeLocation: location,
           };
-          
           set({ user: updatedUser });
-          
-          return;
+
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              office_address: address,
+              office_lat: location.latitude,
+              office_lng: location.longitude,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', user.id);
+
+          if (error) console.error('Update office address error:', error.message);
         } catch (error) {
           console.error('Update office address error:', error);
           throw error;
@@ -402,46 +362,54 @@ export const useAuthStore = create<AuthState>()(
       setRoutesSameAsHomeToOffice: async (value: boolean) => {
         try {
           const { user } = get();
-          
-          if (!user) {
-            throw new Error('User not found');
-          }
-          
+          if (!user) throw new Error('User not found');
+
           let updatedUser = { ...user, routesSameAsHomeToOffice: value };
-          
-          // If setting to true, copy and reverse the homeToOffice route
           if (value && user.homeToOfficeRoute) {
             updatedUser.officeToHomeRoute = [...user.homeToOfficeRoute].reverse();
           }
-          
           set({ user: updatedUser });
-          
-          return;
+
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              routes_same_as_home_to_office: value,
+              office_to_home_route: updatedUser.officeToHomeRoute,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', user.id);
+
+          if (error) console.error('Set routes same error:', error.message);
         } catch (error) {
           console.error('Set routes same error:', error);
           throw error;
         }
       },
 
-      // Chef subscription methods
       updateSubscription: async (plan: string, expiryDate: string) => {
         try {
           const { user } = get();
-          
-          if (!user) {
-            throw new Error('User not found');
-          }
-          
-          const updatedUser = { 
-            ...user, 
+          if (!user) throw new Error('User not found');
+
+          const updatedUser = {
+            ...user,
             subscriptionPlan: plan,
             subscriptionExpiry: expiryDate,
-            freePostsRemaining: 0 // Reset free posts when subscribing
+            freePostsRemaining: 0,
           };
-          
           set({ user: updatedUser });
-          
-          return;
+
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              subscription_plan: plan,
+              subscription_expiry: expiryDate,
+              free_posts_remaining: 0,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', user.id);
+
+          if (error) console.error('Update subscription error:', error.message);
         } catch (error) {
           console.error('Update subscription error:', error);
           throw error;
@@ -451,34 +419,32 @@ export const useAuthStore = create<AuthState>()(
       incrementPostCount: async () => {
         try {
           const { user } = get();
-          
-          if (!user) {
-            throw new Error('User not found');
-          }
+          if (!user) throw new Error('User not found');
 
-          // Check if user is eligible to post
           const eligibility = get().checkPostingEligibility();
-          if (!eligibility.eligible) {
-            return false;
-          }
-          
+          if (!eligibility.eligible) return false;
+
           let updatedUser = { ...user };
-          
-          // If this is the first post, set the first post date
           if (!user.firstPostDate) {
             updatedUser.firstPostDate = new Date().toISOString();
           }
-          
-          // Increment post count
           updatedUser.postCount = (user.postCount || 0) + 1;
-          
-          // If user is using free posts, decrement the remaining count
           if (user.freePostsRemaining && user.freePostsRemaining > 0) {
             updatedUser.freePostsRemaining = user.freePostsRemaining - 1;
           }
-          
           set({ user: updatedUser });
-          
+
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              first_post_date: updatedUser.firstPostDate,
+              post_count: updatedUser.postCount,
+              free_posts_remaining: updatedUser.freePostsRemaining,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', user.id);
+
+          if (error) console.error('Increment post count error:', error.message);
           return true;
         } catch (error) {
           console.error('Increment post count error:', error);
@@ -488,94 +454,53 @@ export const useAuthStore = create<AuthState>()(
 
       checkPostingEligibility: () => {
         const { user } = get();
-        
-        if (!user) {
-          return { 
-            eligible: false, 
-            message: 'User not found' 
-          };
-        }
-        
-        // Check if user has free posts remaining
+        if (!user) return { eligible: false, message: 'User not found' };
+
         if (user.freePostsRemaining && user.freePostsRemaining > 0) {
-          return { 
-            eligible: true, 
-            message: `You have ${user.freePostsRemaining} free posts remaining` 
-          };
+          return { eligible: true, message: `You have ${user.freePostsRemaining} free posts remaining` };
         }
-        
-        // Check if user has an active subscription
+
         if (user.subscriptionPlan && user.subscriptionExpiry) {
           const expiryDate = new Date(user.subscriptionExpiry);
-          const now = new Date();
-          
-          if (expiryDate > now) {
-            // Check post limits based on subscription plan
+          if (expiryDate > new Date()) {
             if (user.subscriptionPlan === 'basic' && (user.postCount || 0) >= 10) {
-              return { 
-                eligible: false, 
-                message: 'You have reached the maximum number of posts for your Basic plan (10 per month)' 
-              };
+              return { eligible: false, message: 'You have reached the maximum number of posts for your Basic plan (10 per month)' };
             } else if (user.subscriptionPlan === 'silver' && (user.postCount || 0) >= 30) {
-              return { 
-                eligible: false, 
-                message: 'You have reached the maximum number of posts for your Silver plan (30 per month)' 
-              };
+              return { eligible: false, message: 'You have reached the maximum number of posts for your Silver plan (30 per month)' };
             } else if (user.subscriptionPlan === 'gold') {
-              // Gold plan has unlimited posts
-              return { 
-                eligible: true, 
-                message: 'You have unlimited posts with your Gold plan' 
-              };
+              return { eligible: true, message: 'You have unlimited posts with your Gold plan' };
             }
-            
-            return { 
-              eligible: true, 
-              message: 'You have an active subscription' 
-            };
+            return { eligible: true, message: 'You have an active subscription' };
           } else {
-            return { 
-              eligible: false, 
-              message: 'Your subscription has expired. Please renew to continue posting.' 
-            };
+            return { eligible: false, message: 'Your subscription has expired. Please renew to continue posting.' };
           }
         }
-        
-        // Check if 30-day free trial period is still active
+
         if (user.firstPostDate) {
           const firstPostDate = new Date(user.firstPostDate);
           const trialEndDate = new Date(firstPostDate);
           trialEndDate.setDate(trialEndDate.getDate() + 30);
-          
-          const now = new Date();
-          
-          if (now < trialEndDate) {
-            return { 
-              eligible: true, 
-              message: `Your free trial is active until ${trialEndDate.toLocaleDateString()}` 
-            };
+          if (new Date() < trialEndDate) {
+            return { eligible: true, message: `Your free trial is active until ${trialEndDate.toLocaleDateString()}` };
           }
         }
-        
-        // If we get here, user needs to subscribe
-        return { 
-          eligible: false, 
-          message: 'You need to subscribe to a plan to continue posting' 
-        };
+
+        return { eligible: false, message: 'You need to subscribe to a plan to continue posting' };
       },
 
       resetFreePostsRemaining: async () => {
         try {
           const { user } = get();
-          
-          if (!user) {
-            throw new Error('User not found');
-          }
-          
-          const updatedUser = { ...user, freePostsRemaining: 3 };
-          set({ user: updatedUser });
-          
-          return;
+          if (!user) throw new Error('User not found');
+
+          set({ user: { ...user, freePostsRemaining: 3 } });
+
+          const { error } = await supabase
+            .from('profiles')
+            .update({ free_posts_remaining: 3, updated_at: new Date().toISOString() })
+            .eq('id', user.id);
+
+          if (error) console.error('Reset free posts error:', error.message);
         } catch (error) {
           console.error('Reset free posts error:', error);
           throw error;
@@ -585,14 +510,11 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      // Skip complex rehydration logic for better Android compatibility
       partialize: (state) => ({
-        // Only persist essential data, not auth state
-        user: null,
-        isAuthenticated: false,
-        userPreference: null,
-        token: null,
-        isAdmin: false,
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+        userPreference: state.userPreference,
+        isAdmin: state.isAdmin,
       }),
     }
   )

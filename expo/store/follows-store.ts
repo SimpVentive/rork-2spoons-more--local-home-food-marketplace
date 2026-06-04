@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { supabase } from '@/lib/supabase';
 
 interface Follow {
   id: string;
@@ -19,59 +20,40 @@ interface FollowsState {
   getFollowerCount: (followedId: string) => number;
 }
 
-// Mock follows for demonstration
-const mockFollows: Follow[] = [
-  {
-    id: '1',
-    followerId: '1',
-    followedId: '2',
-    createdAt: '2023-06-10T14:30:00Z',
-  },
-  {
-    id: '2',
-    followerId: '1',
-    followedId: '3',
-    createdAt: '2023-06-12T09:15:00Z',
-  },
-  {
-    id: '3',
-    followerId: '2',
-    followedId: '1',
-    createdAt: '2023-06-14T16:45:00Z',
-  },
-];
+function rowToFollow(row: Record<string, unknown>): Follow {
+  return {
+    id: row.id as string,
+    followerId: row.follower_id as string,
+    followedId: row.following_id as string,
+    createdAt: row.created_at as string,
+  };
+}
 
 export const useFollowsStore = create<FollowsState>()(
   persist(
     (set, get) => ({
-      follows: mockFollows,
+      follows: [],
       isLoading: false,
 
       followSeller: async (followerId, followedId) => {
-        // Don't allow following yourself
         if (followerId === followedId) return false;
-        
-        // Check if already following
         if (get().isFollowing(followerId, followedId)) return true;
-        
+
         set({ isLoading: true });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const newFollow: Follow = {
-            id: `follow_${Date.now()}`,
-            followerId,
-            followedId,
-            createdAt: new Date().toISOString(),
-          };
-          
-          set(state => ({
-            follows: [...state.follows, newFollow],
-            isLoading: false,
-          }));
-          
+          const { data, error } = await supabase
+            .from('follows')
+            .insert({ follower_id: followerId, following_id: followedId })
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Follow seller error:', error.message);
+            set({ isLoading: false });
+            return false;
+          }
+
+          set(state => ({ follows: [...state.follows, rowToFollow(data)], isLoading: false }));
           return true;
         } catch (error) {
           console.error('Follow seller error:', error);
@@ -82,18 +64,25 @@ export const useFollowsStore = create<FollowsState>()(
 
       unfollowSeller: async (followerId, followedId) => {
         set({ isLoading: true });
-        
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
+          const { error } = await supabase
+            .from('follows')
+            .delete()
+            .eq('follower_id', followerId)
+            .eq('following_id', followedId);
+
+          if (error) {
+            console.error('Unfollow seller error:', error.message);
+            set({ isLoading: false });
+            return false;
+          }
+
           set(state => ({
             follows: state.follows.filter(
-              follow => !(follow.followerId === followerId && follow.followedId === followedId)
+              f => !(f.followerId === followerId && f.followedId === followedId)
             ),
             isLoading: false,
           }));
-          
           return true;
         } catch (error) {
           console.error('Unfollow seller error:', error);
@@ -103,19 +92,15 @@ export const useFollowsStore = create<FollowsState>()(
       },
 
       isFollowing: (followerId, followedId) => {
-        return get().follows.some(
-          follow => follow.followerId === followerId && follow.followedId === followedId
-        );
+        return get().follows.some(f => f.followerId === followerId && f.followedId === followedId);
       },
 
       getFollowedSellers: (followerId) => {
-        return get().follows
-          .filter(follow => follow.followerId === followerId)
-          .map(follow => follow.followedId);
+        return get().follows.filter(f => f.followerId === followerId).map(f => f.followedId);
       },
 
       getFollowerCount: (followedId) => {
-        return get().follows.filter(follow => follow.followedId === followedId).length;
+        return get().follows.filter(f => f.followedId === followedId).length;
       },
     }),
     {
