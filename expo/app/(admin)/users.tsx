@@ -31,6 +31,8 @@ import {
 import { mockUsers } from '@/mocks/data';
 import { User as UserType } from '@/types';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 export default function ManageUsers() {
   const router = useRouter();

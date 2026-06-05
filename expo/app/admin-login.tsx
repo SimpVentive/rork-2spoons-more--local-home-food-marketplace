@@ -16,6 +16,8 @@ import { useAuthStore } from '@/store/auth-store';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 export default function AdminLoginScreen() {
   const [email, setEmail] = useState('admin@example.com');

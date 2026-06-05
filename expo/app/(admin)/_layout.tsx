@@ -17,6 +17,8 @@ import {
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 export default function AdminLayout() {
   const router = useRouter();

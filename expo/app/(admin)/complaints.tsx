@@ -24,6 +24,8 @@ import {
 } from 'lucide-react-native';
 import { Complaint } from '@/types';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 // Mock complaints data
 const mockComplaints: Complaint[] = [

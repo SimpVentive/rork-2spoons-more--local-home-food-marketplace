@@ -11,6 +11,8 @@ import {
   Pressable,
 } from 'react-native';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 interface ButtonProps {
   title: string;
@@ -40,12 +42,17 @@ const Button = forwardRef<any, ButtonProps>(({
   const actualLoading = isLoading || loading;
   const getButtonStyle = () => {
     const baseStyle: ViewStyle = {
-      borderRadius: 8,
+      borderRadius: spacing.radius.md,
       justifyContent: 'center',
       alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
       minHeight: 48,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
     };
 
     if (variant === 'primary') {
@@ -63,14 +70,14 @@ const Button = forwardRef<any, ButtonProps>(({
 
   const getSizeStyle = () => {
     const sizeStyle: ViewStyle = {
-      paddingVertical: 12,
-      paddingHorizontal: 16,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
     };
 
     if (size === 'small') {
-      return { ...sizeStyle, paddingVertical: 8, paddingHorizontal: 12, minHeight: 40 };
+      return { ...sizeStyle, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, minHeight: 40 };
     } else if (size === 'large') {
-      return { ...sizeStyle, paddingVertical: 16, paddingHorizontal: 24, minHeight: 56 };
+      return { ...sizeStyle, paddingVertical: spacing.lg, paddingHorizontal: spacing['2xl'], minHeight: 56 };
     }
 
     return sizeStyle;
@@ -86,8 +93,8 @@ const Button = forwardRef<any, ButtonProps>(({
   const getTextStyle = () => {
     const baseStyle: TextStyle = {
       color: colors.white,
-      fontSize: 16,
-      fontWeight: '600',
+      fontSize: typography.sizes.base,
+      fontWeight: typography.weights.semibold,
       textAlign: 'center',
     };
 
@@ -100,9 +107,9 @@ const Button = forwardRef<any, ButtonProps>(({
     }
 
     if (size === 'small') {
-      return { ...baseStyle, fontSize: 14 };
+      return { ...baseStyle, fontSize: typography.sizes.sm };
     } else if (size === 'large') {
-      return { ...baseStyle, fontSize: 18 };
+      return { ...baseStyle, fontSize: typography.sizes.lg };
     }
 
     if (disabled) {
@@ -148,7 +155,7 @@ const Button = forwardRef<any, ButtonProps>(({
         <ActivityIndicator size="small" color={variant === 'outline' ? colors.primary : colors.white} />
       ) : (
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-          {icon && <View style={{ marginRight: 8 }}>{icon}</View>}
+          {icon && <View style={{ marginRight: spacing.sm }}>{icon}</View>}
           <Text style={[getTextStyle(), textStyle]}>{title}</Text>
         </View>
       )}

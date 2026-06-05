@@ -42,6 +42,8 @@ import { useListingsStore } from '@/store/listings-store';
 import { useOrdersStore } from '@/store/orders-store';
 import { useComplaintsStore } from '@/store/complaints-store';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 import { mockAdminDashboardData } from '@/mocks/data';
 import { Image } from 'expo-image';
 import { Order, FoodListing, Complaint, TopChef } from '@/types';

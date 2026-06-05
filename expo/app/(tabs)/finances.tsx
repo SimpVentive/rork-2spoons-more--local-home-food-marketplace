@@ -24,6 +24,8 @@ import { useAuthStore } from '@/store/auth-store';
 import { useOrdersStore } from '@/store/orders-store';
 import { useListingsStore } from '@/store/listings-store';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 import { Order } from '@/types';
 
 export default function FinancesScreen() {

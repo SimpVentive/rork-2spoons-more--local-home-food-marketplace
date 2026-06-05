@@ -25,6 +25,8 @@ import Button from '@/components/Button';
 import LocationPicker from '@/components/LocationPicker';
 import RouteMapView from '@/components/RouteMapView';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 import { RouteLocation } from '@/types';
 
 export default function RouteSettingsScreen() {

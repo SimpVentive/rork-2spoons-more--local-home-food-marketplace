@@ -17,6 +17,8 @@ import { mockUsers } from '@/mocks/data';
 import FoodCard from '@/components/FoodCard';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 import { User, FoodListing } from '@/types';
 
 export default function FollowingScreen() {

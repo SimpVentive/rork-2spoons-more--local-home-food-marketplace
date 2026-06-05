@@ -13,6 +13,8 @@ import { useOrdersStore } from '@/store/orders-store';
 import OrderCard from '@/components/OrderCard';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 import { Order } from '@/types';
 
 export default function OrdersScreen() {

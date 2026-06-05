@@ -26,6 +26,8 @@ import {
 import type { AdminConversation, AdminMessage, User as UserType } from '@/types';
 import { mockUsers } from '@/mocks/data';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 // Mock conversations data
 const mockConversations: AdminConversation[] = [

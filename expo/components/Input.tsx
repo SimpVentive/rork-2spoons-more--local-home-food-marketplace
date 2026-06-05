@@ -11,6 +11,8 @@ import {
   Platform,
 } from 'react-native';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 interface InputProps {
   label?: string;
@@ -109,33 +111,38 @@ const Input: React.FC<InputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
     width: '100%',
   },
   label: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.medium,
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
-    borderRadius: 8,
+    borderRadius: spacing.radius.md,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputContainerError: {
     borderColor: colors.error,
   },
   input: {
     flex: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    fontSize: typography.sizes.base,
     color: colors.text,
-    minHeight: 48, // Ensure minimum height for touch target
+    minHeight: 48,
   },
   inputError: {
     borderColor: colors.error,
@@ -146,23 +153,23 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.error,
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: typography.sizes.sm,
+    marginTop: spacing.xs,
   },
   helperText: {
     color: colors.textLight,
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: typography.sizes.sm,
+    marginTop: spacing.xs,
   },
   rightIconContainer: {
     position: 'absolute',
-    right: 12,
+    right: spacing.md,
     height: '100%',
     justifyContent: 'center',
   },
   leftIconContainer: {
     position: 'absolute',
-    left: 12,
+    left: spacing.md,
     height: '100%',
     justifyContent: 'center',
     zIndex: 1,

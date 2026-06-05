@@ -34,6 +34,8 @@ import { useFollowsStore } from '@/store/follows-store';
 import Button from '@/components/Button';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 import { FoodListing } from '@/types';
 import SubscriptionModal from '@/components/SubscriptionModal';
 

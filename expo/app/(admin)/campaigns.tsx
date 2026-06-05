@@ -32,6 +32,8 @@ import { Campaign } from '@/types';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 // Mock campaigns data
 const mockCampaigns: Campaign[] = [

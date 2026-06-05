@@ -23,6 +23,8 @@ import {
 import { TopEarner } from '@/types';
 import { mockUsers, mockOrders } from '@/mocks/data';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 export default function TopEarnersScreen() {
   const router = useRouter();

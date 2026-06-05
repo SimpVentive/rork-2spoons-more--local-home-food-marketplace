@@ -33,6 +33,8 @@ import {
 } from 'lucide-react-native';
 import { useListingsStore } from '@/store/listings-store';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 import { Image } from 'expo-image';
 import { FoodListing } from '@/types';
 

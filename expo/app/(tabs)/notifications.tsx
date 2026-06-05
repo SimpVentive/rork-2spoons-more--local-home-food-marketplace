@@ -23,6 +23,8 @@ import {
 import { useAuthStore } from '@/store/auth-store';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 import { Notification } from '@/types';
 
 // Mock notifications data

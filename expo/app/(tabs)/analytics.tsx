@@ -25,6 +25,8 @@ import { useOrdersStore } from '@/store/orders-store';
 import { useFollowsStore } from '@/store/follows-store';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 // Mock data for charts
 const mockRevenueData = [

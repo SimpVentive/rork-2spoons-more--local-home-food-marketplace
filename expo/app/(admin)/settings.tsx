@@ -22,6 +22,8 @@ import {
   AlertTriangle
 } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 export default function AdminSettings() {
   // Notification settings

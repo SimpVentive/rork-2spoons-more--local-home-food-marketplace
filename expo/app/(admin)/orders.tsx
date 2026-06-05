@@ -25,6 +25,8 @@ import { Order } from '@/types';
 
 type OrderStatusType = Order['status'] | 'canceled' | 'refunded' | 'refund_requested' | 'accepted' | 'in_delivery' | 'delivered';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 export default function ManageOrders() {
   const router = useRouter();

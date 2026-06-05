@@ -21,6 +21,8 @@ import { FilterModal } from '@/components/FilterModal';
 import { RouteSearchModal } from '@/components/RouteSearchModal';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 import { FoodListing, FilterOptions } from '@/types';
 import { ESSENTIAL_CUISINE_TYPES, getExtendedCuisineTypes } from '@/mocks/data';
 import { optimizeImageUrl, generatePlaceholder } from '@/utils/imageOptimization';
