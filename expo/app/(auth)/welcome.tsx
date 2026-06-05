@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform, Image, ActivityIndicator } from 'reac
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Phone } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/auth-store';
 import Button from '@/components/Button';
@@ -78,6 +79,14 @@ export default function WelcomeScreen() {
               style={styles.registerButton}
               textStyle={styles.registerButtonText}
             />
+            <Button
+              title="Continue with Phone Number"
+              onPress={() => router.push('/(auth)/mobile-login' as never)}
+              variant="outline"
+              style={styles.mobileButton}
+              textStyle={styles.mobileButtonText}
+              icon={<Phone size={18} color={colors.white} />}
+            />
           </View>
         </View>
       </View>
@@ -149,6 +158,13 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   registerButtonText: {
+    color: colors.white,
+  },
+  mobileButton: {
+    borderColor: colors.white,
+    width: '100%',
+  },
+  mobileButtonText: {
     color: colors.white,
   },
 });

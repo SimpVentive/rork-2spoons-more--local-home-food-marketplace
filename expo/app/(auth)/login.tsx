@@ -109,12 +109,20 @@ export default function LoginScreen() {
             <View style={styles.divider} />
           </View>
           
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.emailButton}
             onPress={() => router.push('/(auth)/register' as never)}
             disabled={isSigningIn}
           >
             <Text style={styles.emailButtonText}>Sign up with email</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.mobileButton}
+            onPress={() => router.push('/(auth)/mobile-login' as never)}
+            disabled={isSigningIn}
+          >
+            <Text style={styles.mobileButtonText}>Continue with Phone Number</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -279,9 +287,23 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
+    marginBottom: spacing.md,
   },
   emailButtonText: {
     color: colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  mobileButton: {
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: `${colors.primary}10`,
+  },
+  mobileButtonText: {
+    color: colors.primary,
     fontSize: 16,
     fontWeight: '600',
   },
