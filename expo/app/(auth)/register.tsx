@@ -15,6 +15,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/auth-store';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 export default function RegisterScreen() {
   const { user, isSigningIn, error, signIn, clearError, isLoading: authLoading } = useAuth();

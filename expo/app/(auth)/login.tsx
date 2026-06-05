@@ -15,6 +15,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/auth-store';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 export default function LoginScreen() {
   const { user, isSigningIn, error, signIn, clearError, isLoading: authLoading } = useAuth();
@@ -143,55 +145,55 @@ const styles = StyleSheet.create({
   logo: {
     width: 100,
     height: 100,
-    borderRadius: 20,
+    borderRadius: spacing.radius.lg,
   },
   appName: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: typography.sizes['2xl'],
+    fontWeight: typography.weights.bold,
     color: colors.primary,
-    marginTop: 16,
+    marginTop: spacing.lg,
   },
   tagline: {
-    fontSize: 16,
+    fontSize: typography.sizes.base,
     color: colors.textLight,
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   formContainer: {
     paddingHorizontal: 24,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: typography.sizes['2xl'],
+    fontWeight: typography.weights.bold,
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: typography.sizes.base,
     color: colors.textLight,
-    marginBottom: 24,
+    marginBottom: spacing['2xl'],
   },
   errorContainer: {
     backgroundColor: '#FEE2E2',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    padding: spacing.md,
+    borderRadius: spacing.radius.md,
+    marginBottom: spacing.lg,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   errorText: {
     color: '#DC2626',
-    fontSize: 14,
+    fontSize: typography.sizes.sm,
     flex: 1,
   },
   errorDismiss: {
-    marginLeft: 8,
-    padding: 4,
+    marginLeft: spacing.sm,
+    padding: spacing.xs,
   },
   errorDismissText: {
     color: '#DC2626',
-    fontWeight: '600',
-    fontSize: 14,
+    fontWeight: typography.weights.semibold,
+    fontSize: typography.sizes.sm,
   },
   signingInIndicator: {
     marginBottom: 16,
@@ -201,9 +203,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#4285F4',
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginBottom: 12,
+    paddingVertical: spacing.lg,
+    borderRadius: spacing.radius.md,
+    marginBottom: spacing.md,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   googleButtonText: {
     color: '#4285F4',
@@ -220,17 +227,22 @@ const styles = StyleSheet.create({
   },
   googleButtonLabel: {
     color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
   },
   appleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#000',
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginBottom: 12,
+    paddingVertical: spacing.lg,
+    borderRadius: spacing.radius.md,
+    marginBottom: spacing.md,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   appleButtonText: {
     color: colors.white,
@@ -240,8 +252,8 @@ const styles = StyleSheet.create({
   },
   appleButtonLabel: {
     color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
   },
   buttonDisabled: {
     opacity: 0.6,
