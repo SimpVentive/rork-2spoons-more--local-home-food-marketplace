@@ -25,6 +25,7 @@ import { LoadingState } from '@/components/LoadingState';
 import { NotifyMeModal } from '@/components/NotifyMeModal';
 import { FoodListing, User, Review } from '@/types';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
 import { mockUsers } from '@/mocks/data';
 
 export default function HomeScreen() {
@@ -391,8 +392,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   greeting: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
     color: colors.text,
     marginBottom: 2,
     letterSpacing: -0.3,
@@ -448,13 +449,13 @@ const styles = StyleSheet.create({
   heroCard: {
     marginHorizontal: 20,
     marginTop: 8,
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: 'hidden',
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 10,
   },
   searchBar: {
     flexDirection: 'row',
@@ -572,13 +573,13 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginHorizontal: 20,
     backgroundColor: colors.white,
-    borderRadius: 20,
+    borderRadius: 24,
     paddingVertical: 24,
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 6,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -602,16 +603,16 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
     color: colors.text,
-    marginBottom: 2,
+    marginBottom: 4,
     letterSpacing: -0.3,
   },
   sectionSubtitle: {
-    fontSize: 12,
+    fontSize: typography.sizes.xs,
     color: colors.textLight,
-    fontWeight: '500',
+    fontWeight: typography.weights.medium,
     lineHeight: 18,
   },
   seeAllButton: {
@@ -632,14 +633,14 @@ const styles = StyleSheet.create({
   topItemCard: {
     width: 140,
     marginRight: 12,
-    borderRadius: 16,
+    borderRadius: 20,
     backgroundColor: colors.card,
     overflow: 'hidden',
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   topItemImageContainer: {
     position: 'relative',
@@ -675,17 +676,17 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   topItemName: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.bold,
     color: colors.text,
-    marginBottom: 2,
+    marginBottom: 4,
     lineHeight: 16,
   },
   topItemPrice: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.bold,
     color: colors.primary,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   topItemRating: {
     flexDirection: 'row',
@@ -707,10 +708,10 @@ const styles = StyleSheet.create({
   },
   chefImageContainer: {
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
     borderRadius: 45,
     marginBottom: 12,
   },
@@ -723,11 +724,11 @@ const styles = StyleSheet.create({
     borderColor: colors.white,
   },
   chefName: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.bold,
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
     lineHeight: 18,
   },
   chefRating: {
