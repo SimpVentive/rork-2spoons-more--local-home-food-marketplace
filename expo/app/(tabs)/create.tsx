@@ -6,6 +6,8 @@ import { Camera, ChefHat, Clock, DollarSign, FileText, Image as ImageIcon, MapPi
 import { useAuthStore } from '@/store/auth-store';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 export default function CreateScreen() {
   const { user } = useAuthStore();
