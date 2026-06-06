@@ -161,7 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await fetch(`${AUTH_URL}/oauth/initiate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ app_key: APP_KEY, provider, code_challenge: challenge, target, env }),
+        body: JSON.stringify({ app_key: APP_KEY, provider, code_challenge: challenge, target, env, app_path: "expo" }),
       });
 
       if (!response.ok) {

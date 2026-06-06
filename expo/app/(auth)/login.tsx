@@ -20,22 +20,19 @@ import { spacing } from '@/constants/spacing';
 
 export default function LoginScreen() {
   const { user, isSigningIn, error, signIn, clearError, isLoading: authLoading } = useAuth();
-  const { syncProfile } = useAuthStore();
   const router = useRouter();
 
   // Redirect when authenticated
   useEffect(() => {
     if (user && !authLoading) {
-      syncProfile(user.id, user.email, user.name, user.picture).then(() => {
-        const state = useAuthStore.getState();
-        if (state.isAdmin) {
-          router.replace('/(admin)' as never);
-        } else if (!state.userPreference) {
-          router.replace('/user-preference' as never);
-        } else {
-          router.replace('/(tabs)/home' as never);
-        }
-      });
+      const state = useAuthStore.getState();
+      if (state.isAdmin) {
+        router.replace('/(admin)' as never);
+      } else if (!state.userPreference) {
+        router.replace('/user-preference' as never);
+      } else {
+        router.replace('/(tabs)/home' as never);
+      }
     }
   }, [user, authLoading]);
 
