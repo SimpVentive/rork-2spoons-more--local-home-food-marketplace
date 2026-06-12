@@ -12,7 +12,7 @@ export default function AuthLayout() {
       <Stack.Screen name="welcome" />
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
-      <Stack.Screen name="mobile-login" />
+      <Stack.Screen name="mobile-login" options={{ title: 'Phone Login' }} />
     </Stack>
   );
 }

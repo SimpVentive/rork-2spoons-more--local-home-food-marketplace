@@ -104,7 +104,7 @@ export default function MobileLoginScreen() {
       // For now, set to true to demonstrate flow
       setIsTwoFAEnabled(true);
 
-      if (setIsTwoFAEnabled) {
+      if (isTwoFAEnabled) {
         setStep('twofa');
       } else {
         // Login successful
