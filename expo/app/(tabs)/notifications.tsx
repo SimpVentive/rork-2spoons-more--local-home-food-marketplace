@@ -21,13 +21,14 @@ import {
   MapPin,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
+import { useNotificationsStore } from '@/store/notifications-store';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 import { Notification } from '@/types';
 
-// Mock notifications data
+// Fallback mock notifications data if needed
 const mockNotifications: Notification[] = [
   {
     id: '1',
@@ -82,34 +83,27 @@ const mockNotifications: Notification[] = [
 
 export default function NotificationsScreen() {
   const { user } = useAuthStore();
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const { notifications, fetchNotifications, markAsRead, markAllAsRead } = useNotificationsStore();
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
-  
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchNotifications(user.id);
+    }
+  }, [user?.id]);
+
   const router = useRouter();
-  
+
   const onRefresh = async () => {
     setRefreshing(true);
-    // In a real app, fetch notifications from API
-    setTimeout(() => {
+    try {
+      if (user?.id) {
+        await fetchNotifications(user.id);
+      }
+    } finally {
       setRefreshing(false);
-    }, 1000);
-  };
-  
-  const markAsRead = (notificationId: string) => {
-    setNotifications(
-      notifications.map(notification => 
-        notification.id === notificationId 
-          ? { ...notification, isRead: true } 
-          : notification
-      )
-    );
-  };
-  
-  const markAllAsRead = () => {
-    setNotifications(
-      notifications.map(notification => ({ ...notification, isRead: true }))
-    );
+    }
   };
   
   const handleNotificationPress = (notification: Notification) => {
@@ -247,9 +241,9 @@ export default function NotificationsScreen() {
         </View>
         
         {unreadCount > 0 && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.markAllReadButton}
-            onPress={markAllAsRead}
+            onPress={() => user?.id && markAllAsRead(user.id)}
           >
             <Check size={16} color={colors.primary} />
             <Text style={styles.markAllReadText}>Mark all as read</Text>

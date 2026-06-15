@@ -41,10 +41,10 @@ import { useAuthStore } from '@/store/auth-store';
 import { useListingsStore } from '@/store/listings-store';
 import { useOrdersStore } from '@/store/orders-store';
 import { useComplaintsStore } from '@/store/complaints-store';
+import { fetchAllUsers } from '@/lib/supabase';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
-import { mockAdminDashboardData } from '@/mocks/data';
 import { Image } from 'expo-image';
 import { Order, FoodListing, Complaint, TopChef } from '@/types';
 import Button from '@/components/Button';
@@ -128,66 +128,73 @@ export default function AdminDashboard() {
     logout();
     router.replace('/(auth)' as any);
   };
-  const loadStats = () => {
-    // Calculate stats from store data
-    const pendingApprovals = listings.filter(listing => !listing.isApproved).length;
-    const activeListings = listings.filter(listing => listing.isActive).length;
-    
-    const completedOrders = orders.filter(order => order.status === 'completed').length;
-    const pendingOrders = orders.filter(order => ['confirmed', 'preparing', 'ready'].includes(order.status)).length;
-    const canceledOrders = orders.filter(order => order.status === 'cancelled').length;
-    
-    const resolvedComplaints = complaints.filter(complaint => complaint.status === 'resolved').length;
-    const pendingComplaints = complaints.filter(complaint => complaint.status === 'pending').length;
-    
-    // Calculate total revenue
-    const totalRevenue = orders.reduce((sum, order) => sum + order.totalPrice, 0);
-    
-    // Get today's date at midnight
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Calculate new items today
-    const newOrdersToday = orders.filter(order => new Date(order.createdAt) >= today).length;
-    const newListingsToday = listings.filter(listing => new Date(listing.createdAt) >= today).length;
-    const newComplaintsToday = complaints.filter(complaint => new Date(complaint.createdAt) >= today).length;
-    
-    // Calculate chef stats
-    const totalChefs = mockAdminDashboardData.topChefs.length;
-    const verifiedChefs = mockAdminDashboardData.topChefs.filter(chef => chef.isVerified).length;
-    
-    // Calculate average rating
-    const totalRatings = listings.reduce((sum, listing) => sum + (listing.rating || 0), 0);
-    const averageRating = listings.length > 0 ? parseFloat((totalRatings / listings.length).toFixed(1)) : 0;
-    
-    setStats({
-      totalUsers: mockAdminDashboardData.totalBuyers + mockAdminDashboardData.topChefs.length,
-      totalListings: listings.length,
-      totalOrders: orders.length,
-      totalComplaints: complaints.length,
-      totalRevenue,
-      pendingApprovals,
-      activeListings,
-      completedOrders,
-      pendingOrders,
-      canceledOrders,
-      resolvedComplaints,
-      pendingComplaints,
-      newUsersToday: mockAdminDashboardData.newUsersToday,
-      newOrdersToday,
-      newListingsToday,
-      newComplaintsToday,
-      totalChefs,
-      verifiedChefs,
-      pendingChefs: totalChefs - verifiedChefs,
-      averageRating,
-      totalBuyers: mockAdminDashboardData.totalBuyers,
-      activeUsers: mockAdminDashboardData.activeUsers,
-      revenueGrowth: 8.5,
-      userGrowth: 5.2,
-      orderGrowth: 3.4,
-      complaintGrowth: -2.1,
-    });
+  const loadStats = async () => {
+    try {
+      // Calculate stats from store data
+      const pendingApprovals = listings.filter(listing => !listing.isApproved).length;
+      const activeListings = listings.filter(listing => listing.isActive).length;
+
+      const completedOrders = orders.filter(order => order.status === 'completed').length;
+      const pendingOrders = orders.filter(order => ['confirmed', 'preparing', 'ready'].includes(order.status)).length;
+      const canceledOrders = orders.filter(order => order.status === 'cancelled').length;
+
+      const resolvedComplaints = complaints.filter(complaint => complaint.status === 'resolved').length;
+      const pendingComplaints = complaints.filter(complaint => complaint.status === 'pending').length;
+
+      // Calculate total revenue
+      const totalRevenue = orders.reduce((sum, order) => sum + order.totalPrice, 0);
+
+      // Get today's date at midnight
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Calculate new items today
+      const newOrdersToday = orders.filter(order => new Date(order.createdAt) >= today).length;
+      const newListingsToday = listings.filter(listing => new Date(listing.createdAt) >= today).length;
+      const newComplaintsToday = complaints.filter(complaint => new Date(complaint.createdAt) >= today).length;
+
+      // Fetch all users to calculate chef and buyer stats
+      const allUsers = await fetchAllUsers();
+      const totalChefs = allUsers.filter(u => u.isChef).length;
+      const verifiedChefs = allUsers.filter(u => u.isChef && u.isVerified).length;
+      const totalBuyers = allUsers.filter(u => !u.isChef).length;
+      const newUsersToday = 0; // User model doesn't have createdAt, so use 0
+
+      // Calculate average rating
+      const totalRatings = listings.reduce((sum, listing) => sum + (listing.rating || 0), 0);
+      const averageRating = listings.length > 0 ? parseFloat((totalRatings / listings.length).toFixed(1)) : 0;
+
+      setStats({
+        totalUsers: allUsers.length,
+        totalListings: listings.length,
+        totalOrders: orders.length,
+        totalComplaints: complaints.length,
+        totalRevenue,
+        pendingApprovals,
+        activeListings,
+        completedOrders,
+        pendingOrders,
+        canceledOrders,
+        resolvedComplaints,
+        pendingComplaints,
+        newUsersToday,
+        newOrdersToday,
+        newListingsToday,
+        newComplaintsToday,
+        totalChefs,
+        verifiedChefs,
+        pendingChefs: totalChefs - verifiedChefs,
+        averageRating,
+        totalBuyers,
+        activeUsers: allUsers.length, // Estimate active users as total users
+        revenueGrowth: 8.5,
+        userGrowth: 5.2,
+        orderGrowth: 3.4,
+        complaintGrowth: -2.1,
+      });
+    } catch (error) {
+      console.error('Error calculating stats:', error);
+    }
   };
   
   const getRecentData = () => {

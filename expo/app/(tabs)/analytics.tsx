@@ -28,30 +28,41 @@ import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
-// Mock data for charts
-const mockRevenueData = [
+// Default chart data structure
+const getDefaultChartData = () => [
   { month: 'Jan', amount: 0 },
   { month: 'Feb', amount: 0 },
   { month: 'Mar', amount: 0 },
   { month: 'Apr', amount: 0 },
-  { month: 'May', amount: 1200 },
-  { month: 'Jun', amount: 2400 },
+  { month: 'May', amount: 0 },
+  { month: 'Jun', amount: 0 },
 ];
 
-const mockOrdersData = [
-  { month: 'Jan', count: 0 },
-  { month: 'Feb', count: 0 },
-  { month: 'Mar', count: 0 },
-  { month: 'Apr', count: 0 },
-  { month: 'May', count: 5 },
-  { month: 'Jun', count: 10 },
-];
+// Calculate revenue and orders by month from real data
+const calculateMonthlyData = (orders: any[]) => {
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const revenueByMonth: Record<string, number> = {};
+  const ordersByMonth: Record<string, number> = {};
 
-const mockPopularDishes = [
-  { name: 'Butter Chicken', count: 8 },
-  { name: 'Masala Dosa', count: 6 },
-  { name: 'Gulab Jamun', count: 4 },
-];
+  monthNames.forEach(month => {
+    revenueByMonth[month] = 0;
+    ordersByMonth[month] = 0;
+  });
+
+  orders.forEach(order => {
+    if (order.status === 'completed') {
+      const date = new Date(order.createdAt);
+      const month = monthNames[date.getMonth()];
+      revenueByMonth[month] = (revenueByMonth[month] || 0) + order.totalPrice;
+      ordersByMonth[month] = (ordersByMonth[month] || 0) + 1;
+    }
+  });
+
+  return {
+    revenueData: monthNames.map(month => ({ month, amount: revenueByMonth[month] })),
+    ordersData: monthNames.map(month => ({ month, count: ordersByMonth[month] }))
+  };
+};
 
 export default function AnalyticsScreen() {
   const { user } = useAuthStore();
@@ -82,7 +93,27 @@ export default function AnalyticsScreen() {
   const totalRevenue = sellerOrders.reduce((sum, order) => sum + order.totalPrice, 0);
   const completedOrders = sellerOrders.filter(order => order.status === 'completed').length;
   const averageRating = user.rating || 0;
-  
+
+  // Calculate monthly data from real orders
+  const { revenueData, ordersData } = calculateMonthlyData(sellerOrders);
+
+  // Calculate popular dishes from orders
+  const dishCountMap: Record<string, number> = {};
+  sellerOrders.forEach(order => {
+    const dishName = order.listingSnapshot?.dishName || order.dishName;
+    if (dishName) {
+      dishCountMap[dishName] = (dishCountMap[dishName] || 0) + 1;
+    }
+  });
+  const popularDishes = Object.entries(dishCountMap)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  if (popularDishes.length === 0) {
+    popularDishes.push({ name: 'No orders yet', count: 0 });
+  }
+
   // Simple bar chart component
   const BarChartComponent = ({ data, valueKey, color }: any) => {
     const maxValue = Math.max(...data.map((item: any) => item[valueKey]));
@@ -213,33 +244,33 @@ export default function AnalyticsScreen() {
             <TrendingUp size={20} color={colors.primary} />
           </View>
           
-          <BarChartComponent 
-            data={mockRevenueData} 
-            valueKey="amount" 
-            color={colors.primary} 
+          <BarChartComponent
+            data={revenueData}
+            valueKey="amount"
+            color={colors.primary}
           />
         </View>
-        
+
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Orders</Text>
             <BarChart size={20} color={colors.primary} />
           </View>
-          
-          <BarChartComponent 
-            data={mockOrdersData} 
-            valueKey="count" 
-            color={colors.secondary} 
+
+          <BarChartComponent
+            data={ordersData}
+            valueKey="count"
+            color={colors.secondary}
           />
         </View>
-        
+
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Popular Dishes</Text>
             <PieChart size={20} color={colors.primary} />
           </View>
-          
-          {mockPopularDishes.map((dish, index) => (
+
+          {popularDishes.map((dish, index) => (
             <View key={index} style={styles.popularDishItem}>
               <Text style={styles.popularDishName}>{dish.name}</Text>
               <View style={styles.popularDishCount}>
