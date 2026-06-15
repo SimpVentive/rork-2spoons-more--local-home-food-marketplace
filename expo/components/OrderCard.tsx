@@ -10,6 +10,8 @@ import { Clock, MapPin } from 'lucide-react-native';
 import { Order } from '@/types';
 import OrderStatusBadge from './OrderStatusBadge';
 import colors from '@/constants/colors';
+import { imageSizes } from '@/constants/images';
+import { spacing } from '@/constants/spacing';
 import { optimizeImageUrl, generatePlaceholder } from '@/utils/imageOptimization';
 
 interface OrderCardProps {
@@ -121,14 +123,14 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   image: {
-    width: 80,
+    width: 100,
     height: 80,
-    borderRadius: 8,
+    borderRadius: spacing.radius.md,
     backgroundColor: colors.border,
   },
   details: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing.lg,
   },
   dishName: {
     fontSize: 16,

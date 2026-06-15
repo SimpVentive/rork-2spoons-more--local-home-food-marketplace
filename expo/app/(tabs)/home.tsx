@@ -26,6 +26,7 @@ import { NotifyMeModal } from '@/components/NotifyMeModal';
 import { FoodListing, User, Review } from '@/types';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
+import { imageSizes } from '@/constants/images';
 import { mockUsers } from '@/mocks/data';
 
 export default function HomeScreen() {
@@ -479,8 +480,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   heroImage: {
-    height: 180,
-    width: '100%',
+    height: imageSizes.hero.height,
+    width: imageSizes.hero.width,
     justifyContent: 'flex-end',
   },
   heroImageStyle: {
@@ -646,8 +647,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   topItemImage: {
-    width: '100%',
-    height: 100,
+    width: imageSizes.listingCard.width,
+    height: imageSizes.listingCard.height,
     backgroundColor: colors.border,
   },
   vegIndicator: {
@@ -716,9 +717,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   chefImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: imageSizes.chefProfile.width,
+    height: imageSizes.chefProfile.height,
+    borderRadius: imageSizes.chefProfile.borderRadius,
     backgroundColor: colors.border,
     borderWidth: 3,
     borderColor: colors.white,

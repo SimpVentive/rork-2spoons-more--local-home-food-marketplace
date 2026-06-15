@@ -9,6 +9,8 @@ import {
 import { Image } from 'expo-image';
 import { MapPin, Clock, Star } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import { imageSizes } from '@/constants/images';
+import { spacing } from '@/constants/spacing';
 import { FoodListing } from '@/types';
 import { optimizeImageUrl, generatePlaceholder } from '@/utils/imageOptimization';
 
@@ -161,8 +163,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   image: {
-    width: '100%',
-    height: 120,
+    width: imageSizes.listingCard.width,
+    height: imageSizes.listingCard.height,
     backgroundColor: colors.border,
   },
   overlayBadge: {
@@ -221,7 +223,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     backgroundColor: colors.border,
-    marginRight: 6,
+    marginRight: spacing.sm,
   },
   sellerName: {
     fontSize: 12,
