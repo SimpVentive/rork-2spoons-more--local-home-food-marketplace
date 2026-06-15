@@ -28,7 +28,7 @@ import {
   CheckCircle,
   Shield
 } from 'lucide-react-native';
-import { mockUsers } from '@/mocks/data';
+import { fetchAllUsers } from '@/lib/supabase';
 import { User as UserType } from '@/types';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
@@ -54,13 +54,15 @@ export default function ManageUsers() {
 
   const loadUsers = async () => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setUsers(mockUsers);
-    setFilteredUsers(mockUsers);
-    setIsLoading(false);
+    try {
+      const allUsers = await fetchAllUsers();
+      setUsers(allUsers);
+      setFilteredUsers(allUsers);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const filterUsers = () => {

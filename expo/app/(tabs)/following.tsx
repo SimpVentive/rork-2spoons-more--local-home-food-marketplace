@@ -13,7 +13,7 @@ import { Star, MapPin } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { useFollowsStore } from '@/store/follows-store';
 import { useListingsStore } from '@/store/listings-store';
-import { mockUsers } from '@/mocks/data';
+import { fetchUserProfilesByIds } from '@/lib/supabase';
 import FoodCard from '@/components/FoodCard';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
@@ -37,27 +37,27 @@ export default function FollowingScreen() {
       loadFollowedContent();
     }
   }, [user]);
-  
-  const loadFollowedContent = () => {
+
+  const loadFollowedContent = async () => {
     if (!user) return;
-    
+
     // Get IDs of followed sellers
     const followedIds = getFollowedSellers(user.id);
-    
-    // Get seller profiles
-    const sellers = mockUsers.filter(u => followedIds.includes(u.id));
+
+    // Get seller profiles from Supabase
+    const sellers = await fetchUserProfilesByIds(followedIds);
     setFollowedSellers(sellers);
-    
+
     // Get listings from followed sellers
-    const sellerListings = listings.filter(listing => 
+    const sellerListings = listings.filter(listing =>
       followedIds.includes(listing.sellerId)
     );
     setFollowedListings(sellerListings);
   };
-  
+
   const onRefresh = async () => {
     setRefreshing(true);
-    loadFollowedContent();
+    await loadFollowedContent();
     setRefreshing(false);
   };
   

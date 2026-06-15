@@ -21,14 +21,16 @@ import {
   Calendar
 } from 'lucide-react-native';
 import { TopEarner } from '@/types';
-import { mockUsers, mockOrders } from '@/mocks/data';
+import { useOrdersStore } from '@/store/orders-store';
+import { fetchUserProfilesByIds } from '@/lib/supabase';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
 export default function TopEarnersScreen() {
   const router = useRouter();
-  
+  const { orders: storeOrders, fetchOrders } = useOrdersStore();
+
   const [topEarners, setTopEarners] = useState<TopEarner[]>([]);
   const [filteredEarners, setFilteredEarners] = useState<TopEarner[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,59 +49,70 @@ export default function TopEarnersScreen() {
 
   const loadTopEarners = async () => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Calculate top earners
-    const sellerEarnings = new Map<string, { earnings: number, orderCount: number }>();
-    
-    // Filter orders by time range if needed
-    let filteredOrders = [...mockOrders];
-    if (timeRange !== 'all') {
-      const now = new Date();
-      const cutoffDate = new Date();
-      
-      if (timeRange === 'month') {
-        cutoffDate.setMonth(now.getMonth() - 1);
-      } else if (timeRange === 'week') {
-        cutoffDate.setDate(now.getDate() - 7);
+    try {
+      // Fetch orders from store
+      await fetchOrders();
+
+      // Calculate top earners
+      const sellerEarnings = new Map<string, { earnings: number, orderCount: number }>();
+
+      // Filter orders by time range if needed
+      let filteredOrders = storeOrders;
+      if (timeRange !== 'all') {
+        const now = new Date();
+        const cutoffDate = new Date();
+
+        if (timeRange === 'month') {
+          cutoffDate.setMonth(now.getMonth() - 1);
+        } else if (timeRange === 'week') {
+          cutoffDate.setDate(now.getDate() - 7);
+        }
+
+        filteredOrders = storeOrders.filter(order =>
+          new Date(order.createdAt) >= cutoffDate
+        );
       }
-      
-      filteredOrders = mockOrders.filter(order => 
-        new Date(order.createdAt) >= cutoffDate
-      );
+
+      // Calculate earnings for each seller
+      filteredOrders.forEach(order => {
+        if (order.status === 'completed') {
+          const current = sellerEarnings.get(order.sellerId) || { earnings: 0, orderCount: 0 };
+          sellerEarnings.set(order.sellerId, {
+            earnings: current.earnings + order.totalPrice,
+            orderCount: current.orderCount + 1
+          });
+        }
+      });
+
+      // Get unique seller IDs
+      const sellerIds = Array.from(sellerEarnings.keys());
+
+      // Fetch seller profiles
+      const sellers = await fetchUserProfilesByIds(sellerIds);
+      const sellerMap = new Map(sellers.map(s => [s.id, s]));
+
+      // Convert to array and add user details
+      const earners: TopEarner[] = Array.from(sellerEarnings.entries())
+        .map(([sellerId, data]) => {
+          const seller = sellerMap.get(sellerId);
+          return {
+            id: sellerId,
+            name: seller?.name || 'Unknown Seller',
+            earnings: data.earnings,
+            location: seller?.address || '',
+            phone: seller?.phone || '',
+            orderCount: data.orderCount
+          };
+        })
+        .sort((a, b) => b.earnings - a.earnings);
+
+      setTopEarners(earners);
+      setFilteredEarners(earners);
+    } catch (error) {
+      console.error('Error loading top earners:', error);
+    } finally {
+      setIsLoading(false);
     }
-    
-    // Calculate earnings for each seller
-    filteredOrders.forEach(order => {
-      if (order.status === 'completed') {
-        const current = sellerEarnings.get(order.sellerId) || { earnings: 0, orderCount: 0 };
-        sellerEarnings.set(order.sellerId, {
-          earnings: current.earnings + order.totalPrice,
-          orderCount: current.orderCount + 1
-        });
-      }
-    });
-    
-    // Convert to array and add user details
-    const earners: TopEarner[] = Array.from(sellerEarnings.entries())
-      .map(([sellerId, data]) => {
-        const seller = mockUsers.find(user => user.id === sellerId);
-        return {
-          id: sellerId,
-          name: seller?.name || 'Unknown Seller',
-          earnings: data.earnings,
-          location: seller?.address || '',
-          phone: seller?.phone || '',
-          orderCount: data.orderCount
-        };
-      })
-      .sort((a, b) => b.earnings - a.earnings);
-    
-    setTopEarners(earners);
-    setFilteredEarners(earners);
-    setIsLoading(false);
   };
 
   const filterAndSortEarners = () => {

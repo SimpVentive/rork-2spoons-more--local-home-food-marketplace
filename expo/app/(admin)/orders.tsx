@@ -20,7 +20,7 @@ import {
   RefreshCw,
   DollarSign
 } from 'lucide-react-native';
-import { mockOrders } from '@/mocks/data';
+import { useOrdersStore } from '@/store/orders-store';
 import { Order } from '@/types';
 
 type OrderStatusType = Order['status'] | 'canceled' | 'refunded' | 'refund_requested' | 'accepted' | 'in_delivery' | 'delivered';
@@ -30,7 +30,8 @@ import { spacing } from '@/constants/spacing';
 
 export default function ManageOrders() {
   const router = useRouter();
-  
+  const { orders: storeOrders, fetchOrders } = useOrdersStore();
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,13 +48,15 @@ export default function ManageOrders() {
 
   const loadOrders = async () => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setOrders(mockOrders);
-    setFilteredOrders(mockOrders);
-    setIsLoading(false);
+    try {
+      await fetchOrders();
+      setOrders(storeOrders);
+      setFilteredOrders(storeOrders);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const filterOrders = () => {

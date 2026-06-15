@@ -8,6 +8,7 @@ interface ComplaintsState {
   complaints: Complaint[];
   isLoading: boolean;
   error: string | null;
+  fetchComplaints: () => Promise<void>;
   createComplaint: (complaint: Omit<Complaint, 'id' | 'createdAt' | 'status'>) => Promise<Complaint>;
   getComplaintsByBuyer: (buyerId: string) => Complaint[];
   getComplaintsBySeller: (sellerId: string) => Complaint[];
@@ -44,6 +45,27 @@ export const useComplaintsStore = create<ComplaintsState>()(
       complaints: [],
       isLoading: false,
       error: null,
+
+      fetchComplaints: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          const { data, error } = await supabase
+            .from('complaints')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            console.error('Fetch complaints error:', error.message);
+            set({ error: 'Failed to fetch complaints', isLoading: false });
+            return;
+          }
+
+          set({ complaints: (data || []).map(rowToComplaint), isLoading: false });
+        } catch (error) {
+          console.error('Error fetching complaints:', error);
+          set({ error: 'Failed to fetch complaints', isLoading: false });
+        }
+      },
 
       createComplaint: async (complaintData) => {
         set({ isLoading: true, error: null });

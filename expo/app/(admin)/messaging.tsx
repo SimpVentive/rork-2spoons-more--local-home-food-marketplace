@@ -24,7 +24,7 @@ import {
   Info
 } from 'lucide-react-native';
 import type { AdminConversation, AdminMessage, User as UserType } from '@/types';
-import { mockUsers } from '@/mocks/data';
+import { fetchUserProfile } from '@/lib/supabase';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
@@ -218,10 +218,14 @@ export default function AdminMessagingScreen() {
     }, 100);
   };
 
-  const loadUserDetails = (userId: string) => {
-    const user = mockUsers.find(u => u.id === userId);
-    if (user) {
-      setUserDetails(user);
+  const loadUserDetails = async (userId: string) => {
+    try {
+      const user = await fetchUserProfile(userId);
+      if (user) {
+        setUserDetails(user);
+      }
+    } catch (error) {
+      console.error('Error loading user details:', error);
     }
   };
 

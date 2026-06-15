@@ -27,7 +27,7 @@ import { FoodListing, User, Review } from '@/types';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { imageSizes } from '@/constants/images';
-import { mockUsers } from '@/mocks/data';
+import { fetchTopChefs } from '@/lib/supabase';
 
 export default function HomeScreen() {
   const { user, isInitialized } = useAuthStore();
@@ -76,13 +76,13 @@ export default function HomeScreen() {
     }
   };
   
-  const loadTopChefs = () => {
-    const chefs = [...mockUsers]
-      .filter(user => user.isChef && user.allowProfileDisplay)
-      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-      .slice(0, 5);
-    
-    setTopChefs(chefs);
+  const loadTopChefs = async () => {
+    try {
+      const chefs = await fetchTopChefs(5);
+      setTopChefs(chefs);
+    } catch (error) {
+      console.error("Error loading top chefs:", error);
+    }
   };
   
   const loadRecentReviews = async () => {
@@ -99,7 +99,7 @@ export default function HomeScreen() {
     await fetchListings();
     await loadTopSellingItems();
     await loadRecentReviews();
-    loadTopChefs();
+    await loadTopChefs();
     setRefreshing(false);
   };
   

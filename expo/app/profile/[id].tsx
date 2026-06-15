@@ -17,7 +17,7 @@ import {
   CreditCard,
   Users,
 } from 'lucide-react-native';
-import { mockUsers } from '@/mocks/data';
+import { fetchUserProfile } from '@/lib/supabase';
 import { useListingsStore } from '@/store/listings-store';
 import { useReviewsStore } from '@/store/reviews-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -51,21 +51,27 @@ export default function SellerProfileScreen() {
   const router = useRouter();
   
   useEffect(() => {
-    // Find seller in mock data
-    const foundSeller = mockUsers.find(user => user.id === id);
-    if (foundSeller) {
-      setSeller(foundSeller);
-      
-      // Get seller listings
-      const listings = getSellerListings(id);
-      setSellerListings(listings);
-      
-      // Get seller reviews
-      loadSellerReviews(id);
-      
-      // Get follower count
-      setFollowerCount(getFollowerCount(id));
-    }
+    if (!id) return;
+
+    // Fetch seller from Supabase
+    const loadSeller = async () => {
+      const foundSeller = await fetchUserProfile(id);
+      if (foundSeller) {
+        setSeller(foundSeller);
+
+        // Get seller listings
+        const listings = getSellerListings(id);
+        setSellerListings(listings);
+
+        // Get seller reviews
+        loadSellerReviews(id);
+
+        // Get follower count
+        setFollowerCount(getFollowerCount(id));
+      }
+    };
+
+    loadSeller();
   }, [id]);
   
   const loadSellerReviews = async (sellerId: string) => {

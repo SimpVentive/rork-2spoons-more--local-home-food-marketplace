@@ -23,11 +23,12 @@ import {
   HelpCircle
 } from 'lucide-react-native';
 import { Complaint } from '@/types';
+import { useComplaintsStore } from '@/store/complaints-store';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
-// Mock complaints data
+// Mock complaints data for fallback
 const mockComplaints: Complaint[] = [
   {
     id: 'complaint-1',
@@ -99,7 +100,8 @@ const mockComplaints: Complaint[] = [
 
 export default function ManageComplaints() {
   const router = useRouter();
-  
+  const { complaints: storeComplaints, fetchComplaints } = useComplaintsStore();
+
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [filteredComplaints, setFilteredComplaints] = useState<Complaint[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -116,13 +118,17 @@ export default function ManageComplaints() {
 
   const loadComplaints = async () => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setComplaints(mockComplaints);
-    setFilteredComplaints(mockComplaints);
-    setIsLoading(false);
+    try {
+      await fetchComplaints();
+      setComplaints(storeComplaints.length > 0 ? storeComplaints : mockComplaints);
+      setFilteredComplaints(storeComplaints.length > 0 ? storeComplaints : mockComplaints);
+    } catch (error) {
+      console.error('Error loading complaints:', error);
+      setComplaints(mockComplaints);
+      setFilteredComplaints(mockComplaints);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const filterComplaints = () => {
