@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
   TouchableOpacity,
   Platform,
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { 
-  Star, 
-  MapPin, 
+import {
+  Star,
+  MapPin,
   ChefHat,
   CreditCard,
   Users,
 } from 'lucide-react-native';
-import { mockUsers } from '@/mocks/data';
+import { fetchUserProfile } from '@/lib/supabase';
 import { useListingsStore } from '@/store/listings-store';
 import { useReviewsStore } from '@/store/reviews-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -51,22 +51,52 @@ export default function SellerProfileScreen() {
   const router = useRouter();
   
   useEffect(() => {
-    // Find seller in mock data
-    const foundSeller = mockUsers.find(user => user.id === id);
-    if (foundSeller) {
-      setSeller(foundSeller);
-      
-      // Get seller listings
-      const listings = getSellerListings(id);
-      setSellerListings(listings);
-      
-      // Get seller reviews
-      loadSellerReviews(id);
-      
-      // Get follower count
-      setFollowerCount(getFollowerCount(id));
-    }
+    loadSellerProfile();
   }, [id]);
+
+  const loadSellerProfile = async () => {
+    try {
+      if (!id) return;
+
+      // Fetch seller profile from Supabase
+      const sellerData = await fetchUserProfile(id);
+
+      if (sellerData) {
+        // Convert database format to User format
+        const formattedSeller: User = {
+          id: sellerData.id,
+          name: sellerData.name,
+          email: sellerData.email,
+          phone: sellerData.phone,
+          address: sellerData.address,
+          profileImage: sellerData.profile_image,
+          experience: sellerData.experience,
+          cuisineTypes: sellerData.cuisine_types || [],
+          paymentMethods: sellerData.payment_methods || [],
+          location: sellerData.location,
+          isChef: sellerData.is_chef,
+          allowProfileDisplay: sellerData.allow_profile_display,
+          isVerified: sellerData.is_verified,
+          rating: sellerData.rating,
+          reviewCount: sellerData.review_count,
+        };
+
+        setSeller(formattedSeller);
+
+        // Get seller listings
+        const listings = getSellerListings(id);
+        setSellerListings(listings);
+
+        // Get seller reviews
+        loadSellerReviews(id);
+
+        // Get follower count
+        setFollowerCount(getFollowerCount(id));
+      }
+    } catch (error) {
+      console.error('Error loading seller profile:', error);
+    }
+  };
   
   const loadSellerReviews = async (sellerId: string) => {
     const reviews = await fetchSellerReviews(sellerId);

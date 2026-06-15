@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
+import {
+  View,
+  Text,
+  StyleSheet,
   RefreshControl,
   TouchableOpacity,
   ScrollView,
@@ -11,11 +11,11 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { 
-  MapPin, 
-  Bell, 
-  ChefHat, 
-  TrendingUp, 
+import {
+  MapPin,
+  Bell,
+  ChefHat,
+  TrendingUp,
   Star,
   Route,
 } from 'lucide-react-native';
@@ -26,7 +26,7 @@ import { FoodCard } from '@/components/FoodCard';
 import { NotifyMeModal } from '@/components/NotifyMeModal';
 import { FoodListing, User, Review } from '@/types';
 import colors from '@/constants/colors';
-import { mockUsers } from '@/mocks/data';
+import { fetchTopChefs } from '@/lib/supabase';
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
@@ -68,14 +68,35 @@ export default function HomeScreen() {
     }
   };
   
-  const loadTopChefs = () => {
-    // Get top 5 chefs based on rating
-    const chefs = [...mockUsers]
-      .filter(user => user.isChef && user.allowProfileDisplay)
-      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-      .slice(0, 5);
-    
-    setTopChefs(chefs);
+  const loadTopChefs = async () => {
+    try {
+      // Fetch top 5 chefs from Supabase
+      const chefs = await fetchTopChefs(5);
+
+      // Convert database format to User format if needed
+      const formattedChefs = chefs.map((chef: any) => ({
+        id: chef.id,
+        name: chef.name,
+        profileImage: chef.profile_image,
+        rating: chef.rating,
+        reviewCount: chef.review_count,
+        cuisineTypes: chef.cuisine_types || [],
+        address: chef.address,
+        email: chef.email,
+        phone: chef.phone,
+        experience: chef.experience,
+        paymentMethods: chef.payment_methods || [],
+        location: chef.location,
+        isChef: chef.is_chef,
+        allowProfileDisplay: chef.allow_profile_display,
+        isVerified: chef.is_verified,
+      }));
+
+      setTopChefs(formattedChefs);
+    } catch (error) {
+      console.error('Error loading top chefs:', error);
+      setTopChefs([]);
+    }
   };
   
   const loadRecentReviews = async () => {

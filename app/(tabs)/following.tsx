@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -13,7 +13,7 @@ import { Star, MapPin } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { useFollowsStore } from '@/store/follows-store';
 import { useListingsStore } from '@/store/listings-store';
-import { mockUsers } from '@/mocks/data';
+import { fetchUserProfilesByIds } from '@/lib/supabase';
 import FoodCard from '@/components/FoodCard';
 import EmptyState from '@/components/EmptyState';
 import colors from '@/constants/colors';
@@ -36,21 +36,53 @@ export default function FollowingScreen() {
     }
   }, [user]);
   
-  const loadFollowedContent = () => {
+  const loadFollowedContent = async () => {
     if (!user) return;
-    
-    // Get IDs of followed sellers
-    const followedIds = getFollowedSellers(user.id);
-    
-    // Get seller profiles
-    const sellers = mockUsers.filter(u => followedIds.includes(u.id));
-    setFollowedSellers(sellers);
-    
-    // Get listings from followed sellers
-    const sellerListings = listings.filter(listing => 
-      followedIds.includes(listing.sellerId)
-    );
-    setFollowedListings(sellerListings);
+
+    try {
+      // Get IDs of followed sellers
+      const followedIds = getFollowedSellers(user.id);
+
+      if (followedIds.length === 0) {
+        setFollowedSellers([]);
+        setFollowedListings([]);
+        return;
+      }
+
+      // Fetch seller profiles from Supabase
+      const sellerProfiles = await fetchUserProfilesByIds(followedIds);
+
+      // Convert database format to User format
+      const formattedSellers: User[] = sellerProfiles.map((seller: any) => ({
+        id: seller.id,
+        name: seller.name,
+        email: seller.email,
+        phone: seller.phone,
+        address: seller.address,
+        profileImage: seller.profile_image,
+        experience: seller.experience,
+        cuisineTypes: seller.cuisine_types || [],
+        paymentMethods: seller.payment_methods || [],
+        location: seller.location,
+        isChef: seller.is_chef,
+        allowProfileDisplay: seller.allow_profile_display,
+        isVerified: seller.is_verified,
+        rating: seller.rating,
+        reviewCount: seller.review_count,
+      }));
+
+      setFollowedSellers(formattedSellers);
+
+      // Get listings from followed sellers
+      const sellerListings = listings.filter((listing) =>
+        followedIds.includes(listing.sellerId)
+      );
+      setFollowedListings(sellerListings);
+    } catch (error) {
+      console.error('Error loading followed content:', error);
+      setFollowedSellers([]);
+      setFollowedListings([]);
+    }
   };
   
   const onRefresh = async () => {

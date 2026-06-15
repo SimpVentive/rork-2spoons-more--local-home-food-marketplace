@@ -1,27 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
   TextInput,
   ActivityIndicator,
   Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { 
-  Search, 
-  DollarSign, 
-  MapPin, 
-  Phone, 
+import {
+  Search,
+  DollarSign,
+  MapPin,
+  Phone,
   ShoppingBag,
   ChevronRight,
   ArrowUpDown,
   Calendar
 } from 'lucide-react-native';
 import { TopEarner } from '@/types';
-import { mockUsers, mockOrders } from '@/mocks/data';
+import { fetchTopEarners } from '@/lib/supabase';
 import colors from '@/constants/colors';
 
 export default function TopEarnersScreen() {
@@ -45,59 +45,20 @@ export default function TopEarnersScreen() {
 
   const loadTopEarners = async () => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Calculate top earners
-    const sellerEarnings = new Map<string, { earnings: number, orderCount: number }>();
-    
-    // Filter orders by time range if needed
-    let filteredOrders = [...mockOrders];
-    if (timeRange !== 'all') {
-      const now = new Date();
-      const cutoffDate = new Date();
-      
-      if (timeRange === 'month') {
-        cutoffDate.setMonth(now.getMonth() - 1);
-      } else if (timeRange === 'week') {
-        cutoffDate.setDate(now.getDate() - 7);
-      }
-      
-      filteredOrders = mockOrders.filter(order => 
-        new Date(order.createdAt) >= cutoffDate
-      );
+
+    try {
+      // Fetch top earners from Supabase
+      const earners = await fetchTopEarners(100); // Get more than we display to allow filtering
+
+      setTopEarners(earners);
+      setFilteredEarners(earners);
+    } catch (error) {
+      console.error('Error loading top earners:', error);
+      setTopEarners([]);
+      setFilteredEarners([]);
+    } finally {
+      setIsLoading(false);
     }
-    
-    // Calculate earnings for each seller
-    filteredOrders.forEach(order => {
-      if (order.status === 'completed') {
-        const current = sellerEarnings.get(order.sellerId) || { earnings: 0, orderCount: 0 };
-        sellerEarnings.set(order.sellerId, {
-          earnings: current.earnings + order.totalPrice,
-          orderCount: current.orderCount + 1
-        });
-      }
-    });
-    
-    // Convert to array and add user details
-    const earners: TopEarner[] = Array.from(sellerEarnings.entries())
-      .map(([sellerId, data]) => {
-        const seller = mockUsers.find(user => user.id === sellerId);
-        return {
-          id: sellerId,
-          name: seller?.name || 'Unknown Seller',
-          earnings: data.earnings,
-          location: seller?.address || '',
-          phone: seller?.phone || '',
-          orderCount: data.orderCount
-        };
-      })
-      .sort((a, b) => b.earnings - a.earnings);
-    
-    setTopEarners(earners);
-    setFilteredEarners(earners);
-    setIsLoading(false);
   };
 
   const filterAndSortEarners = () => {

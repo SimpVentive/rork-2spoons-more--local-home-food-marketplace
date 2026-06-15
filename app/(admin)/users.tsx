@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
   TextInput,
   ActivityIndicator,
   Alert,
@@ -12,12 +12,12 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { 
-  Search, 
-  User, 
-  ChefHat, 
-  Phone, 
-  Mail, 
+import {
+  Search,
+  User,
+  ChefHat,
+  Phone,
+  Mail,
   MapPin,
   Star,
   ShoppingBag,
@@ -28,7 +28,7 @@ import {
   CheckCircle,
   Shield
 } from 'lucide-react-native';
-import { mockUsers } from '@/mocks/data';
+import { fetchAllUserProfiles, searchUsers } from '@/lib/supabase';
 import { User as UserType } from '@/types';
 import colors from '@/constants/colors';
 
@@ -52,13 +52,40 @@ export default function ManageUsers() {
 
   const loadUsers = async () => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setUsers(mockUsers);
-    setFilteredUsers(mockUsers);
-    setIsLoading(false);
+
+    try {
+      // Fetch all users from Supabase
+      const allProfiles = await fetchAllUserProfiles();
+
+      // Convert database format to User format
+      const formattedUsers: UserType[] = allProfiles.map((profile: any) => ({
+        id: profile.id,
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+        address: profile.address,
+        profileImage: profile.profile_image,
+        experience: profile.experience,
+        cuisineTypes: profile.cuisine_types || [],
+        paymentMethods: profile.payment_methods || [],
+        location: profile.location,
+        isChef: profile.is_chef,
+        allowProfileDisplay: profile.allow_profile_display,
+        isVerified: profile.is_verified,
+        isAdmin: profile.is_admin,
+        rating: profile.rating,
+        reviewCount: profile.review_count,
+      }));
+
+      setUsers(formattedUsers);
+      setFilteredUsers(formattedUsers);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      setUsers([]);
+      setFilteredUsers([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const filterUsers = () => {
