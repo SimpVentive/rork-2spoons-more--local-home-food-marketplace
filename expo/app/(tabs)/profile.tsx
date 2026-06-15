@@ -148,7 +148,7 @@ export default function ProfileScreen() {
     if (Platform.OS === 'web') {
       return {
         ...styles.listingCard,
-        width: '100%',
+        width: '100%' as const,
         marginRight: 0,
         marginBottom: 12
       };
@@ -160,7 +160,7 @@ export default function ProfileScreen() {
     if (Platform.OS === 'web') {
       return {
         ...styles.addListingCard,
-        width: '100%',
+        width: '100%' as const,
         height: 100
       };
     }

@@ -18,6 +18,8 @@ interface AuthState {
   fetchProfile: (userId: string) => Promise<User | null>;
   /** Logout — clears local state (token clearing is handled by useAuth hook) */
   logout: () => void;
+  /** Admin login with email/password — demo implementation */
+  adminLogin: (email: string, password: string) => Promise<boolean>;
 
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
   updateUser: (updates: Partial<User>) => Promise<boolean>;
@@ -160,6 +162,37 @@ export const useAuthStore = create<AuthState>()(
           console.error('Sync profile error:', error);
           set({ isLoading: false });
           return null as unknown as User;
+        }
+      },
+
+      adminLogin: async (email: string, _password: string) => {
+        try {
+          // Fetch the profile by email to check if admin
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('email', email)
+            .single();
+
+          if (error || !data) {
+            return false;
+          }
+
+          const user = rowToUser(data);
+          if (!user.isAdmin) {
+            return false;
+          }
+
+          set({
+            user,
+            isAuthenticated: true,
+            isAdmin: true,
+            userPreference: user.isChef ? { type: 'seller' } : { type: 'buyer' },
+          });
+          return true;
+        } catch (error) {
+          console.error('Admin login error:', error);
+          return false;
         }
       },
 

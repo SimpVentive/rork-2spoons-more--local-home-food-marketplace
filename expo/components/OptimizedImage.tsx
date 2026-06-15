@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Image, ImageProps, ViewStyle } from 'react-native';
+import { Image, ImageProps, ImageStyle, StyleProp } from 'react-native';
 import { optimizeImageUrl } from '@/utils/imageOptimization';
 import { assetOptimization } from '@/utils/bundleOptimization';
 
@@ -9,7 +9,7 @@ interface OptimizedImageComponentProps extends Omit<ImageProps, 'source'> {
   height?: number;
   quality?: keyof typeof assetOptimization.imageQuality;
   useCase?: keyof typeof assetOptimization.maxDimensions;
-  style?: ViewStyle;
+  style?: StyleProp<ImageStyle>;
   placeholder?: boolean;
   transition?: number;
 }

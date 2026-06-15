@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginLeft: 10,
     fontWeight: '400' as const,
-    ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}),
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' } as any : {}),
   },
   filterButton: {
     width: 46,

@@ -11,7 +11,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   accessToken: async () => {
     const token = await SecureStore.getItemAsync("access_token");
-    return token ?? undefined;
+    return token ?? null;
   },
 });
 

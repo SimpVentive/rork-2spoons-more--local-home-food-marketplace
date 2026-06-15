@@ -77,11 +77,11 @@ const Input: React.FC<InputProps> = ({
         <TextInput
           style={[
             styles.input,
-            multiline && { height: numberOfLines * 24, textAlignVertical: textAlignVertical || 'top' },
-            error && styles.inputError,
-            disabled && styles.inputDisabled,
-            rightIcon && { paddingRight: 40 },
-            leftIcon && { paddingLeft: 40 },
+            ...(multiline ? [{ height: numberOfLines * 24, textAlignVertical: (textAlignVertical || 'top') } as TextStyle] : []),
+            ...(error ? [styles.inputError] : []),
+            ...(disabled ? [styles.inputDisabled] : []),
+            ...(rightIcon ? [{ paddingRight: 40 } as TextStyle] : []),
+            ...(leftIcon ? [{ paddingLeft: 40 } as TextStyle] : []),
             inputStyle,
           ]}
           placeholder={placeholder}
@@ -103,76 +103,66 @@ const Input: React.FC<InputProps> = ({
           </View>
         )}
       </View>
-      {error && <Text style={[styles.errorText, errorStyle]}>{error}</Text>}
-      {helperText && !error && <Text style={styles.helperText}>{helperText}</Text>}
+      
+      {(error || helperText) && (
+        <Text style={[styles.helperText, error && styles.errorText, errorStyle]}>
+          {error || helperText}
+        </Text>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: spacing.lg,
-    width: '100%',
+    marginBottom: spacing.sm,
   },
   label: {
-    fontSize: typography.sizes.base,
+    fontSize: typography.sizes.sm,
     fontWeight: typography.weights.medium,
     color: colors.text,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: spacing.radius.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 12,
+    backgroundColor: colors.white,
   },
   inputContainerError: {
     borderColor: colors.error,
   },
   input: {
     flex: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
     fontSize: typography.sizes.base,
     color: colors.text,
-    minHeight: 48,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontWeight: typography.weights.normal,
   },
   inputError: {
-    borderColor: colors.error,
+    color: colors.error,
   },
   inputDisabled: {
-    backgroundColor: '#F1F1F1',
+    backgroundColor: colors.card,
     color: colors.textLight,
+  },
+  leftIconContainer: {
+    paddingLeft: 14,
+  },
+  rightIconContainer: {
+    paddingRight: 14,
+  },
+  helperText: {
+    fontSize: typography.sizes.xs,
+    color: colors.textLight,
+    marginTop: 4,
+    marginLeft: 2,
   },
   errorText: {
     color: colors.error,
-    fontSize: typography.sizes.sm,
-    marginTop: spacing.xs,
-  },
-  helperText: {
-    color: colors.textLight,
-    fontSize: typography.sizes.sm,
-    marginTop: spacing.xs,
-  },
-  rightIconContainer: {
-    position: 'absolute',
-    right: spacing.md,
-    height: '100%',
-    justifyContent: 'center',
-  },
-  leftIconContainer: {
-    position: 'absolute',
-    left: spacing.md,
-    height: '100%',
-    justifyContent: 'center',
-    zIndex: 1,
   },
 });
 

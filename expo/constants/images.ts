@@ -1,7 +1,7 @@
 export const imageSizes = {
   // Card images - food listings
   listingCard: {
-    width: '100%',
+    width: '100%' as const,
     height: 140,
     aspectRatio: 4 / 3, // Standard food photo ratio
     resizeMode: 'cover' as const,
@@ -9,7 +9,7 @@ export const imageSizes = {
 
   // Hero/large images
   hero: {
-    width: '100%',
+    width: '100%' as const,
     height: 200,
     aspectRatio: 16 / 9,
     resizeMode: 'cover' as const,
@@ -35,7 +35,7 @@ export const imageSizes = {
 
   // Order/receipt images
   orderImage: {
-    width: '100%',
+    width: '100%' as const,
     height: 120,
     aspectRatio: 16 / 9,
     resizeMode: 'cover' as const,
@@ -51,7 +51,7 @@ export const imageSizes = {
 
   // Full width images (detail pages)
   detailImage: {
-    width: '100%',
+    width: '100%' as const,
     height: 300,
     aspectRatio: 1,
     resizeMode: 'cover' as const,

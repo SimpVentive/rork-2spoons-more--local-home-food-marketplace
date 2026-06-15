@@ -502,11 +502,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 32,
   },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-  },
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
