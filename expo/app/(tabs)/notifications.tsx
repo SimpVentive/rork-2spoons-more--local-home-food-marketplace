@@ -28,59 +28,6 @@ import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 import { Notification } from '@/types';
 
-// Fallback mock notifications data if needed
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    userId: 'user1',
-    title: 'New Order',
-    message: 'Your order for Butter Chicken has been accepted',
-    type: 'order',
-    relatedId: 'order1',
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-  },
-  {
-    id: '2',
-    userId: 'user1',
-    title: 'New Review',
-    message: 'Rahul left a 5-star review on your Paneer Tikka',
-    type: 'review',
-    relatedId: 'review1',
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-  },
-  {
-    id: '3',
-    userId: 'user1',
-    title: 'New Follower',
-    message: 'Priya started following you',
-    type: 'system',
-    relatedId: 'user2',
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
-  },
-  {
-    id: '4',
-    userId: 'user1',
-    title: 'Dish Alert',
-    message: 'Biryani is now available near you',
-    type: 'system',
-    relatedId: 'listing1',
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // 8 hours ago
-  },
-  {
-    id: '5',
-    userId: 'user1',
-    title: 'System Update',
-    message: 'We have updated our terms of service',
-    type: 'system',
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-  },
-];
-
 export default function NotificationsScreen() {
   const { user } = useAuthStore();
   const { notifications, fetchNotifications, markAsRead, markAllAsRead } = useNotificationsStore();

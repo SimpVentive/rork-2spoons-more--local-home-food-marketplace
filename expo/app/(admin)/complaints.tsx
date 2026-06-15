@@ -28,76 +28,6 @@ import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
-// Mock complaints data for fallback
-const mockComplaints: Complaint[] = [
-  {
-    id: 'complaint-1',
-    userId: '2',
-    userName: 'John Doe',
-    userEmail: 'john@example.com',
-    orderId: 'order-3',
-    sellerId: '2',
-    type: 'order',
-    title: 'Food quality issue',
-    description: 'The food was cold when it arrived and did not taste fresh.',
-    status: 'pending',
-    createdAt: '2023-06-13T14:30:00Z',
-    updatedAt: '2023-06-13T14:30:00Z',
-  },
-  {
-    id: 'complaint-2',
-    userId: '1',
-    userName: 'Jane Smith',
-    userEmail: 'jane@example.com',
-    type: 'payment',
-    title: 'Payment not received',
-    description: 'I have not received payment for my order that was delivered 3 days ago.',
-    status: 'investigating',
-    createdAt: '2023-06-12T09:15:00Z',
-    updatedAt: '2023-06-12T15:45:00Z',
-  },
-  {
-    id: 'complaint-3',
-    userId: '3',
-    userName: 'Bob Wilson',
-    userEmail: 'bob@example.com',
-    sellerId: '1',
-    type: 'user',
-    title: 'Seller was rude',
-    description: 'The seller was very rude during pickup and refused to provide proper packaging.',
-    status: 'resolved',
-    resolution: 'Spoke with the seller and issued a warning. Offered a discount to the customer for their next order.',
-    createdAt: '2023-06-10T11:20:00Z',
-    updatedAt: '2023-06-11T16:30:00Z',
-  },
-  {
-    id: 'complaint-4',
-    userId: '2',
-    userName: 'John Doe',
-    userEmail: 'john@example.com',
-    type: 'other',
-    title: 'App crashes during checkout',
-    description: 'The app keeps crashing when I try to complete my payment during checkout.',
-    status: 'pending',
-    createdAt: '2023-06-14T10:05:00Z',
-    updatedAt: '2023-06-14T10:05:00Z',
-  },
-  {
-    id: 'complaint-5',
-    userId: '1',
-    userName: 'Jane Smith',
-    userEmail: 'jane@example.com',
-    orderId: 'order-5',
-    type: 'order',
-    title: 'Wrong order delivered',
-    description: 'I ordered vegetarian food but received non-vegetarian items.',
-    status: 'closed',
-    resolution: 'Refunded the order and offered a discount on the next purchase.',
-    createdAt: '2023-06-09T13:40:00Z',
-    updatedAt: '2023-06-10T09:25:00Z',
-  },
-];
-
 export default function ManageComplaints() {
   const router = useRouter();
   const { complaints: storeComplaints, fetchComplaints } = useComplaintsStore();
@@ -120,16 +50,18 @@ export default function ManageComplaints() {
     setIsLoading(true);
     try {
       await fetchComplaints();
-      setComplaints(storeComplaints.length > 0 ? storeComplaints : mockComplaints);
-      setFilteredComplaints(storeComplaints.length > 0 ? storeComplaints : mockComplaints);
     } catch (error) {
       console.error('Error loading complaints:', error);
-      setComplaints(mockComplaints);
-      setFilteredComplaints(mockComplaints);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Sync store data to local state whenever it changes
+  useEffect(() => {
+    setComplaints(storeComplaints);
+    setFilteredComplaints(storeComplaints);
+  }, [storeComplaints]);
 
   const filterComplaints = () => {
     let result = [...complaints];
