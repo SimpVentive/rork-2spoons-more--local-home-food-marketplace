@@ -4,6 +4,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
 import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store/auth-store";
 
 const AUTH_URL = process.env.EXPO_PUBLIC_RORK_AUTH_URL!;
 const APP_KEY = process.env.EXPO_PUBLIC_RORK_APP_KEY!;
@@ -102,8 +103,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const decoded = userFromToken(accessToken);
       if (decoded) {
-        setUser(decoded);
+        // Sync store BEFORE setting local user — so redirect logic sees populated store
         await syncProfile(decoded);
+        setUser(decoded);
       } else {
         await refreshToken();
       }
@@ -129,17 +131,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  /** Sync the auth user into the Zustand store (which handles Supabase upsert + fetch) */
   async function syncProfile(authUser: AuthUser) {
     try {
-      await supabase.from("profiles").upsert(
-        {
-          id: authUser.id,
-          email: authUser.email,
-          name: authUser.name,
-          avatar_url: authUser.picture,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "id" }
+      await useAuthStore.getState().syncProfile(
+        authUser.id,
+        authUser.email,
+        authUser.name,
+        authUser.picture
       );
     } catch (err) {
       console.error("Profile sync failed:", err);
@@ -244,8 +243,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await SecureStore.setItemAsync("access_token", access_token);
     await SecureStore.setItemAsync("refresh_token", refresh_token);
 
-    setUser(userData);
+    // Sync store BEFORE setting local user — so redirect logic sees populated store
     await syncProfile(userData);
+    setUser(userData);
   }
 
   async function refreshToken() {
@@ -271,14 +271,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const decoded = userFromToken(access_token);
     if (decoded) {
-      setUser(decoded);
+      // Sync store BEFORE setting local user
       await syncProfile(decoded);
+      setUser(decoded);
     }
   }
 
   async function signOut() {
     await SecureStore.deleteItemAsync("access_token");
     await SecureStore.deleteItemAsync("refresh_token");
+    useAuthStore.getState().logout();
     setUser(null);
   }
 
