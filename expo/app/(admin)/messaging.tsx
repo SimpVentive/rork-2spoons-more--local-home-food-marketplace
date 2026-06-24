@@ -25,147 +25,27 @@ import {
 } from 'lucide-react-native';
 import type { AdminConversation, AdminMessage, User as UserType } from '@/types';
 import { fetchUserProfile } from '@/lib/supabase';
+import { useMessagingStore } from '@/store/messaging-store';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
-// Mock conversations data
-const mockConversations: AdminConversation[] = [
-  {
-    id: 'conv-1',
-    userId: '1',
-    userName: 'Priya Sharma',
-    userImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
-    lastMessage: 'Thank you for your help with my order issue!',
-    unreadCount: 0,
-    updatedAt: '2023-06-15T14:30:00Z'
-  },
-  {
-    id: 'conv-2',
-    userId: '2',
-    userName: 'Rajesh Kumar',
-    userImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
-    lastMessage: 'When will my refund be processed?',
-    unreadCount: 2,
-    updatedAt: '2023-06-16T09:15:00Z'
-  },
-  {
-    id: 'conv-3',
-    userId: '3',
-    userName: 'Anita Desai',
-    userImage: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604',
-    lastMessage: 'I need help with my listing approval',
-    unreadCount: 1,
-    updatedAt: '2023-06-16T11:20:00Z'
-  }
-];
-
-// Mock messages data
-const mockMessages: Record<string, AdminMessage[]> = {
-  'conv-1': [
-    {
-      id: 'msg-1-1',
-      senderId: '1',
-      recipientId: 'admin1',
-      content: 'Hello, I have an issue with my recent order #order-3',
-      isRead: true,
-      createdAt: '2023-06-15T13:30:00Z'
-    },
-    {
-      id: 'msg-1-2',
-      senderId: 'admin1',
-      recipientId: '1',
-      content: 'Hi Priya, I would be happy to help. Could you please provide more details about the issue?',
-      isRead: true,
-      createdAt: '2023-06-15T13:35:00Z'
-    },
-    {
-      id: 'msg-1-3',
-      senderId: '1',
-      recipientId: 'admin1',
-      content: 'The food quality was not good, and it arrived cold.',
-      isRead: true,
-      createdAt: '2023-06-15T13:40:00Z'
-    },
-    {
-      id: 'msg-1-4',
-      senderId: 'admin1',
-      recipientId: '1',
-      content: 'I apologize for the inconvenience. I have processed a refund for your order. It should reflect in your account within 3-5 business days.',
-      isRead: true,
-      createdAt: '2023-06-15T13:45:00Z'
-    },
-    {
-      id: 'msg-1-5',
-      senderId: '1',
-      recipientId: 'admin1',
-      content: 'Thank you for your help with my order issue!',
-      isRead: true,
-      createdAt: '2023-06-15T14:30:00Z'
-    }
-  ],
-  'conv-2': [
-    {
-      id: 'msg-2-1',
-      senderId: '2',
-      recipientId: 'admin1',
-      content: 'Hi, I requested a refund for order #order-5 three days ago but haven\'t received it yet.',
-      isRead: true,
-      createdAt: '2023-06-16T09:00:00Z'
-    },
-    {
-      id: 'msg-2-2',
-      senderId: 'admin1',
-      recipientId: '2',
-      content: 'Hello Rajesh, let me check the status of your refund.',
-      isRead: true,
-      createdAt: '2023-06-16T09:05:00Z'
-    },
-    {
-      id: 'msg-2-3',
-      senderId: '2',
-      recipientId: 'admin1',
-      content: 'When will my refund be processed?',
-      isRead: false,
-      createdAt: '2023-06-16T09:15:00Z'
-    }
-  ],
-  'conv-3': [
-    {
-      id: 'msg-3-1',
-      senderId: '3',
-      recipientId: 'admin1',
-      content: 'Hello, I submitted a new food listing yesterday but it\'s still pending approval.',
-      isRead: true,
-      createdAt: '2023-06-16T11:00:00Z'
-    },
-    {
-      id: 'msg-3-2',
-      senderId: 'admin1',
-      recipientId: '3',
-      content: 'Hi Anita, we typically review new listings within 24 hours. I\'ll check on the status for you.',
-      isRead: true,
-      createdAt: '2023-06-16T11:10:00Z'
-    },
-    {
-      id: 'msg-3-3',
-      senderId: '3',
-      recipientId: 'admin1',
-      content: 'I need help with my listing approval',
-      isRead: false,
-      createdAt: '2023-06-16T11:20:00Z'
-    }
-  ]
-};
-
 export default function AdminMessagingScreen() {
   const router = useRouter();
-  const [conversations, setConversations] = useState<AdminConversation[]>([]);
+  const {
+    conversations: storeConversations,
+    messages: storeMessages,
+    isLoading: storeLoading,
+    fetchConversations,
+    fetchMessages,
+    sendMessage,
+    markAsRead,
+  } = useMessagingStore();
+
   const [filteredConversations, setFilteredConversations] = useState<AdminConversation[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedConversation, setSelectedConversation] = useState<AdminConversation | null>(null);
-  const [messages, setMessages] = useState<AdminMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [userDetails, setUserDetails] = useState<UserType | null>(null);
   
@@ -177,40 +57,25 @@ export default function AdminMessagingScreen() {
 
   useEffect(() => {
     filterConversations();
-  }, [searchQuery, conversations]);
+  }, [searchQuery, storeConversations]);
 
   useEffect(() => {
     if (selectedConversation) {
       loadMessages(selectedConversation.id);
       loadUserDetails(selectedConversation.userId);
-      
-      // Mark messages as read
-      const updatedConversations = conversations.map(conv => {
-        if (conv.id === selectedConversation.id) {
-          return { ...conv, unreadCount: 0 };
-        }
-        return conv;
-      });
-      setConversations(updatedConversations);
+      markAsRead(selectedConversation.id);
     }
   }, [selectedConversation]);
 
   const loadConversations = async () => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setConversations(mockConversations);
-    setFilteredConversations(mockConversations);
+    await fetchConversations();
     setIsLoading(false);
   };
 
-  const loadMessages = (conversationId: string) => {
-    const conversationMessages = mockMessages[conversationId] || [];
-    setMessages(conversationMessages);
-    
-    // Scroll to bottom after messages load
+  const loadMessages = async (conversationId: string) => {
+    await fetchMessages(conversationId);
+
     setTimeout(() => {
       if (flatListRef.current) {
         flatListRef.current.scrollToEnd({ animated: true });
@@ -231,55 +96,24 @@ export default function AdminMessagingScreen() {
 
   const filterConversations = () => {
     if (!searchQuery) {
-      setFilteredConversations(conversations);
+      setFilteredConversations(storeConversations);
       return;
     }
     
     const query = searchQuery.toLowerCase();
-    const filtered = conversations.filter(
+    const filtered = storeConversations.filter(
       conv => conv.userName.toLowerCase().includes(query)
     );
     
     setFilteredConversations(filtered);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
-    
-    const newMsg: AdminMessage = {
-      id: `msg-new-${Date.now()}`,
-      senderId: 'admin1',
-      recipientId: selectedConversation.userId,
-      content: newMessage.trim(),
-      isRead: false,
-      createdAt: new Date().toISOString()
-    };
-    
-    // Update messages
-    const updatedMessages = [...messages, newMsg];
-    setMessages(updatedMessages);
-    
-    // Update conversation with last message
-    const updatedConversations = conversations.map(conv => {
-      if (conv.id === selectedConversation.id) {
-        return {
-          ...conv,
-          lastMessage: newMessage.trim(),
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return conv;
-    });
-    
-    // Sort conversations by most recent
-    updatedConversations.sort((a, b) => 
-      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    );
-    
-    setConversations(updatedConversations);
+
+    await sendMessage(selectedConversation.id, selectedConversation.userId, newMessage.trim(), 'admin1');
     setNewMessage('');
-    
-    // Scroll to bottom
+
     if (flatListRef.current) {
       flatListRef.current.scrollToEnd({ animated: true });
     }
@@ -356,7 +190,6 @@ export default function AdminMessagingScreen() {
   return (
     <View style={styles.container}>
       {!selectedConversation ? (
-        // Conversations List View
         <>
           <View style={styles.searchContainer}>
             <View style={styles.searchInputContainer}>
@@ -390,7 +223,6 @@ export default function AdminMessagingScreen() {
           )}
         </>
       ) : (
-        // Chat View
         <KeyboardAvoidingView 
           style={styles.chatContainer}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -451,7 +283,7 @@ export default function AdminMessagingScreen() {
           
           <FlatList
             ref={flatListRef}
-            data={messages}
+            data={storeMessages}
             renderItem={renderMessageItem}
             keyExtractor={item => item.id}
             contentContainerStyle={styles.messagesList}

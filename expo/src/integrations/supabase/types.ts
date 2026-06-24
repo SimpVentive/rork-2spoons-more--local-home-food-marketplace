@@ -18,6 +18,113 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          action_text: string | null
+          action_url: string | null
+          created_at: string | null
+          created_by: string
+          description: string
+          id: string
+          image_url: string | null
+          metrics: Json | null
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          target_audience: string
+          title: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          action_text?: string | null
+          action_url?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          metrics?: Json | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          target_audience?: string
+          title: string
+          type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          action_text?: string | null
+          action_url?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          metrics?: Json | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          target_audience?: string
+          title?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       complaints: {
         Row: {
           admin_notes: string | null

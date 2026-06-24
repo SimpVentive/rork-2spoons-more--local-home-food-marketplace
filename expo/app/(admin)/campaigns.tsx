@@ -29,75 +29,26 @@ import {
   AlertCircle
 } from 'lucide-react-native';
 import { Campaign } from '@/types';
+import { useCampaignsStore } from '@/store/campaigns-store';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
-// Mock campaigns data
-const mockCampaigns: Campaign[] = [
-  {
-    id: 'campaign-1',
-    title: 'Summer Special Offers',
-    description: 'Get 20% off on your first order this summer!',
-    type: 'email',
-    targetAudience: 'all',
-    status: 'sent',
-    sentAt: '2023-06-10T10:00:00Z',
-    createdAt: '2023-06-05T14:30:00Z',
-    updatedAt: '2023-06-10T10:00:00Z',
-    metrics: {
-      sent: 1250,
-      delivered: 1200,
-      opened: 850,
-      clicked: 320
-    }
-  },
-  {
-    id: 'campaign-2',
-    title: 'New Chef Onboarding',
-    description: 'Welcome to our platform! Here are some tips to get started.',
-    type: 'push',
-    targetAudience: 'sellers',
-    status: 'scheduled',
-    scheduledFor: '2023-07-01T09:00:00Z',
-    createdAt: '2023-06-15T11:20:00Z',
-    updatedAt: '2023-06-15T16:45:00Z'
-  },
-  {
-    id: 'campaign-3',
-    title: 'Weekend Food Festival',
-    description: 'Join our virtual food festival this weekend with special discounts!',
-    type: 'in_app',
-    targetAudience: 'buyers',
-    status: 'draft',
-    createdAt: '2023-06-18T09:15:00Z',
-    updatedAt: '2023-06-18T09:15:00Z'
-  },
-  {
-    id: 'campaign-4',
-    title: 'We Miss You!',
-    description: 'It has been a while since your last order. Come back and enjoy special offers!',
-    type: 'email',
-    targetAudience: 'inactive',
-    status: 'sent',
-    sentAt: '2023-06-12T08:30:00Z',
-    createdAt: '2023-06-08T13:40:00Z',
-    updatedAt: '2023-06-12T08:30:00Z',
-    metrics: {
-      sent: 450,
-      delivered: 430,
-      opened: 210,
-      clicked: 85
-    }
-  }
-];
-
 export default function CampaignsScreen() {
   const router = useRouter();
   
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const {
+    campaigns: storeCampaigns,
+    isLoading: storeLoading,
+    fetchCampaigns,
+    createCampaign,
+    deleteCampaign,
+    scheduleCampaign,
+    sendCampaign,
+  } = useCampaignsStore();
+
   const [filteredCampaigns, setFilteredCampaigns] = useState<Campaign[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -118,21 +69,21 @@ export default function CampaignsScreen() {
 
   useEffect(() => {
     filterCampaigns();
-  }, [searchQuery, filter, campaigns]);
+  }, [searchQuery, filter, storeCampaigns]);
 
   const loadCampaigns = async () => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setCampaigns(mockCampaigns);
-    setFilteredCampaigns(mockCampaigns);
+    await fetchCampaigns();
     setIsLoading(false);
   };
 
+  // Sync filtered campaigns when store campaigns change
+  useEffect(() => {
+    filterCampaigns();
+  }, [storeCampaigns]);
+
   const filterCampaigns = () => {
-    let result = [...campaigns];
+    let result = [...storeCampaigns];
     
     // Apply filter
     if (filter !== 'all') {
@@ -155,30 +106,31 @@ export default function CampaignsScreen() {
     setFilteredCampaigns(result);
   };
 
-  const handleCreateCampaign = () => {
+  const handleCreateCampaign = async () => {
     if (!newCampaign.title || !newCampaign.description) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
     
-    const campaign: Campaign = {
-      id: `campaign-${Date.now()}`,
-      ...newCampaign,
-      status: 'draft',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    setCampaigns([campaign, ...campaigns]);
-    setIsModalVisible(false);
-    setNewCampaign({
-      title: '',
-      description: '',
-      type: 'email',
-      targetAudience: 'all'
+    const created = await createCampaign({
+      title: newCampaign.title,
+      description: newCampaign.description,
+      type: newCampaign.type,
+      targetAudience: newCampaign.targetAudience,
     });
     
-    Alert.alert('Success', 'Campaign created successfully');
+    if (created) {
+      setIsModalVisible(false);
+      setNewCampaign({
+        title: '',
+        description: '',
+        type: 'email',
+        targetAudience: 'all'
+      });
+      Alert.alert('Success', 'Campaign created successfully');
+    } else {
+      Alert.alert('Error', 'Failed to create campaign. Please try again.');
+    }
   };
 
   const handleDeleteCampaign = (id: string) => {
@@ -193,9 +145,8 @@ export default function CampaignsScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            const updatedCampaigns = campaigns.filter(campaign => campaign.id !== id);
-            setCampaigns(updatedCampaigns);
+          onPress: async () => {
+            await deleteCampaign(id);
             Alert.alert('Success', 'Campaign deleted successfully');
           }
         }
@@ -214,24 +165,10 @@ export default function CampaignsScreen() {
         },
         {
           text: 'Schedule',
-          onPress: () => {
-            // In a real app, this would open a date picker
+          onPress: async () => {
             const scheduledDate = new Date();
             scheduledDate.setDate(scheduledDate.getDate() + 1);
-            
-            const updatedCampaigns = campaigns.map(campaign => {
-              if (campaign.id === id) {
-                return {
-                  ...campaign,
-                  status: 'scheduled' as const,
-                  scheduledFor: scheduledDate.toISOString(),
-                  updatedAt: new Date().toISOString()
-                };
-              }
-              return campaign;
-            });
-            
-            setCampaigns(updatedCampaigns);
+            await scheduleCampaign(id, scheduledDate.toISOString());
             Alert.alert('Success', 'Campaign scheduled successfully');
           }
         }
@@ -250,26 +187,8 @@ export default function CampaignsScreen() {
         },
         {
           text: 'Send Now',
-          onPress: () => {
-            const updatedCampaigns = campaigns.map(campaign => {
-              if (campaign.id === id) {
-                return {
-                  ...campaign,
-                  status: 'sent' as const,
-                  sentAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  metrics: {
-                    sent: Math.floor(Math.random() * 1000) + 500,
-                    delivered: Math.floor(Math.random() * 900) + 400,
-                    opened: Math.floor(Math.random() * 700) + 300,
-                    clicked: Math.floor(Math.random() * 400) + 100
-                  }
-                };
-              }
-              return campaign;
-            });
-            
-            setCampaigns(updatedCampaigns);
+          onPress: async () => {
+            await sendCampaign(id);
             Alert.alert('Success', 'Campaign sent successfully');
           }
         }

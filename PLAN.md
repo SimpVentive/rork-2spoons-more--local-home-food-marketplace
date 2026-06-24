@@ -25,6 +25,8 @@ Replaces all mock data and local-only storage with a real Supabase Postgres data
 - **notifications** — user notifications (order updates, reviews, system messages)
 - **complaints** — user complaints and admin resolution
 - **dish_notifications** — saved dish alerts for route-based notifications
+- **campaigns** — admin marketing campaigns (email, push, in-app)
+- **admin_messages** — admin-to-user messaging system
 
 ## Design
 
