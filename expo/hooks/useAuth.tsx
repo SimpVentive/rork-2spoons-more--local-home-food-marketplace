@@ -5,6 +5,7 @@ import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth-store";
+import { base64UrlEncode, uint8ArrayToBase64Url, base64UrlDecode } from "@/utils/base64";
 
 const AUTH_URL = process.env.EXPO_PUBLIC_RORK_AUTH_URL!;
 const APP_KEY = process.env.EXPO_PUBLIC_RORK_APP_KEY!;
@@ -13,19 +14,13 @@ const PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID!;
 function generateCodeVerifier(): string {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+  return uint8ArrayToBase64Url(bytes);
 }
 
 async function generateCodeChallenge(verifier: string): Promise<string> {
   const data = new TextEncoder().encode(verifier);
   const hash = await crypto.subtle.digest("SHA-256", data);
-  return btoa(String.fromCharCode(...new Uint8Array(hash)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+  return uint8ArrayToBase64Url(new Uint8Array(hash));
 }
 
 export interface AuthUser {
@@ -40,8 +35,7 @@ function userFromToken(token: string): AuthUser | null {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
 
-    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    const payload = JSON.parse(atob(base64));
+    const payload = JSON.parse(base64UrlDecode(parts[1]));
 
     if (payload.exp && payload.exp * 1000 < Date.now()) {
       return null;
@@ -295,8 +289,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name,
         exp: now + 30 * 24 * 60 * 60,
       });
-      const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-      const body = btoa(payload);
+      const header = base64UrlEncode(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+      const body = base64UrlEncode(payload);
       const accessToken = `${header}.${body}.phone`;
 
       await SecureStore.setItemAsync("access_token", accessToken);
