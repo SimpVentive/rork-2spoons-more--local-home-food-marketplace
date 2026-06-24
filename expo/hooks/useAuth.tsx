@@ -64,6 +64,7 @@ interface AuthContextType {
   isSigningIn: boolean;
   error: string | null;
   signIn: (provider: "google" | "apple") => Promise<void>;
+  phoneSignIn: (phoneNumber: string) => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -277,6 +278,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function phoneSignIn(phoneNumber: string) {
+    setIsSigningIn(true);
+    setError(null);
+    try {
+      // Derive a stable user ID from the phone number
+      const userId = `phone_${phoneNumber.replace(/\D/g, "")}`;
+      const email = `${phoneNumber.replace(/\D/g, "")}@phone.2spoons.app`;
+      const name = `User ${phoneNumber.slice(-4)}`;
+
+      // Create a JWT-like token so checkAuth can restore sessions
+      const now = Math.floor(Date.now() / 1000);
+      const payload = JSON.stringify({
+        sub: userId,
+        email,
+        name,
+        exp: now + 30 * 24 * 60 * 60,
+      });
+      const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+      const body = btoa(payload);
+      const accessToken = `${header}.${body}.phone`;
+
+      await SecureStore.setItemAsync("access_token", accessToken);
+      await SecureStore.setItemAsync("refresh_token", `phone_refresh_${userId}`);
+
+      const authUser: AuthUser = { id: userId, email, name };
+      await syncProfile(authUser);
+      setUser(authUser);
+    } catch (err) {
+      console.error("Phone sign in failed:", err);
+      setError(err instanceof Error ? err.message : "Phone sign in failed");
+    } finally {
+      setIsSigningIn(false);
+    }
+  }
+
   async function signOut() {
     await SecureStore.deleteItemAsync("access_token");
     await SecureStore.deleteItemAsync("refresh_token");
@@ -285,7 +321,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isSigningIn, error, signIn, signOut, clearError }}>
+    <AuthContext.Provider value={{ user, isLoading, isSigningIn, error, signIn, phoneSignIn, signOut, clearError }}>
       {children}
     </AuthContext.Provider>
   );

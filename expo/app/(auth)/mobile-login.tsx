@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,35 +8,54 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Phone } from 'lucide-react-native';
+import { ArrowLeft, Phone, Key } from 'lucide-react-native';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import OTPInput from '@/components/OTPInput';
+import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
 export default function MobileLoginScreen() {
   const router = useRouter();
-  const [step, setStep] = useState<'phone' | 'otp' | 'twofa'>('phone');
+  const { phoneSignIn, isSigningIn } = useAuth();
+  const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
-  const [twoFACode, setTwoFACode] = useState('');
+  const [generatedOtp, setGeneratedOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [otpError, setOtpError] = useState('');
-  const [twoFAError, setTwoFAError] = useState('');
   const [resendCountdown, setResendCountdown] = useState(0);
-  const [isTwoFAEnabled, setIsTwoFAEnabled] = useState(false);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const validatePhoneNumber = (phone: string) => {
-    // Indian phone number format: 10 digits
     const cleaned = phone.replace(/\D/g, '');
     return cleaned.length === 10;
+  };
+
+  const generateOTP = (): string => {
+    // Generate a random 4-digit OTP
+    return String(Math.floor(1000 + Math.random() * 9000));
+  };
+
+  const startCountdown = () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    setResendCountdown(60);
+    countdownRef.current = setInterval(() => {
+      setResendCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   const handleSendOTP = async () => {
@@ -55,26 +74,16 @@ export default function MobileLoginScreen() {
 
     setLoading(true);
     try {
-      // TODO: Integrate with Supabase auth
-      // Call OTP sending API
-      console.log('Sending OTP to:', phoneNumber);
+      // Generate OTP — in production this would come from an SMS gateway
+      const code = generateOTP();
+      setGeneratedOtp(code);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Simulate network delay
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
+      console.log(`[Demo] OTP for ${phoneNumber}: ${code}`);
       setStep('otp');
-      setResendCountdown(60);
-
-      // Countdown timer
-      const interval = setInterval(() => {
-        setResendCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      startCountdown();
     } catch (err) {
       setError('Failed to send OTP. Please try again.');
       console.error('OTP send error:', err);
@@ -92,55 +101,28 @@ export default function MobileLoginScreen() {
       return;
     }
 
-    setLoading(true);
-    try {
-      // TODO: Integrate with Supabase auth
-      console.log('Verifying OTP:', otp);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Check if 2FA is enabled for this user
-      // For now, set to true to demonstrate flow
-      setIsTwoFAEnabled(true);
-
-      if (isTwoFAEnabled) {
-        setStep('twofa');
-      } else {
-        // Login successful
-        router.replace('/(tabs)/home' as never);
-      }
-    } catch (err) {
-      setOtpError('Invalid OTP. Please try again.');
-      console.error('OTP verification error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyTwoFA = async () => {
-    setError('');
-    setTwoFAError('');
-
-    if (twoFACode.length !== 4) {
-      setTwoFAError('Please enter the 4-digit 2FA code');
+    if (otp !== generatedOtp) {
+      setOtpError('Incorrect OTP. Please try again.');
       return;
     }
 
     setLoading(true);
     try {
-      // TODO: Integrate with Supabase 2FA verification
-      console.log('Verifying 2FA:', twoFACode);
+      // Sign in the user via the auth context
+      await phoneSignIn(phoneNumber);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Login successful
-      Alert.alert('Success', 'You have been logged in successfully!');
-      router.replace('/(tabs)/home' as never);
+      // Route based on user preferences
+      const state = useAuthStore.getState();
+      if (state.isAdmin) {
+        router.replace('/(admin)' as never);
+      } else if (!state.userPreference) {
+        router.replace('/user-preference' as never);
+      } else {
+        router.replace('/(tabs)/home' as never);
+      }
     } catch (err) {
-      setTwoFAError('Invalid 2FA code. Please try again.');
-      console.error('2FA verification error:', err);
+      setError('Login failed. Please try again.');
+      console.error('Phone sign in error:', err);
     } finally {
       setLoading(false);
     }
@@ -149,27 +131,33 @@ export default function MobileLoginScreen() {
   const handleResendOTP = async () => {
     if (resendCountdown > 0) return;
 
+    const code = generateOTP();
+    setGeneratedOtp(code);
+    setOtp('');
+    setOtpError('');
     setLoading(true);
-    try {
-      await handleSendOTP();
-    } finally {
-      setLoading(false);
-    }
+
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    console.log(`[Demo] New OTP for ${phoneNumber}: ${code}`);
+    setLoading(false);
+    startCountdown();
   };
 
   const handleBack = () => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
     if (step === 'phone') {
       router.back();
-    } else if (step === 'otp') {
+    } else {
       setStep('phone');
       setOtp('');
       setOtpError('');
-    } else {
-      setStep('otp');
-      setTwoFACode('');
-      setTwoFAError('');
+      setGeneratedOtp('');
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      setResendCountdown(0);
     }
   };
+
+  const isBusy = loading || isSigningIn;
 
   return (
     <KeyboardAvoidingView
@@ -183,9 +171,7 @@ export default function MobileLoginScreen() {
             <ArrowLeft size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.title}>
-            {step === 'phone' && 'Phone Number'}
-            {step === 'otp' && 'Enter OTP'}
-            {step === 'twofa' && 'Two-Factor Auth'}
+            {step === 'phone' ? 'Phone Number' : 'Enter OTP'}
           </Text>
           <View style={{ width: 24 }} />
         </View>
@@ -214,7 +200,7 @@ export default function MobileLoginScreen() {
                 error={phoneError}
               />
 
-              {error && <Text style={styles.errorText}>{error}</Text>}
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
               <Button
                 title={loading ? 'Sending OTP...' : 'Send OTP'}
@@ -237,7 +223,7 @@ export default function MobileLoginScreen() {
             <>
               <View style={styles.iconContainer}>
                 <View style={styles.otpIcon}>
-                  <Text style={styles.otpIconText}>••••</Text>
+                  <Key size={32} color={colors.primary} />
                 </View>
               </View>
 
@@ -246,19 +232,31 @@ export default function MobileLoginScreen() {
                 <Text style={styles.phoneDisplay}>+91 {phoneNumber}</Text>
               </Text>
 
+              {/* Visible OTP — for demo purposes, shows the code on screen */}
+              <View style={styles.otpDisplayCard}>
+                <Text style={styles.otpDisplayLabel}>Your OTP is</Text>
+                <Text style={styles.otpDisplayValue}>{generatedOtp}</Text>
+                <Text style={styles.otpDisplayHint}>
+                  In production, this would arrive via SMS
+                </Text>
+              </View>
+
               <OTPInput
                 length={4}
                 value={otp}
-                onChangeText={setOtp}
+                onChangeText={(text) => {
+                  setOtp(text);
+                  setOtpError('');
+                }}
                 error={otpError}
               />
 
-              {error && <Text style={styles.errorText}>{error}</Text>}
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
               <Button
-                title={loading ? 'Verifying...' : 'Verify OTP'}
+                title={isBusy ? 'Signing in...' : 'Verify & Sign In'}
                 onPress={handleVerifyOTP}
-                disabled={loading || otp.length !== 4}
+                disabled={isBusy || otp.length !== 4}
                 variant="primary"
                 size="large"
               />
@@ -275,44 +273,6 @@ export default function MobileLoginScreen() {
                   </TouchableOpacity>
                 )}
               </View>
-            </>
-          )}
-
-          {/* 2FA Step */}
-          {step === 'twofa' && (
-            <>
-              <View style={styles.iconContainer}>
-                <View style={styles.twoFAIcon}>
-                  <Text style={styles.twoFAIconText}>🔐</Text>
-                </View>
-              </View>
-
-              <Text style={styles.description}>
-                Enter the 4-digit code from your authenticator app
-              </Text>
-
-              <OTPInput
-                length={4}
-                value={twoFACode}
-                onChangeText={setTwoFACode}
-                error={twoFAError}
-              />
-
-              {error && <Text style={styles.errorText}>{error}</Text>}
-
-              <Button
-                title={loading ? 'Verifying...' : 'Verify 2FA'}
-                onPress={handleVerifyTwoFA}
-                disabled={loading || twoFACode.length !== 4}
-                variant="primary"
-                size="large"
-              />
-
-              <TouchableOpacity
-                onPress={() => Alert.alert('Recovery Code', 'Enter your recovery code')}
-              >
-                <Text style={styles.link}>Use recovery code instead</Text>
-              </TouchableOpacity>
             </>
           )}
         </View>
@@ -367,22 +327,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  otpIconText: {
-    fontSize: 32,
-    fontWeight: typography.weights.bold,
-    color: colors.primary,
-  },
-  twoFAIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: `${colors.success}15`,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  twoFAIconText: {
-    fontSize: 40,
-  },
   description: {
     fontSize: typography.sizes.base,
     color: colors.textLight,
@@ -393,6 +337,36 @@ const styles = StyleSheet.create({
   phoneDisplay: {
     color: colors.primary,
     fontWeight: typography.weights.semibold,
+  },
+  // OTP Display Card — shows the generated code prominently
+  otpDisplayCard: {
+    backgroundColor: `${colors.primary}10`,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: `${colors.primary}30`,
+    padding: spacing.xl,
+    alignItems: 'center',
+    marginBottom: spacing['2xl'],
+  },
+  otpDisplayLabel: {
+    fontSize: typography.sizes.sm,
+    color: colors.textLight,
+    marginBottom: spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    fontWeight: typography.weights.semibold,
+  },
+  otpDisplayValue: {
+    fontSize: 48,
+    fontWeight: typography.weights.bold,
+    color: colors.primary,
+    letterSpacing: 12,
+    marginBottom: spacing.sm,
+  },
+  otpDisplayHint: {
+    fontSize: typography.sizes.xs,
+    color: colors.textLight,
+    fontStyle: 'italic',
   },
   errorText: {
     color: colors.error,
