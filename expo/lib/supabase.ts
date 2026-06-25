@@ -5,13 +5,40 @@ import { User } from "@/types";
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
+/**
+ * Custom fetch that injects the Rork Auth JWT as the Authorization header
+ * while preserving all headers set by Supabase (including apikey).
+ *
+ * We use this instead of the `accessToken` option because in some
+ * supabase-js versions the `accessToken` code path can interfere with
+ * the `apikey` header being sent, causing "No API key found" errors.
+ */
+const authFetch: typeof fetch = async (input, init) => {
+  try {
+    const token = await SecureStore.getItemAsync("access_token");
+    if (token) {
+      const existingHeaders = (init?.headers ?? {}) as Record<string, string>;
+      return fetch(input, {
+        ...init,
+        headers: {
+          ...existingHeaders,
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    }
+  } catch {
+    // SecureStore may be unavailable in certain environments;
+    // proceed without the auth header (anon access only).
+  }
+  return fetch(input, init);
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: false,
   },
-  accessToken: async () => {
-    const token = await SecureStore.getItemAsync("access_token");
-    return token ?? null;
+  global: {
+    fetch: authFetch,
   },
 });
 

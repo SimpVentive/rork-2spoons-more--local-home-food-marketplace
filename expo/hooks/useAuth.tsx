@@ -5,7 +5,7 @@ import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth-store";
-import { base64UrlEncode, uint8ArrayToBase64Url, base64UrlDecode } from "@/utils/base64";
+import { uint8ArrayToBase64Url, base64UrlDecode } from "@/utils/base64";
 
 const AUTH_URL = process.env.EXPO_PUBLIC_RORK_AUTH_URL!;
 const APP_KEY = process.env.EXPO_PUBLIC_RORK_APP_KEY!;
@@ -87,22 +87,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function checkAuth() {
     try {
+      // 1. Try Rork Auth token (Google / Apple sign-in)
       const accessToken = await SecureStore.getItemAsync("access_token");
-      if (!accessToken) {
-        const refreshTokenStored = await SecureStore.getItemAsync("refresh_token");
-        if (refreshTokenStored) {
+      if (accessToken) {
+        const decoded = userFromToken(accessToken);
+        if (decoded) {
+          await syncProfile(decoded);
+          setUser(decoded);
+          setIsLoading(false);
+          return;
+        } else {
+          // Token expired or invalid — try refreshing
           await refreshToken();
+          setIsLoading(false);
+          return;
         }
+      }
+
+      // No access token — try refresh
+      const refreshTokenStored = await SecureStore.getItemAsync("refresh_token");
+      if (refreshTokenStored) {
+        await refreshToken();
+        setIsLoading(false);
         return;
       }
 
-      const decoded = userFromToken(accessToken);
-      if (decoded) {
-        // Sync store BEFORE setting local user — so redirect logic sees populated store
-        await syncProfile(decoded);
-        setUser(decoded);
-      } else {
-        await refreshToken();
+      // 2. Try phone session (phone-number OTP sign-in)
+      const phoneSession = await SecureStore.getItemAsync("phone_session");
+      if (phoneSession) {
+        // Restore phone user from Zustand persist (already hydrated from AsyncStorage)
+        const storedUser = useAuthStore.getState().user;
+        if (storedUser) {
+          setUser({
+            id: storedUser.id,
+            email: storedUser.email,
+            name: storedUser.name,
+            picture: storedUser.profileImage,
+          });
+        }
       }
     } catch (err) {
       console.error("Auth check failed:", err);
@@ -276,28 +298,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSigningIn(true);
     setError(null);
     try {
-      // Derive a stable user ID from the phone number
       const userId = `phone_${phoneNumber.replace(/\D/g, "")}`;
       const email = `${phoneNumber.replace(/\D/g, "")}@phone.2spoons.app`;
       const name = `User ${phoneNumber.slice(-4)}`;
 
-      // Create a JWT-like token so checkAuth can restore sessions
-      const now = Math.floor(Date.now() / 1000);
-      const payload = JSON.stringify({
-        sub: userId,
-        email,
-        name,
-        exp: now + 30 * 24 * 60 * 60,
-      });
-      const header = base64UrlEncode(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-      const body = base64UrlEncode(payload);
-      const accessToken = `${header}.${body}.phone`;
-
-      await SecureStore.setItemAsync("access_token", accessToken);
-      await SecureStore.setItemAsync("refresh_token", `phone_refresh_${userId}`);
-
       const authUser: AuthUser = { id: userId, email, name };
-      await syncProfile(authUser);
+
+      // Store a phone session marker (not a fake JWT — those get rejected by Supabase)
+      // This lets checkAuth() restore the session on next app launch.
+      await SecureStore.setItemAsync("phone_session", userId);
+
+      // Populate the Zustand store with basic phone-user state so redirect logic works
+      // even if the Supabase profile sync fails (RLS requires a real JWT for inserts).
+      useAuthStore.setState({
+        user: {
+          id: userId,
+          email,
+          name,
+          phone: phoneNumber,
+          address: "",
+          profileImage: "",
+          experience: "",
+          cuisineTypes: [],
+          paymentMethods: [],
+          location: { latitude: 0, longitude: 0 },
+          isChef: false,
+          allowProfileDisplay: true,
+          isVerified: false,
+          isAdmin: false,
+          rating: 0,
+          reviewCount: 0,
+          officeAddress: "",
+          officeLocation: { latitude: 0, longitude: 0 },
+          homeToOfficeRoute: [],
+          officeToHomeRoute: [],
+          routesSameAsHomeToOffice: true,
+          detourPreference: 500,
+          firstPostDate: null,
+          postCount: 0,
+          freePostsRemaining: 3,
+        },
+        isAuthenticated: true,
+        isAdmin: false,
+        userPreference: null,
+      });
+
+      // Try to sync the profile to Supabase (may fail without a real JWT;
+      // the user is still logged in locally regardless).
+      try {
+        await syncProfile(authUser);
+      } catch {
+        console.log("Phone user profile sync skipped (no Rork Auth JWT)");
+      }
+
       setUser(authUser);
     } catch (err) {
       console.error("Phone sign in failed:", err);
@@ -310,6 +363,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signOut() {
     await SecureStore.deleteItemAsync("access_token");
     await SecureStore.deleteItemAsync("refresh_token");
+    await SecureStore.deleteItemAsync("phone_session");
     useAuthStore.getState().logout();
     setUser(null);
   }
