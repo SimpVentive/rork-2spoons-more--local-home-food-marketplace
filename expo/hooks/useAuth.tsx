@@ -298,18 +298,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSigningIn(true);
     setError(null);
     try {
-      const userId = `phone_${phoneNumber.replace(/\D/g, "")}`;
-      const email = `${phoneNumber.replace(/\D/g, "")}@phone.2spoons.app`;
+      const phoneDigits = phoneNumber.replace(/\D/g, "");
+      const userId = `phone_${phoneDigits}`;
+      const email = `${phoneDigits}@phone.2spoons.app`;
       const name = `User ${phoneNumber.slice(-4)}`;
 
       const authUser: AuthUser = { id: userId, email, name };
 
-      // Store a phone session marker (not a fake JWT — those get rejected by Supabase)
-      // This lets checkAuth() restore the session on next app launch.
+      // Store a phone session marker so checkAuth() can restore on next launch
       await SecureStore.setItemAsync("phone_session", userId);
 
-      // Populate the Zustand store with basic phone-user state so redirect logic works
-      // even if the Supabase profile sync fails (RLS requires a real JWT for inserts).
+      // Populate Zustand with a full local user profile.
+      // We do NOT call Supabase here — phone users have no real JWT,
+      // so RLS policies would block all reads/writes. The profile lives
+      // in local state (persisted via AsyncStorage) until the user upgrades
+      // to a real auth provider.
       useAuthStore.setState({
         user: {
           id: userId,
@@ -342,14 +345,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin: false,
         userPreference: null,
       });
-
-      // Try to sync the profile to Supabase (may fail without a real JWT;
-      // the user is still logged in locally regardless).
-      try {
-        await syncProfile(authUser);
-      } catch {
-        console.log("Phone user profile sync skipped (no Rork Auth JWT)");
-      }
 
       setUser(authUser);
     } catch (err) {

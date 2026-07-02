@@ -12,19 +12,22 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
  * We use this instead of the `accessToken` option because in some
  * supabase-js versions the `accessToken` code path can interfere with
  * the `apikey` header being sent, causing "No API key found" errors.
+ *
+ * IMPORTANT: We construct a new Headers object from init.headers rather
+ * than spreading ({...headers}) because Supabase may pass a Headers
+ * instance — and Headers objects are NOT iterable with the spread
+ * operator. Spreading a Headers object yields an empty plain object,
+ * silently dropping ALL headers including the critical `apikey` header.
  */
 const authFetch: typeof fetch = async (input, init) => {
   try {
     const token = await SecureStore.getItemAsync("access_token");
     if (token) {
-      const existingHeaders = (init?.headers ?? {}) as Record<string, string>;
-      return fetch(input, {
-        ...init,
-        headers: {
-          ...existingHeaders,
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // new Headers() properly copies all entries from any format:
+      // Headers object, plain object, or [key,value][] tuples.
+      const headers = new Headers(init?.headers);
+      headers.set("Authorization", `Bearer ${token}`);
+      return fetch(input, { ...init, headers });
     }
   } catch {
     // SecureStore may be unavailable in certain environments;
