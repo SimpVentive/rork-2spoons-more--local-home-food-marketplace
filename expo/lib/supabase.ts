@@ -2,29 +2,17 @@ import { createClient } from "@supabase/supabase-js";
 import * as SecureStore from "expo-secure-store";
 import { User } from "@/types";
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 /**
  * Custom fetch that injects the Rork Auth JWT as the Authorization header
  * while preserving all headers set by Supabase (including apikey).
- *
- * We use this instead of the `accessToken` option because in some
- * supabase-js versions the `accessToken` code path can interfere with
- * the `apikey` header being sent, causing "No API key found" errors.
- *
- * IMPORTANT: We construct a new Headers object from init.headers rather
- * than spreading ({...headers}) because Supabase may pass a Headers
- * instance — and Headers objects are NOT iterable with the spread
- * operator. Spreading a Headers object yields an empty plain object,
- * silently dropping ALL headers including the critical `apikey` header.
  */
 const authFetch: typeof fetch = async (input, init) => {
   try {
     const token = await SecureStore.getItemAsync("access_token");
     if (token) {
-      // new Headers() properly copies all entries from any format:
-      // Headers object, plain object, or [key,value][] tuples.
       const headers = new Headers(init?.headers);
       headers.set("Authorization", `Bearer ${token}`);
       return fetch(input, { ...init, headers });
@@ -36,7 +24,13 @@ const authFetch: typeof fetch = async (input, init) => {
   return fetch(input, init);
 };
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error(
+    "Supabase is not configured. Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to expo/.env and restart the app."
+  );
+}
+
+export const supabase = createClient(supabaseUrl || "https://example.supabase.co", supabaseAnonKey || "dummy-key", {
   auth: {
     persistSession: false,
   },
