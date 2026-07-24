@@ -19,7 +19,7 @@ import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export default function MobileLoginScreen() {
   const router = useRouter();
@@ -27,6 +27,7 @@ export default function MobileLoginScreen() {
   const [step, setStep] = useState<'phone' | 'otp' | 'twofa'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
+  const [demoOtp, setDemoOtp] = useState<string | null>(null);
   const [twoFACode, setTwoFACode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -60,6 +61,10 @@ export default function MobileLoginScreen() {
     }, 1000);
   };
 
+  const generateDemoOtp = () => {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+  };
+
   const isPlaceholderConfig = (message: string) =>
     message.includes('dummy-key') ||
     message.includes('your-project-ref') ||
@@ -83,6 +88,15 @@ export default function MobileLoginScreen() {
 
     setLoading(true);
     try {
+      if (!isSupabaseConfigured) {
+        const demo = generateDemoOtp();
+        setDemoOtp(demo);
+        console.log('Demo OTP (dev):', demo);
+        setStep('otp');
+        startCountdown();
+        return;
+      }
+
       const { error: otpErrorResponse } = await supabase.auth.signInWithOtp({
         phone: normalizedPhone,
       });
@@ -119,6 +133,26 @@ export default function MobileLoginScreen() {
 
     setLoading(true);
     try {
+      if (!isSupabaseConfigured) {
+        if (!demoOtp || otp !== demoOtp) {
+          setOtpError('Invalid OTP. Please try again.');
+          return;
+        }
+
+        // Demo flow: mark phone user as signed in and route immediately
+        await phoneSignIn(phoneNumber);
+        const state = useAuthStore.getState();
+        if (state.isAdmin) {
+          router.replace('/(admin)' as never);
+        } else if (!state.userPreference) {
+          router.replace('/user-preference' as never);
+        } else {
+          router.replace('/(tabs)/home' as never);
+        }
+
+        return;
+      }
+
       const { data, error: verifyOtpError } = await supabase.auth.verifyOtp({
         phone: normalizedPhone,
         token: otp,
@@ -278,10 +312,7 @@ export default function MobileLoginScreen() {
                 variant="primary"
                 size="large"
               />
-
-              <TouchableOpacity onPress={() => router.replace('/(auth)/login' as never)}>
-                <Text style={styles.link}>Use Google or Apple instead</Text>
-              </TouchableOpacity>
+              {/* OAuth options removed — mobile-only registration */}
             </>
           )}
 

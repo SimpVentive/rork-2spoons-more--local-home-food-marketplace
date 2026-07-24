@@ -7,9 +7,27 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth-store";
 import { uint8ArrayToBase64Url, base64UrlDecode } from "@/utils/base64";
 
-const AUTH_URL = process.env.EXPO_PUBLIC_RORK_AUTH_URL!;
-const APP_KEY = process.env.EXPO_PUBLIC_RORK_APP_KEY!;
-const PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID!;
+const AUTH_URL = process.env.EXPO_PUBLIC_RORK_AUTH_URL?.trim();
+const APP_KEY = process.env.EXPO_PUBLIC_RORK_APP_KEY?.trim();
+const PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID?.trim();
+
+function getAuthConfigError(): string | null {
+  if (!AUTH_URL || !APP_KEY || !PROJECT_ID) {
+    return "Rork authentication is not configured. Add EXPO_PUBLIC_RORK_AUTH_URL, EXPO_PUBLIC_RORK_APP_KEY, and EXPO_PUBLIC_PROJECT_ID to expo/.env.";
+  }
+
+  if (
+    AUTH_URL.includes("your-") ||
+    AUTH_URL.includes("supabase.co") ||
+    APP_KEY.includes("your-") ||
+    APP_KEY.includes("dummy") ||
+    PROJECT_ID.includes("your-")
+  ) {
+    return "Rork authentication is using placeholder values. Replace the Rork environment variables in expo/.env with your real project credentials.";
+  }
+
+  return null;
+}
 
 function generateCodeVerifier(): string {
   const bytes = new Uint8Array(32);
@@ -166,6 +184,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSigningIn(true);
     setError(null);
     try {
+      const configError = getAuthConfigError();
+      if (configError) {
+        setError(configError);
+        return;
+      }
+
       const verifier = generateCodeVerifier();
       const challenge = await generateCodeChallenge(verifier);
       codeVerifierRef.current = verifier;
@@ -218,7 +242,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }, 500);
         });
       } else {
-        const result = await WebBrowser.openAuthSessionAsync(auth_url, `rork-${PROJECT_ID}://auth/callback`);
+        const callbackUrl = `rork-${PROJECT_ID}://auth/callback`;
+        const result = await WebBrowser.openAuthSessionAsync(auth_url, callbackUrl);
 
         if (result.type === "success") {
           const url = new URL(result.url);
@@ -240,6 +265,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const verifier = codeVerifierRef.current;
     if (!verifier) return;
     codeVerifierRef.current = null;
+
+    const configError = getAuthConfigError();
+    if (configError) {
+      setError(configError);
+      return;
+    }
 
     const response = await fetch(`${AUTH_URL}/oauth/token`, {
       method: "POST",
@@ -268,6 +299,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function refreshToken() {
     const storedRefreshToken = await SecureStore.getItemAsync("refresh_token");
     if (!storedRefreshToken) {
+      setUser(null);
+      return;
+    }
+
+    const configError = getAuthConfigError();
+    if (configError) {
+      setError(configError);
       setUser(null);
       return;
     }

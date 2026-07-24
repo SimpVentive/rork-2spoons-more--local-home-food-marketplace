@@ -5,6 +5,14 @@ import { User } from "@/types";
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
+// Expose a simple flag so UI can detect when Supabase env is not configured
+export const isSupabaseConfigured = Boolean(
+  supabaseUrl &&
+    supabaseAnonKey &&
+    !supabaseAnonKey.includes("dummy-key") &&
+    !supabaseUrl.includes("example.supabase.co")
+);
+
 /**
  * Custom fetch that injects the Rork Auth JWT as the Authorization header
  * while preserving all headers set by Supabase (including apikey).
