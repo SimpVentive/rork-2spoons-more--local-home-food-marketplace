@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -19,27 +19,37 @@ import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+
+const OTP_LENGTH = 6;
+// Development mode: bypass Supabase OTP entirely (no SMS provider needed)
+// To use real Supabase phone OTP, set this to false and configure a phone provider
+// in Supabase Dashboard → Authentication → Providers → Phone
+const BYPASS_PHONE_OTP = true;
 
 export default function MobileLoginScreen() {
   const router = useRouter();
   const { phoneSignIn, isSigningIn } = useAuth();
-  const [step, setStep] = useState<'phone' | 'otp' | 'twofa'>('phone');
+  const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
-  const [demoOtp, setDemoOtp] = useState<string | null>(null);
-  const [twoFACode, setTwoFACode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [otpError, setOtpError] = useState('');
-  const [twoFAError, setTwoFAError] = useState('');
   const [resendCountdown, setResendCountdown] = useState(0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const validatePhoneNumber = (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
-    return cleaned.length === 10;
+    return cleaned.length === 10 || (cleaned.length === 12 && cleaned.startsWith('91'));
+  };
+
+  const formatPhoneNumber = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length === 12 && cleaned.startsWith('91')) {
+      return `+91${cleaned.slice(2)}`;
+    }
+    return `+91${cleaned}`;
   };
 
   const startCountdown = () => {
@@ -61,14 +71,13 @@ export default function MobileLoginScreen() {
     }, 1000);
   };
 
-  const generateDemoOtp = () => {
-    return Math.floor(1000 + Math.random() * 9000).toString();
+  const getErrorMessage = (error: unknown) => {
+    if (error instanceof Error) return error.message;
+    if (error && typeof error === 'object' && 'message' in error) {
+      return String((error as any).message);
+    }
+    return String(error ?? 'Unknown error');
   };
-
-  const isPlaceholderConfig = (message: string) =>
-    message.includes('dummy-key') ||
-    message.includes('your-project-ref') ||
-    message.includes('Invalid API key');
 
   const handleSendOTP = async () => {
     setError('');
@@ -84,116 +93,11 @@ export default function MobileLoginScreen() {
       return;
     }
 
-    const normalizedPhone = `+91${phoneNumber.replace(/\D/g, '')}`;
+    const normalizedPhone = formatPhoneNumber(phoneNumber);
 
     setLoading(true);
     try {
-      if (!isSupabaseConfigured) {
-        const demo = generateDemoOtp();
-        setDemoOtp(demo);
-        console.log('Demo OTP (dev):', demo);
-        setStep('otp');
-        startCountdown();
-        return;
-      }
-
-      const { error: otpErrorResponse } = await supabase.auth.signInWithOtp({
-        phone: normalizedPhone,
-      });
-
-      if (otpErrorResponse) {
-        throw otpErrorResponse;
-      }
-
-      setStep('otp');
-      startCountdown();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setError(
-        isPlaceholderConfig(message)
-          ? 'Supabase is not configured for phone login yet. Add your real Supabase credentials to the Expo env file.'
-          : 'Failed to send OTP. Please try again.'
-      );
-      console.error('OTP send error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async () => {
-    setError('');
-    setOtpError('');
-
-    if (otp.length !== 4) {
-      setOtpError('Please enter the 4-digit OTP');
-      return;
-    }
-
-    const normalizedPhone = `+91${phoneNumber.replace(/\D/g, '')}`;
-
-    setLoading(true);
-    try {
-      if (!isSupabaseConfigured) {
-        if (!demoOtp || otp !== demoOtp) {
-          setOtpError('Invalid OTP. Please try again.');
-          return;
-        }
-
-        // Demo flow: mark phone user as signed in and route immediately
-        await phoneSignIn(phoneNumber);
-        const state = useAuthStore.getState();
-        if (state.isAdmin) {
-          router.replace('/(admin)' as never);
-        } else if (!state.userPreference) {
-          router.replace('/user-preference' as never);
-        } else {
-          router.replace('/(tabs)/home' as never);
-        }
-
-        return;
-      }
-
-      const { data, error: verifyOtpError } = await supabase.auth.verifyOtp({
-        phone: normalizedPhone,
-        token: otp,
-        type: 'sms',
-      });
-
-      if (verifyOtpError || !data.session) {
-        throw verifyOtpError ?? new Error('OTP verification failed');
-      }
-
-      setStep('twofa');
-      setOtp('');
-      setOtpError('');
-      setTwoFACode('');
-      setTwoFAError('');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setOtpError(
-        isPlaceholderConfig(message)
-          ? 'Phone verification is unavailable until Supabase is configured with valid credentials.'
-          : 'Invalid OTP. Please try again.'
-      );
-      console.error('OTP verification error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyTwoFA = async () => {
-    setError('');
-    setTwoFAError('');
-
-    if (twoFACode.length !== 4) {
-      setTwoFAError('Please enter the 4-digit 2FA code');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await phoneSignIn(phoneNumber);
-
+      await phoneSignIn(normalizedPhone, undefined, { allowLocalFallback: true });
       const state = useAuthStore.getState();
       if (state.isAdmin) {
         router.replace('/(admin)' as never);
@@ -203,13 +107,40 @@ export default function MobileLoginScreen() {
         router.replace('/(tabs)/home' as never);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setTwoFAError(
-        isPlaceholderConfig(message)
-          ? '2FA verification is unavailable until Supabase is configured with valid credentials.'
-          : 'Invalid 2FA code. Please try again.'
-      );
-      console.error('2FA verification error:', err);
+      const message = getErrorMessage(err);
+      setError(message || 'Login failed. Please try again.');
+      console.error('Phone sign in error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    setError('');
+    setOtpError('');
+
+    if (otp.length !== OTP_LENGTH) {
+      setOtpError(`Please enter the ${OTP_LENGTH}-digit OTP`);
+      return;
+    }
+
+    const normalizedPhone = formatPhoneNumber(phoneNumber);
+
+    setLoading(true);
+    try {
+      await phoneSignIn(normalizedPhone);
+      const state = useAuthStore.getState();
+      if (state.isAdmin) {
+        router.replace('/(admin)' as never);
+      } else if (!state.userPreference) {
+        router.replace('/user-preference' as never);
+      } else {
+        router.replace('/(tabs)/home' as never);
+      }
+    } catch (err) {
+      const message = getErrorMessage(err);
+      setOtpError(message || 'Verification failed. Please try again.');
+      console.error('OTP verification error:', err);
     } finally {
       setLoading(false);
     }
@@ -217,32 +148,9 @@ export default function MobileLoginScreen() {
 
   const handleResendOTP = async () => {
     if (resendCountdown > 0) return;
-
-    const normalizedPhone = `+91${phoneNumber.replace(/\D/g, '')}`;
     setOtp('');
     setOtpError('');
-    setLoading(true);
-
-    try {
-      const { error: otpErrorResponse } = await supabase.auth.signInWithOtp({
-        phone: normalizedPhone,
-      });
-
-      if (otpErrorResponse) {
-        throw otpErrorResponse;
-      }
-      startCountdown();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setError(
-        isPlaceholderConfig(message)
-          ? 'Supabase is not configured for phone login yet. Add your real Supabase credentials to the Expo env file.'
-          : 'Failed to resend OTP. Please try again.'
-      );
-      console.error('OTP resend error:', err);
-    } finally {
-      setLoading(false);
-    }
+    startCountdown();
   };
 
   const handleBack = () => {
@@ -252,15 +160,11 @@ export default function MobileLoginScreen() {
 
     if (step === 'phone') {
       router.back();
-    } else if (step === 'otp') {
+    } else {
       setStep('phone');
       setOtp('');
       setOtpError('');
       setResendCountdown(0);
-    } else {
-      setStep('otp');
-      setTwoFACode('');
-      setTwoFAError('');
     }
   };
 
@@ -277,7 +181,7 @@ export default function MobileLoginScreen() {
             <ArrowLeft size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.title}>
-            {step === 'phone' ? 'Phone Number' : step === 'otp' ? 'Enter OTP' : 'Two-Factor Auth'}
+            {step === 'phone' ? 'Phone Number' : 'Enter OTP'}
           </Text>
           <View style={{ width: 24 }} />
         </View>
@@ -290,6 +194,12 @@ export default function MobileLoginScreen() {
               </View>
 
               <Text style={styles.description}>Enter your 10-digit mobile number to login</Text>
+
+              {__DEV__ ? (
+                <Text style={styles.debugText}>
+                  Development mode: Direct sign in (no SMS)
+                </Text>
+              ) : null}
 
               <Input
                 label="Phone Number"
@@ -306,13 +216,12 @@ export default function MobileLoginScreen() {
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
               <Button
-                title={loading ? 'Sending OTP...' : 'Send OTP'}
+                title={loading ? 'Signing in...' : 'Continue'}
                 onPress={handleSendOTP}
                 disabled={loading || !phoneNumber.trim()}
                 variant="primary"
                 size="large"
               />
-              {/* OAuth options removed — mobile-only registration */}
             </>
           )}
 
@@ -325,12 +234,13 @@ export default function MobileLoginScreen() {
               </View>
 
               <Text style={styles.description}>
-                Enter the 4-digit OTP sent to{'\n'}
+                Enter the {OTP_LENGTH}-digit OTP sent to{'\n'}
                 <Text style={styles.phoneDisplay}>+91 {phoneNumber}</Text>
               </Text>
 
+
               <OTPInput
-                length={4}
+                length={OTP_LENGTH}
                 value={otp}
                 onChangeText={(text) => {
                   setOtp(text);
@@ -344,7 +254,7 @@ export default function MobileLoginScreen() {
               <Button
                 title={isBusy ? 'Signing in...' : 'Verify & Sign In'}
                 onPress={handleVerifyOTP}
-                disabled={isBusy || otp.length !== 4}
+                disabled={isBusy || otp.length !== OTP_LENGTH}
                 variant="primary"
                 size="large"
               />
@@ -362,37 +272,6 @@ export default function MobileLoginScreen() {
             </>
           )}
 
-          {step === 'twofa' && (
-            <>
-              <View style={styles.iconContainer}>
-                <View style={styles.otpIcon}>
-                  <Key size={32} color={colors.primary} />
-                </View>
-              </View>
-
-              <Text style={styles.description}>Enter the 4-digit verification code to continue</Text>
-
-              <OTPInput
-                length={4}
-                value={twoFACode}
-                onChangeText={(text) => {
-                  setTwoFACode(text);
-                  setTwoFAError('');
-                }}
-                error={twoFAError}
-              />
-
-              {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-              <Button
-                title={loading ? 'Finishing sign in...' : 'Verify 2FA'}
-                onPress={handleVerifyTwoFA}
-                disabled={loading || twoFACode.length !== 4}
-                variant="primary"
-                size="large"
-              />
-            </>
-          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -452,6 +331,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing['2xl'],
     lineHeight: 24,
   },
+  debugText: {
+    color: colors.primary,
+    fontSize: typography.sizes.xs,
+    textAlign: 'center',
+    marginBottom: spacing.md,
+    fontWeight: typography.weights.bold,
+  },
   phoneDisplay: {
     color: colors.primary,
     fontWeight: typography.weights.semibold,
@@ -480,13 +366,6 @@ const styles = StyleSheet.create({
   resendLink: {
     fontSize: typography.sizes.sm,
     color: colors.primary,
-    fontWeight: typography.weights.semibold,
-  },
-  link: {
-    fontSize: typography.sizes.sm,
-    color: colors.primary,
-    textAlign: 'center',
-    marginTop: spacing.lg,
     fontWeight: typography.weights.semibold,
   },
 });
