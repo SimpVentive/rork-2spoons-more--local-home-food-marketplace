@@ -42,17 +42,17 @@ jobs:
       ####################################################
       - name: Install Frontend Dependencies
         working-directory: expo
-        run: bun install
+        run: bun install --frozen-lockfile
 
       ####################################################
       # Build Frontend
       ####################################################
       - name: Build Frontend
         working-directory: expo
-        run: bunx expo export --platform web
+        run: npx expo export --platform web
 
       ####################################################
-      # Deploy to Server
+      # Deploy
       ####################################################
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.2.0
@@ -76,8 +76,6 @@ jobs:
             git fetch origin
             git reset --hard origin/main
 
-            echo "Building frontend..."
-
             cd expo
 
             cat > .env <<EOF
@@ -89,11 +87,22 @@ jobs:
             EXPO_PUBLIC_SKIP_PHONE_OTP=${{ secrets.EXPO_PUBLIC_SKIP_PHONE_OTP }}
             EOF
 
-            bun install
+            echo "Node Version:"
+            node -v
 
-            bunx expo export --platform web
+            echo "NPM Version:"
+            npm -v
 
-            echo "Reloading Apache...."
+            echo "Bun Version:"
+            bun -v
+
+            echo "Installing dependencies..."
+            bun install --frozen-lockfile
+
+            echo "Building Expo Web..."
+            npx expo export --platform web
+
+            echo "Reloading Apache..."
             sudo systemctl reload apache2
 
-            echo "✅ Deployment completed successfully..."
+            echo "Deployment completed successfully."
