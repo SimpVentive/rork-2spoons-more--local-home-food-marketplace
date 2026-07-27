@@ -1,0 +1,82 @@
+name: Deploy 2spoonsmore
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # Build locally to ensure code compiles before deployment
+      - name: Create Frontend .env
+        working-directory: expo
+        run: |
+          echo "EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}" > .env
+          echo "EXPO_PUBLIC_RORK_AUTH_URL=${{ secrets.EXPO_PUBLIC_RORK_AUTH_URL }}" >> .env
+          echo "EXPO_PUBLIC_PROJECT_ID=${{ secrets.EXPO_PUBLIC_PROJECT_ID }}" >> .env
+          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" >> .env
+          echo "EXPO_PUBLIC_RORK_APP_KEY=${{ secrets.EXPO_PUBLIC_RORK_APP_KEY }}" >> .env
+          echo "EXPO_PUBLIC_SKIP_PHONE_OTP=${{ secrets.EXPO_PUBLIC_SKIP_PHONE_OTP }}" >> .env
+      
+      - name: Install Frontend Dependencies
+        working-directory: expo
+        run: bun install --frozen-lockfile
+
+      - name: Build Frontend
+        working-directory: expo
+        run: bun expo export --platform web
+
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script_stop: true
+          script: |
+            export BUN_INSTALL="$HOME/.bun"
+            export PATH="$BUN_INSTALL/bin:$PATH"
+
+            cd /var/www/testing.2spoonsmore.com/rork-2spoons-more--local-home-food-marketplace
+
+            echo "Pulling latest code..."
+            git fetch origin
+            git reset --hard origin/main
+
+            #############################
+            ## Frontend
+            #############################
+
+            cd expo
+
+            cat > .env <<EOF
+            EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+            EXPO_PUBLIC_RORK_AUTH_URL=${{ secrets.EXPO_PUBLIC_RORK_AUTH_URL }}
+            EXPO_PUBLIC_PROJECT_ID=${{ secrets.EXPO_PUBLIC_PROJECT_ID }}
+            EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+            EXPO_PUBLIC_RORK_APP_KEY=${{ secrets.EXPO_PUBLIC_RORK_APP_KEY }}
+            EXPO_PUBLIC_SKIP_PHONE_OTP=${{ secrets.EXPO_PUBLIC_SKIP_PHONE_OTP }}
+            EOF
+
+            bun install --frozen-lockfile
+            bun expo export --platform web
+
+            sudo systemctl reload apache2
+
+            echo "Deployment completed successfully."
