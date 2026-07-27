@@ -20,11 +20,8 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.20   # Same version as your server
 
-      ####################################################
-      # Create Frontend .env
-      ####################################################
       - name: Create Frontend .env
         working-directory: expo
         run: |
@@ -37,23 +34,14 @@ jobs:
           EXPO_PUBLIC_SKIP_PHONE_OTP=${{ secrets.EXPO_PUBLIC_SKIP_PHONE_OTP }}
           EOF
 
-      ####################################################
-      # Install Dependencies
-      ####################################################
       - name: Install Frontend Dependencies
         working-directory: expo
         run: bun install --frozen-lockfile
 
-      ####################################################
-      # Build Frontend
-      ####################################################
       - name: Build Frontend
         working-directory: expo
         run: npx expo export --platform web
 
-      ####################################################
-      # Deploy
-      ####################################################
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -87,22 +75,14 @@ jobs:
             EXPO_PUBLIC_SKIP_PHONE_OTP=${{ secrets.EXPO_PUBLIC_SKIP_PHONE_OTP }}
             EOF
 
-            echo "Node Version:"
-            node -v
+            echo "Node: $(node -v)"
+            echo "NPM : $(npm -v)"
+            echo "Bun : $(bun -v)"
 
-            echo "NPM Version:"
-            npm -v
-
-            echo "Bun Version:"
-            bun -v
-
-            echo "Installing dependencies..."
             bun install --frozen-lockfile
 
-            echo "Building Expo Web..."
             npx expo export --platform web
 
-            echo "Reloading Apache..."
             sudo systemctl reload apache2
 
             echo "Deployment completed successfully."
