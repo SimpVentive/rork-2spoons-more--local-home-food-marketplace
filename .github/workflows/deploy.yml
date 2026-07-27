@@ -36,7 +36,7 @@ jobs:
 
       - name: Install Frontend Dependencies
         working-directory: expo
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: Build Frontend
         working-directory: expo
@@ -79,7 +79,7 @@ jobs:
             echo "NPM : $(npm -v)"
             echo "Bun : $(bun -v)"
 
-            bun install --frozen-lockfile
+            bun install
 
             npx expo export --platform web
 
