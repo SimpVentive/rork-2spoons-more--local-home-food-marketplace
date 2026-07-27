@@ -17,12 +17,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v5
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: bun
-
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -44,18 +38,21 @@ jobs:
           EOF
 
       ####################################################
-      # Install & Build Frontend
+      # Install Dependencies
       ####################################################
       - name: Install Frontend Dependencies
         working-directory: expo
         run: bun install --frozen-lockfile
 
+      ####################################################
+      # Build Frontend
+      ####################################################
       - name: Build Frontend
         working-directory: expo
         run: bunx expo export --platform web
 
       ####################################################
-      # Deploy
+      # Deploy to Server
       ####################################################
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.2.0
@@ -66,20 +63,20 @@ jobs:
           port: ${{ secrets.PORT }}
           script_stop: true
           script: |
-            set -e
+            set -euo pipefail
 
             export BUN_INSTALL="$HOME/.bun"
             export PATH="$BUN_INSTALL/bin:$PATH"
 
-            cd /var/www/testing.2spoonsmore.com/rork-2spoons-more--local-home-food-marketplace
+            PROJECT_DIR="/var/www/testing.2spoonsmore.com/rork-2spoons-more--local-home-food-marketplace"
 
-            echo "Pulling latest code..."
+            cd "$PROJECT_DIR"
+
+            echo "Updating repository..."
             git fetch origin
             git reset --hard origin/main
 
-            ########################################
-            # Frontend
-            ########################################
+            echo "Building frontend..."
 
             cd expo
 
@@ -96,6 +93,7 @@ jobs:
 
             bunx expo export --platform web
 
+            echo "Reloading Apache..."
             sudo systemctl reload apache2
 
-            echo "Deployment completed successfully."
+            echo "✅ Deployment completed successfully."
