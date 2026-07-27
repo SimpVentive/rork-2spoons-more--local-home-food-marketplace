@@ -1,16 +1,34 @@
 import { createClient } from "@supabase/supabase-js";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { User } from "@/types";
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
+const looksLikePlaceholder = (value?: string) => {
+  if (!value) return true;
+
+  const normalized = value.trim().toLowerCase();
+  return (
+    normalized.length === 0 ||
+    normalized.includes('dummy') ||
+    normalized.includes('example') ||
+    normalized.includes('your-') ||
+    normalized.includes('your_') ||
+    normalized.includes('yourproject') ||
+    normalized.includes('your-project') ||
+    normalized.includes('anon-key-here') ||
+    normalized.includes('project-ref')
+  );
+};
+
 // Expose a simple flag so UI can detect when Supabase env is not configured
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
     supabaseAnonKey &&
-    !supabaseAnonKey.includes("dummy-key") &&
-    !supabaseUrl.includes("example.supabase.co")
+    !looksLikePlaceholder(supabaseUrl) &&
+    !looksLikePlaceholder(supabaseAnonKey)
 );
 
 /**
@@ -18,18 +36,19 @@ export const isSupabaseConfigured = Boolean(
  * while preserving all headers set by Supabase (including apikey).
  */
 const authFetch: typeof fetch = async (input, init) => {
+  const headers = new Headers(init?.headers);
+
   try {
     const token = await SecureStore.getItemAsync("access_token");
-    if (token) {
-      const headers = new Headers(init?.headers);
+    if (token && !headers.has("Authorization")) {
       headers.set("Authorization", `Bearer ${token}`);
-      return fetch(input, { ...init, headers });
     }
   } catch {
     // SecureStore may be unavailable in certain environments;
-    // proceed without the auth header (anon access only).
+    // proceed with whatever headers Supabase already provided.
   }
-  return fetch(input, init);
+
+  return fetch(input, { ...init, headers });
 };
 
 if (!supabaseUrl || !supabaseAnonKey) {
@@ -40,7 +59,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl || "https://example.supabase.co", supabaseAnonKey || "dummy-key", {
   auth: {
-    persistSession: false,
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false,
+    storage: AsyncStorage,
   },
   global: {
     fetch: authFetch,

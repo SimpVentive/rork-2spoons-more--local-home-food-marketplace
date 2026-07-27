@@ -36,9 +36,14 @@ export default function TabLayout(): React.ReactElement {
           router.replace('/(auth)' as never);
           return;
         }
+
+        const isLocalPhoneBypassUser =
+          authUser.id.startsWith('phone_') || authUser.email.endsWith('@phone.2spoons.app');
         
-        // Sync the Supabase profile
-        await syncProfile(authUser.id, authUser.email, authUser.name, authUser.picture);
+        if (!isLocalPhoneBypassUser) {
+          // Sync the Supabase profile only for real authenticated backend users.
+          await syncProfile(authUser.id, authUser.email, authUser.name, authUser.picture, authUser.phone);
+        }
         
         // Re-check store state after sync
         const state = useAuthStore.getState();

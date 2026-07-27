@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useAuthStore } from "@/store/auth-store";
 import { uint8ArrayToBase64Url, base64UrlDecode } from "@/utils/base64";
 
@@ -46,6 +46,7 @@ export interface AuthUser {
   email: string;
   name?: string;
   picture?: string;
+  phone?: string;
 }
 
 function userFromToken(token: string): AuthUser | null {
@@ -76,7 +77,11 @@ interface AuthContextType {
   isSigningIn: boolean;
   error: string | null;
   signIn: (provider: "google" | "apple") => Promise<void>;
-  phoneSignIn: (phoneNumber: string) => Promise<void>;
+  phoneSignIn: (
+    phoneNumber: string,
+    authUser?: AuthUser,
+    options?: { allowLocalFallback?: boolean }
+  ) => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -141,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: storedUser.email,
             name: storedUser.name,
             picture: storedUser.profileImage,
+            phone: storedUser.phone,
           });
         }
       }
@@ -332,33 +338,91 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function phoneSignIn(phoneNumber: string) {
+  async function phoneSignIn(
+    phoneNumber: string,
+    authUser?: AuthUser,
+    options?: { allowLocalFallback?: boolean }
+  ) {
     setIsSigningIn(true);
     setError(null);
     try {
+      const allowLocalFallback = options?.allowLocalFallback === true;
       const phoneDigits = phoneNumber.replace(/\D/g, "");
-      const userId = `phone_${phoneDigits}`;
-      const email = `${phoneDigits}@phone.2spoons.app`;
-      const name = `User ${phoneNumber.slice(-4)}`;
+      const formattedPhone =
+        phoneNumber.startsWith("+") || phoneNumber.length === 0
+          ? phoneNumber
+          : `+91${phoneDigits}`;
 
-      const authUser: AuthUser = { id: userId, email, name };
+      let resolvedAuthUser: AuthUser | undefined = authUser;
+
+      if (isSupabaseConfigured && !resolvedAuthUser && !allowLocalFallback) {
+        const { data, error: getUserError } = await supabase.auth.getUser();
+        if (getUserError || !data?.user) {
+          throw new Error(
+            "Phone login session created, but Supabase user could not be resolved. Please retry OTP sign in."
+          );
+        }
+
+        const sessionUser = data.user;
+        const metadata = (sessionUser.user_metadata ?? {}) as Record<string, unknown>;
+        const fullName = typeof metadata.full_name === "string" ? metadata.full_name : undefined;
+        const avatarUrl = typeof metadata.avatar_url === "string" ? metadata.avatar_url : undefined;
+
+        resolvedAuthUser = {
+          id: sessionUser.id,
+          email: sessionUser.email ?? `${phoneDigits}@phone.2spoons.app`,
+          name: fullName ?? `User ${phoneDigits.slice(-4)}`,
+          picture: avatarUrl,
+          phone: sessionUser.phone ?? formattedPhone,
+        };
+      }
+
+      const userId = resolvedAuthUser?.id ?? `phone_${phoneDigits}`;
+      const email = resolvedAuthUser?.email ?? `${phoneDigits}@phone.2spoons.app`;
+      const name = resolvedAuthUser?.name ?? `User ${phoneDigits.slice(-4)}`;
+      const picture = resolvedAuthUser?.picture;
+      const resolvedPhone = resolvedAuthUser?.phone ?? formattedPhone;
+      const canonicalPhone = resolvedPhone.replace(/\D/g, '').slice(-10) || resolvedPhone;
 
       // Store a phone session marker so checkAuth() can restore on next launch
       await SecureStore.setItemAsync("phone_session", userId);
 
+      if (isSupabaseConfigured && !allowLocalFallback) {
+        const syncedUser = await useAuthStore.getState().syncProfile(
+          userId,
+          email,
+          name,
+          picture,
+          canonicalPhone
+        );
+
+        if (!syncedUser) {
+          throw new Error(
+            "Phone login succeeded, but profile sync to database failed. Check Supabase RLS policy on profiles for authenticated users."
+          );
+        }
+
+        setUser({
+          id: syncedUser.id,
+          email: syncedUser.email,
+          name: syncedUser.name,
+          picture: syncedUser.profileImage,
+          phone: syncedUser.phone,
+        });
+        return;
+      }
+
+      const authUserData: AuthUser = { id: userId, email, name, picture, phone: canonicalPhone };
+
       // Populate Zustand with a full local user profile.
-      // We do NOT call Supabase here — phone users have no real JWT,
-      // so RLS policies would block all reads/writes. The profile lives
-      // in local state (persisted via AsyncStorage) until the user upgrades
-      // to a real auth provider.
       useAuthStore.setState({
         user: {
           id: userId,
           email,
           name,
-          phone: phoneNumber,
+          phone: canonicalPhone,
           address: "",
-          profileImage: "",
+          profileImage: picture || "",
           experience: "",
           cuisineTypes: [],
           paymentMethods: [],
@@ -384,7 +448,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userPreference: null,
       });
 
-      setUser(authUser);
+      setUser(authUserData);
     } catch (err) {
       console.error("Phone sign in failed:", err);
       setError(err instanceof Error ? err.message : "Phone sign in failed");

@@ -66,6 +66,8 @@ function rowToListing(row: Record<string, unknown>): FoodListing {
     packaging: (row.packaging as string) || 'Eco-friendly container',
     isFeatured: (row.is_featured as boolean) || false,
     isApproved: (row.is_approved as boolean) || false,
+    isLunchBox: (row.is_lunch_box as boolean) || false,
+    lunchBoxItems: (row.lunch_box_items as any) || [],
   };
 }
 
@@ -314,6 +316,8 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
           packaging: listing.packaging,
           available_from: listing.availableFrom,
           available_until: listing.availableUntil,
+          is_lunch_box: listing.isLunchBox || false,
+          lunch_box_items: listing.lunchBoxItems || [],
           is_active: true,
           is_approved: false,
         })

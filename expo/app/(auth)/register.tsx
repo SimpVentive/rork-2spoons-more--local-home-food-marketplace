@@ -13,13 +13,11 @@ import { StatusBar } from 'expo-status-bar';
 import { Link, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/auth-store';
-import Button from '@/components/Button';
-import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
 export default function RegisterScreen() {
-  const { user, isSigningIn, error, signIn, clearError, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { syncProfile } = useAuthStore();
   const router = useRouter();
 
@@ -72,41 +70,16 @@ export default function RegisterScreen() {
         </View>
         
         <View style={styles.form}>
-          {error ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity onPress={clearError} style={styles.errorDismiss}>
-                <Text style={styles.errorDismissText}>Dismiss</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
-          
-          {isSigningIn && (
-            <ActivityIndicator size="small" color={colors.primary} style={styles.signingInIndicator} />
-          )}
-          
           <Text style={styles.instruction}>
             Create your account to start discovering homemade food from local chefs in your area.
           </Text>
-          
+
           <TouchableOpacity
-            style={[styles.googleButton, isSigningIn && styles.buttonDisabled]}
-            onPress={() => signIn('google')}
-            disabled={isSigningIn}
+            style={styles.mobileButton}
+            onPress={() => router.push('/(auth)/mobile-login' as never)}
             activeOpacity={0.8}
           >
-            <Text style={styles.googleIcon}>G</Text>
-            <Text style={styles.googleLabel}>Continue with Google</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.appleButton, isSigningIn && styles.buttonDisabled]}
-            onPress={() => signIn('apple')}
-            disabled={isSigningIn}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.appleIcon}></Text>
-            <Text style={styles.appleLabel}>Continue with Apple</Text>
+            <Text style={styles.mobileButtonText}>Continue with Phone Number</Text>
           </TouchableOpacity>
         </View>
         

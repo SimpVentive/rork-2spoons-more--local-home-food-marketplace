@@ -64,24 +64,10 @@ export default function WelcomeScreen() {
           
           <View style={styles.buttonContainer}>
             <Button
-              title="Continue with Google"
-              onPress={() => router.push('/(auth)/login' as never)}
-              variant="primary"
-              style={styles.button}
-            />
-            <Button
-              title="Continue with Apple"
-              onPress={() => router.push('/(auth)/login' as never)}
-              variant="outline"
-              style={styles.registerButton}
-              textStyle={styles.registerButtonText}
-            />
-            <Button
               title="Continue with Phone Number"
               onPress={() => router.push('/(auth)/mobile-login' as never)}
-              variant="outline"
-              style={styles.mobileButton}
-              textStyle={styles.mobileButtonText}
+              variant="primary"
+              style={styles.button}
               icon={<Phone size={18} color={colors.white} />}
             />
           </View>

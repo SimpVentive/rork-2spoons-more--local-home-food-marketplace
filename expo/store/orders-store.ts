@@ -159,6 +159,15 @@ export const useOrdersStore = create<OrdersState>()(
           set({ isLoading: true, error: null });
 
           const now = new Date().toISOString();
+          const buyerUser = useAuthStore.getState().user;
+
+          // Fetch seller profile to get phone and address
+          const { data: sellerData } = await supabase
+            .from('profiles')
+            .select('phone, address')
+            .eq('id', orderData.sellerId)
+            .single();
+
           const { data, error } = await supabase
             .from('orders')
             .insert({
@@ -170,11 +179,11 @@ export const useOrdersStore = create<OrdersState>()(
               total_price: orderData.totalPrice,
               status: 'pending',
               pickup_time: now,
-              buyer_name: '',
-              buyer_phone: '',
+              buyer_name: buyerUser?.name || '',
+              buyer_phone: buyerUser?.phone || '',
               seller_name: orderData.listingSnapshot?.sellerName || '',
-              seller_phone: '',
-              seller_address: '',
+              seller_phone: sellerData?.phone || '',
+              seller_address: sellerData?.address || '',
               delivery_address: orderData.deliveryAddress,
               delivery_instructions: orderData.deliveryInstructions,
               delivery_method: orderData.deliveryMethod,

@@ -12,6 +12,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { X, AlertTriangle, Check } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { useOrdersStore } from '@/store/orders-store';
+import { useComplaintsStore } from '@/store/complaints-store';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
 
@@ -32,6 +33,7 @@ export default function FileComplaintScreen() {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
   const { user } = useAuthStore();
   const { getOrderById, updateOrderStatus } = useOrdersStore();
+  const { createComplaint } = useComplaintsStore();
   
   const [reason, setReason] = useState('');
   const [description, setDescription] = useState('');
@@ -58,22 +60,37 @@ export default function FileComplaintScreen() {
     return Object.keys(newErrors).length === 0;
   };
   
-  const handleSubmit = () => {
-    if (!validateForm()) return;
-    
-    // In a real app, this would create a complaint in the database
-    // For now, we'll just show an alert and navigate back
-    
-    Alert.alert(
-      'Complaint Submitted',
-      'Your complaint has been submitted successfully. We will review it and get back to you soon.',
-      [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]
-    );
+  const handleSubmit = async () => {
+    if (!validateForm() || !user) return;
+
+    try {
+      await createComplaint({
+        userId: user.id,
+        userName: user.name,
+        userEmail: user.email,
+        orderId: orderId || undefined,
+        listingId: order?.listingId,
+        sellerId: order?.sellerId,
+        type: reason.toLowerCase().replace(/\s+/g, '_') as any,
+        title: reason,
+        description,
+        priority: 'medium',
+      });
+
+      Alert.alert(
+        'Complaint Submitted',
+        'Your complaint has been submitted successfully. We will review it and get back to you soon.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to submit complaint. Please try again.');
+      console.error('Complaint submission error:', error);
+    }
   };
   
   if (!user) {

@@ -13,7 +13,7 @@ interface AuthState {
   isLoading: boolean;
 
   /** Called after Rork Auth sign-in to sync the Supabase profile */
-  syncProfile: (authUserId: string, authEmail?: string, authName?: string, authPicture?: string) => Promise<User>;
+  syncProfile: (authUserId: string, authEmail?: string, authName?: string, authPicture?: string, authPhone?: string) => Promise<User | null>;
   /** Fetch profile from Supabase by user ID */
   fetchProfile: (userId: string) => Promise<User | null>;
   /** Logout — clears local state (token clearing is handled by useAuth hook) */
@@ -76,6 +76,11 @@ function rowToUser(row: Record<string, unknown>): User {
   };
 }
 
+function normalizePhone(value?: string): string {
+  if (!value) return '';
+  return value.replace(/\D/g, '').slice(-10);
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -110,58 +115,112 @@ export const useAuthStore = create<AuthState>()(
         return rowToUser(data);
       },
 
-      syncProfile: async (authUserId: string, authEmail?: string, authName?: string, authPicture?: string) => {
+      syncProfile: async (
+        authUserId: string,
+        authEmail?: string,
+        authName?: string,
+        authPicture?: string,
+        authPhone?: string
+      ) => {
         try {
           set({ isLoading: true });
 
-          // Check if profile exists
-          const { data: existing } = await supabase
+          const profileSeed: Record<string, unknown> = {
+            id: authUserId,
+            email: authEmail || '',
+            name: authName || '',
+            avatar_url: authPicture || '',
+          };
+
+          if (authPhone) {
+            profileSeed.phone = authPhone;
+          }
+
+          // Upsert avoids a brittle read-then-insert sequence under RLS.
+          const { error: upsertError } = await supabase
             .from('profiles')
-            .select('id')
-            .eq('id', authUserId)
-            .single();
+            .upsert(profileSeed, { onConflict: 'id' });
 
-          if (!existing) {
-            // Create new profile for first-time sign-in
-            const { error: insertError } = await supabase
-              .from('profiles')
-              .insert({
-                id: authUserId,
-                email: authEmail || '',
-                name: authName || '',
-                avatar_url: authPicture || '',
-              });
+          if (upsertError) {
+            console.error('Upsert profile error:', upsertError.message);
+            set({ isLoading: false });
+            return null;
+          }
 
-            if (insertError) {
-              console.error('Create profile error:', insertError.message);
-            }
+          if (__DEV__) {
+            console.log('Profile upsert success:', { id: authUserId, phone: authPhone ?? null });
           }
 
           // Fetch the full profile
-          const { data: profile } = await supabase
+          let { data: profile, error: fetchError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', authUserId)
-            .single();
+            .maybeSingle();
 
-          if (profile) {
-            const user = rowToUser(profile);
-            set({
-              user,
-              isAuthenticated: true,
-              isAdmin: user.isAdmin === true,
-              userPreference: user.isChef ? { type: 'seller' } : { type: 'buyer' },
-              isLoading: false,
-            });
-            return user;
+          if (fetchError) {
+            console.error('Fetch profile after upsert error:', fetchError.message);
+            set({ isLoading: false });
+            return null;
           }
 
-          set({ isLoading: false });
-          return null as unknown as User;
+          if (!profile) {
+            console.error('Profile missing after upsert:', authUserId);
+            set({ isLoading: false });
+            return null;
+          }
+
+          const expectedPhone = normalizePhone(authPhone);
+          if (expectedPhone) {
+            const persistedPhone = normalizePhone((profile.phone as string | undefined) ?? '');
+
+            if (persistedPhone !== expectedPhone) {
+              const { data: updatedProfile, error: updatePhoneError } = await supabase
+                .from('profiles')
+                .update({ phone: expectedPhone })
+                .eq('id', authUserId)
+                .select('*')
+                .maybeSingle();
+
+              if (updatePhoneError) {
+                console.error('Update phone after upsert error:', updatePhoneError.message);
+                set({ isLoading: false });
+                return null;
+              }
+
+              if (!updatedProfile) {
+                console.error('Profile missing after phone update:', authUserId);
+                set({ isLoading: false });
+                return null;
+              }
+
+              profile = updatedProfile;
+            }
+          }
+
+          if (__DEV__) {
+            console.log('Profile fetch after upsert:', {
+              id: authUserId,
+              phone: (profile?.phone as string | undefined) ?? authPhone ?? null,
+              fetched: Boolean(profile),
+            });
+          }
+
+          const user = rowToUser(profile);
+
+          set({
+            user,
+            isAuthenticated: true,
+            isAdmin: user.isAdmin === true,
+            userPreference: user.isChef ? { type: 'seller' } : { type: 'buyer' },
+            isLoading: false,
+          });
+          return user;
+
         } catch (error) {
           console.error('Sync profile error:', error);
           set({ isLoading: false });
-          return null as unknown as User;
+          return null;
         }
       },
 

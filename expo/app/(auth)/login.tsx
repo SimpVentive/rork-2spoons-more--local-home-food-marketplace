@@ -13,13 +13,12 @@ import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/auth-store';
-import Button from '@/components/Button';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
 export default function LoginScreen() {
-  const { user, isSigningIn, error, signIn, clearError, isLoading: authLoading } = useAuth();
+  const { user, isSigningIn, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   // Redirect when authenticated
@@ -67,52 +66,9 @@ export default function LoginScreen() {
           <Text style={styles.title}>Welcome</Text>
           <Text style={styles.subtitle}>Sign in to continue</Text>
           
-          {error ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity onPress={clearError} style={styles.errorDismiss}>
-                <Text style={styles.errorDismissText}>Dismiss</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
-          
           {isSigningIn && (
             <ActivityIndicator size="small" color={colors.primary} style={styles.signingInIndicator} />
           )}
-          
-          <TouchableOpacity
-            style={[styles.googleButton, isSigningIn && styles.buttonDisabled]}
-            onPress={() => signIn('google')}
-            disabled={isSigningIn}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.googleButtonText}>G</Text>
-            <Text style={styles.googleButtonLabel}>Continue with Google</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.appleButton, isSigningIn && styles.buttonDisabled]}
-            onPress={() => signIn('apple')}
-            disabled={isSigningIn}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.appleButtonText}></Text>
-            <Text style={styles.appleButtonLabel}>Continue with Apple</Text>
-          </TouchableOpacity>
-
-          <View style={styles.dividerContainer}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>OR</Text>
-            <View style={styles.divider} />
-          </View>
-          
-          <TouchableOpacity
-            style={styles.emailButton}
-            onPress={() => router.push('/(auth)/register' as never)}
-            disabled={isSigningIn}
-          >
-            <Text style={styles.emailButtonText}>Sign up with email</Text>
-          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.mobileButton}
