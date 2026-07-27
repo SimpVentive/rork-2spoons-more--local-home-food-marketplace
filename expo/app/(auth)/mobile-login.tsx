@@ -97,7 +97,7 @@ export default function MobileLoginScreen() {
 
     setLoading(true);
     try {
-      await phoneSignIn(normalizedPhone, undefined, { allowLocalFallback: true });
+      await phoneSignIn(normalizedPhone);
       const state = useAuthStore.getState();
       if (state.isAdmin) {
         router.replace('/(admin)' as never);
