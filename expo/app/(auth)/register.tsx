@@ -15,6 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/auth-store';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
+import colors from "@/constants/colors"; // ✅
 
 export default function RegisterScreen() {
   const { user, isLoading: authLoading } = useAuth();
@@ -192,6 +193,20 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     marginBottom: 12,
+  },
+  mobileButton:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4285F4',
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  mobileButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
   },
   googleIcon: {
     color: '#4285F4',

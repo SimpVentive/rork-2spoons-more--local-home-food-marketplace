@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { Complaint } from '@/types';
+import { zustandStorage } from '@/lib/storage';
 
 interface ComplaintsState {
   complaints: Complaint[];
@@ -170,7 +171,7 @@ export const useComplaintsStore = create<ComplaintsState>()(
     }),
     {
       name: 'complaints-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: zustandStorage,
     }
   )
 );
