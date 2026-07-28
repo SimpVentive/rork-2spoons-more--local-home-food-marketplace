@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
+import * as Crypto from "expo-crypto";
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useAuthStore } from "@/store/auth-store";
 import { uint8ArrayToBase64Url, base64UrlDecode } from "@/utils/base64";
@@ -29,16 +30,38 @@ function getAuthConfigError(): string | null {
   return null;
 }
 
-function generateCodeVerifier(): string {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
+async function generateCodeVerifier(): Promise<string> {
+  const bytes = await Crypto.getRandomBytesAsync(32);
   return uint8ArrayToBase64Url(bytes);
 }
 
+function hexToUint8Array(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16);
+  }
+  return bytes;
+}
+
 async function generateCodeChallenge(verifier: string): Promise<string> {
-  const data = new TextEncoder().encode(verifier);
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  return uint8ArrayToBase64Url(new Uint8Array(hash));
+  const hashHex = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    verifier,
+    { encoding: Crypto.CryptoEncoding.HEX }
+  );
+  return uint8ArrayToBase64Url(hexToUint8Array(hashHex));
+}
+
+function generateUuid(): string {
+  if (typeof Crypto.randomUUID === "function") {
+    return Crypto.randomUUID();
+  }
+  // Fallback for older expo-crypto versions without randomUUID
+  const bytes = Array.from({ length: 16 }, () => Math.floor(Math.random() * 256));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 export interface AuthUser {
@@ -196,7 +219,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const verifier = generateCodeVerifier();
+      const verifier = await generateCodeVerifier();
       const challenge = await generateCodeChallenge(verifier);
       codeVerifierRef.current = verifier;
 
@@ -224,6 +247,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isWeb) {
         const popup = window.open(auth_url, "_blank", "width=500,height=650");
 
+        if (!popup) {
+          // Popup blocked by the browser — surface this instead of hanging forever.
+          codeVerifierRef.current = null;
+          setError("Sign-in popup was blocked. Please allow popups for this site and try again.");
+          return;
+        }
+
         await new Promise<void>((resolve, reject) => {
           const onMessage = (event: MessageEvent) => {
             if (event.data?.type !== "rork_auth_callback") return;
@@ -239,7 +269,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           window.addEventListener("message", onMessage);
 
           const pollTimer = setInterval(() => {
-            if (popup?.closed) {
+            if (popup.closed) {
               clearInterval(pollTimer);
               window.removeEventListener("message", onMessage);
               codeVerifierRef.current = null;
@@ -389,9 +419,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Create new profile
           // ----------------------------------------------
 
-          const userId =
-            crypto?.randomUUID?.() ??
-            `phone_${Date.now()}_${phoneDigits}`;
+          const userId = generateUuid();
 
           const newProfile = {
             id: userId,
@@ -485,7 +513,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await setStorageItem("phone_session", userId);
 
       if (isSupabaseConfigured && !allowLocalFallback) {
-        /*const syncedUser =
+        const syncedUser =
           await useAuthStore.getState().syncProfile(
             userId,
             email,
@@ -496,7 +524,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!syncedUser) {
           throw new Error("Failed to synchronize profile.");
-        }*/
+        }
 
         setUser({
           id: userId,
@@ -568,134 +596,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsSigningIn(false);
     }
   }
-
-  /*async function phoneSignIn(
-    phoneNumber: string,
-    authUser?: AuthUser,
-    options?: { allowLocalFallback?: boolean }
-  ) {
-    setIsSigningIn(true);
-    setError(null);
-    try {
-      const allowLocalFallback = options?.allowLocalFallback === true;
-      const phoneDigits = phoneNumber.replace(/\D/g, "");
-      const formattedPhone =
-        phoneNumber.startsWith("+") || phoneNumber.length === 0
-          ? phoneNumber
-          : `+91${phoneDigits}`;
-
-      let resolvedAuthUser: AuthUser | undefined = authUser;
-
-      if (isSupabaseConfigured && !resolvedAuthUser && !allowLocalFallback) {
-        const session = await supabase.auth.getSession();
-
-        console.log("SESSION", session);
-
-        const { data, error: getUserError } = await supabase.auth.getUser();
-
-        console.log("USER", data);
-        console.log("ERROR", error);
-
-        //const { data, error: getUserError } = await supabase.auth.getUser();
-        if (getUserError || !data?.user) {
-          throw new Error(
-            "Phone login session created, but Supabase user could not be resolved. Please retry OTP sign in."
-          );
-        }
-
-        const sessionUser = data.user;
-        const metadata = (sessionUser.user_metadata ?? {}) as Record<string, unknown>;
-        const fullName = typeof metadata.full_name === "string" ? metadata.full_name : undefined;
-        const avatarUrl = typeof metadata.avatar_url === "string" ? metadata.avatar_url : undefined;
-
-        resolvedAuthUser = {
-          id: sessionUser.id,
-          email: sessionUser.email ?? `${phoneDigits}@phone.2spoons.app`,
-          name: fullName ?? `User ${phoneDigits.slice(-4)}`,
-          picture: avatarUrl,
-          phone: sessionUser.phone ?? formattedPhone,
-        };
-      }
-
-      const userId = resolvedAuthUser?.id ?? `phone_${phoneDigits}`;
-      const email = resolvedAuthUser?.email ?? `${phoneDigits}@phone.2spoons.app`;
-      const name = resolvedAuthUser?.name ?? `User ${phoneDigits.slice(-4)}`;
-      const picture = resolvedAuthUser?.picture;
-      const resolvedPhone = resolvedAuthUser?.phone ?? formattedPhone;
-      const canonicalPhone = resolvedPhone.replace(/\D/g, '').slice(-10) || resolvedPhone;
-
-      // Store a phone session marker so checkAuth() can restore on next launch
-      await setStorageItem("phone_session", userId);
-
-      if (isSupabaseConfigured && !allowLocalFallback) {
-        const syncedUser = await useAuthStore.getState().syncProfile(
-          userId,
-          email,
-          name,
-          picture,
-          canonicalPhone
-        );
-
-        if (!syncedUser) {
-          throw new Error(
-            "Phone login succeeded, but profile sync to database failed. Check Supabase RLS policy on profiles for authenticated users."
-          );
-        }
-
-        setUser({
-          id: syncedUser.id,
-          email: syncedUser.email,
-          name: syncedUser.name,
-          picture: syncedUser.profileImage,
-          phone: syncedUser.phone,
-        });
-        return;
-      }
-
-      const authUserData: AuthUser = { id: userId, email, name, picture, phone: canonicalPhone };
-
-      // Populate Zustand with a full local user profile.
-      useAuthStore.setState({
-        user: {
-          id: userId,
-          email,
-          name,
-          phone: canonicalPhone,
-          address: "",
-          profileImage: picture || "",
-          experience: "",
-          cuisineTypes: [],
-          paymentMethods: [],
-          location: { latitude: 0, longitude: 0 },
-          isChef: false,
-          allowProfileDisplay: true,
-          isVerified: false,
-          isAdmin: false,
-          rating: 0,
-          reviewCount: 0,
-          officeAddress: "",
-          officeLocation: { latitude: 0, longitude: 0 },
-          homeToOfficeRoute: [],
-          officeToHomeRoute: [],
-          routesSameAsHomeToOffice: true,
-          detourPreference: 500,
-          firstPostDate: null,
-          postCount: 0,
-          freePostsRemaining: 3,
-        },
-        isAuthenticated: true,
-        isAdmin: false,
-        userPreference: null,
-      });
-
-      setUser(authUserData);
-    } catch (err) {
-      console.error("Phone sign in failed:", err);
-      setError(err instanceof Error ? err.message : "Phone sign in failed");
-    } finally {
-      setIsSigningIn(false);
-    }
-  }*/
 
   async function signOut() {
     await removeStorageItem("access_token");

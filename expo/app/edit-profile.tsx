@@ -29,9 +29,11 @@ import { useAuthStore } from '@/store/auth-store';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function EditProfileScreen() {
   const { user, updateProfile, logout } = useAuthStore();
+  const { signOut, isSigningIn } = useAuth();
   const router = useRouter();
 
   const [name, setName] = useState(user?.name || '');
@@ -136,7 +138,8 @@ export default function EditProfileScreen() {
         {
           text: 'Logout',
           onPress: () => {
-            logout();
+            //logout();
+            signOut();
             router.replace('/(auth)/welcome' as any);
           },
           style: 'destructive',
