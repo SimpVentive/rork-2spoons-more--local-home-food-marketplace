@@ -126,7 +126,7 @@ export default function AdminDashboard() {
   };
   const handleLogout = () => {
     logout();
-    router.replace('/(auth)' as any);
+    router.replace('/(auth)/welcome' as any);
   };
   const loadStats = async () => {
     try {

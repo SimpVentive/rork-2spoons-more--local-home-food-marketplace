@@ -85,7 +85,7 @@ export default function AdminLayout() {
         try {
           if (!authState.isAuthenticated) {
             console.log('TabLayout: User not authenticated, redirecting to auth');
-            router.replace('/(auth)' as any);
+            router.replace('/(auth)/welcome' as any);
             return;
           }
           
@@ -121,7 +121,7 @@ export default function AdminLayout() {
     }, [isMounted, authState, hasCheckedAuth, router]);  
   const handleLogout = () => {
     logout();
-    router.replace('/(auth)' as any);
+    router.replace('/(auth)/welcome' as any);
   };
 
   const isActive = (path: string) => {

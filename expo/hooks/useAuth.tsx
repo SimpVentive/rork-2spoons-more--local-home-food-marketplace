@@ -111,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function checkAuth() {
     try {
       // 1. Try Rork Auth token (Google / Apple sign-in)
-      const accessToken = await SecureStore.getItemAsync("access_token");
+      const accessToken = await getStorageItem("access_token");
       if (accessToken) {
         const decoded = userFromToken(accessToken);
         if (decoded) {
@@ -128,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // No access token — try refresh
-      const refreshTokenStored = await SecureStore.getItemAsync("refresh_token");
+      const refreshTokenStored = await getStorageItem("refresh_token");
       if (refreshTokenStored) {
         await refreshToken();
         setIsLoading(false);
@@ -136,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // 2. Try phone session (phone-number OTP sign-in)
-      const phoneSession = await SecureStore.getItemAsync("phone_session");
+      const phoneSession = await getStorageItem("phone_session");
       if (phoneSession) {
         // Restore phone user from Zustand persist (already hydrated from AsyncStorage)
         const storedUser = useAuthStore.getState().user;
@@ -294,8 +294,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { access_token, refresh_token, user: userData } = await response.json();
 
-    await SecureStore.setItemAsync("access_token", access_token);
-    await SecureStore.setItemAsync("refresh_token", refresh_token);
+    await setStorageItem("access_token", access_token);
+    await setStorageItem("refresh_token", refresh_token);
 
     // Sync store BEFORE setting local user — so redirect logic sees populated store
     await syncProfile(userData);
@@ -303,7 +303,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function refreshToken() {
-    const storedRefreshToken = await SecureStore.getItemAsync("refresh_token");
+    const storedRefreshToken = await getStorageItem("refresh_token");
     if (!storedRefreshToken) {
       setUser(null);
       return;
@@ -328,7 +328,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { access_token } = await response.json();
-    await SecureStore.setItemAsync("access_token", access_token);
+    await setStorageItem("access_token", access_token);
 
     const decoded = userFromToken(access_token);
     if (decoded) {
@@ -339,6 +339,237 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function phoneSignIn(
+    phoneNumber: string,
+    authUser?: AuthUser,
+    options?: { allowLocalFallback?: boolean }
+  ) {
+    setIsSigningIn(true);
+    setError(null);
+
+    try {
+      const allowLocalFallback = options?.allowLocalFallback === true;
+
+      const phoneDigits = phoneNumber.replace(/\D/g, "");
+
+      const formattedPhone =
+        phoneNumber.startsWith("+")
+          ? phoneNumber
+          : `+91${phoneDigits}`;
+
+      let resolvedAuthUser = authUser;
+
+      if (isSupabaseConfigured && !allowLocalFallback) {
+        // --------------------------------------------------
+        // Find existing profile by phone
+        // --------------------------------------------------
+        const { data: existingUser, error: findError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("phone", phoneDigits)
+          .maybeSingle();
+
+        if (findError) {
+          throw findError;
+        }
+
+        if (existingUser) {
+          resolvedAuthUser = {
+            id: existingUser.id,
+            email:
+              existingUser.email ||
+              `${phoneDigits}@phone.2spoons.app`,
+            name:
+              existingUser.name ||
+              `User ${phoneDigits.slice(-4)}`,
+            picture: existingUser.avatar_url ?? undefined,
+            phone: existingUser.phone,
+          };
+        } else {
+          // ----------------------------------------------
+          // Create new profile
+          // ----------------------------------------------
+
+          const userId =
+            crypto?.randomUUID?.() ??
+            `phone_${Date.now()}_${phoneDigits}`;
+
+          const newProfile = {
+            id: userId,
+            phone: phoneDigits,
+            email: `${phoneDigits}@phone.2spoons.app`,
+            name: `User ${phoneDigits.slice(-4)}`,
+            avatar_url: null,
+
+            address: "",
+
+            experience: "",
+
+            cuisine_types: [],
+
+            payment_methods: [],
+
+            location_lat: 0,
+            location_lng: 0,
+
+            office_address: "",
+
+            office_lat: 0,
+            office_lng: 0,
+
+            home_to_office_route: [],
+
+            office_to_home_route: [],
+
+            routes_same_as_home_to_office: true,
+
+            detour_preference: 500,
+
+            is_chef: false,
+            allow_profile_display: true,
+            is_verified: true,
+            is_admin: false,
+
+            rating: 0,
+            review_count: 0,
+
+            first_post_date: null,
+            post_count: 0,
+            free_posts_remaining: 3,
+          };
+
+          const { data: insertedUser, error: insertError } =
+            await supabase
+              .from("profiles")
+              .insert(newProfile)
+              .select()
+              .single();
+
+          if (insertError) {
+            throw insertError;
+          }
+
+          resolvedAuthUser = {
+            id: insertedUser.id,
+            email: insertedUser.email,
+            name: insertedUser.name,
+            picture: insertedUser.avatar_url ?? undefined,
+            phone: insertedUser.phone,
+          };
+        }
+      }
+
+      // ---------------------------------------
+      // Build authenticated user
+      // ---------------------------------------
+
+      const userId =
+        resolvedAuthUser?.id ??
+        `phone_${phoneDigits}`;
+
+      const email =
+        resolvedAuthUser?.email ??
+        `${phoneDigits}@phone.2spoons.app`;
+
+      const name =
+        resolvedAuthUser?.name ??
+        `User ${phoneDigits.slice(-4)}`;
+
+      const picture = resolvedAuthUser?.picture;
+
+      const resolvedPhone =
+        resolvedAuthUser?.phone ?? formattedPhone;
+
+      const canonicalPhone =
+        resolvedPhone.replace(/\D/g, "").slice(-10);
+
+      await setStorageItem("phone_session", userId);
+
+      if (isSupabaseConfigured && !allowLocalFallback) {
+        /*const syncedUser =
+          await useAuthStore.getState().syncProfile(
+            userId,
+            email,
+            name,
+            picture,
+            canonicalPhone
+          );
+
+        if (!syncedUser) {
+          throw new Error("Failed to synchronize profile.");
+        }*/
+
+        setUser({
+          id: userId,
+          email: email,
+          name: name,
+          picture: picture,
+          phone: canonicalPhone,
+        });
+
+        return;
+      }
+
+      // Local fallback
+
+      useAuthStore.setState({
+        user: {
+          id: userId,
+          email,
+          name,
+          phone: canonicalPhone,
+          address: "",
+          profileImage: picture ?? "",
+          experience: "",
+          cuisineTypes: [],
+          paymentMethods: [],
+          location: {
+            latitude: 0,
+            longitude: 0,
+          },
+          isChef: false,
+          allowProfileDisplay: true,
+          isVerified: false,
+          isAdmin: false,
+          rating: 0,
+          reviewCount: 0,
+          officeAddress: "",
+          officeLocation: {
+            latitude: 0,
+            longitude: 0,
+          },
+          homeToOfficeRoute: [],
+          officeToHomeRoute: [],
+          routesSameAsHomeToOffice: true,
+          detourPreference: 500,
+          firstPostDate: null,
+          postCount: 0,
+          freePostsRemaining: 3,
+        },
+        isAuthenticated: true,
+        isAdmin: false,
+        userPreference: null,
+      });
+
+      setUser({
+        id: userId,
+        email,
+        name,
+        picture,
+        phone: canonicalPhone,
+      });
+    } catch (err) {
+      console.error(err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Phone sign in failed"
+      );
+    } finally {
+      setIsSigningIn(false);
+    }
+  }
+
+  /*async function phoneSignIn(
     phoneNumber: string,
     authUser?: AuthUser,
     options?: { allowLocalFallback?: boolean }
@@ -356,7 +587,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let resolvedAuthUser: AuthUser | undefined = authUser;
 
       if (isSupabaseConfigured && !resolvedAuthUser && !allowLocalFallback) {
+        const session = await supabase.auth.getSession();
+
+        console.log("SESSION", session);
+
         const { data, error: getUserError } = await supabase.auth.getUser();
+
+        console.log("USER", data);
+        console.log("ERROR", error);
+
+        //const { data, error: getUserError } = await supabase.auth.getUser();
         if (getUserError || !data?.user) {
           throw new Error(
             "Phone login session created, but Supabase user could not be resolved. Please retry OTP sign in."
@@ -385,7 +625,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const canonicalPhone = resolvedPhone.replace(/\D/g, '').slice(-10) || resolvedPhone;
 
       // Store a phone session marker so checkAuth() can restore on next launch
-      await SecureStore.setItemAsync("phone_session", userId);
+      await setStorageItem("phone_session", userId);
 
       if (isSupabaseConfigured && !allowLocalFallback) {
         const syncedUser = await useAuthStore.getState().syncProfile(
@@ -455,12 +695,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsSigningIn(false);
     }
-  }
+  }*/
 
   async function signOut() {
-    await SecureStore.deleteItemAsync("access_token");
-    await SecureStore.deleteItemAsync("refresh_token");
-    await SecureStore.deleteItemAsync("phone_session");
+    await removeStorageItem("access_token");
+    await removeStorageItem("refresh_token");
+    await removeStorageItem("phone_session");
     useAuthStore.getState().logout();
     setUser(null);
   }
@@ -478,4 +718,28 @@ export function useAuth() {
     throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
+}
+
+
+export async function getStorageItem(key: string) {
+  if (Platform.OS === "web") {
+    return localStorage.getItem(key);
+  }
+  return SecureStore.getItemAsync(key);
+}
+
+export async function setStorageItem(key: string, value: string) {
+  if (Platform.OS === "web") {
+    localStorage.setItem(key, value);
+    return;
+  }
+  return SecureStore.setItemAsync(key, value);
+}
+
+export async function removeStorageItem(key: string) {
+  if (Platform.OS === "web") {
+    localStorage.removeItem(key);
+    return;
+  }
+  return SecureStore.deleteItemAsync(key);
 }

@@ -55,7 +55,7 @@ export default function MoreScreen() {
             try {
               await logout();
               setTimeout(() => {
-                router.replace('/(auth)' as never);
+                router.replace('/(auth)/welcome' as never);
               }, 100); 
             } catch (error) {
               console.error('Logout error:', error);

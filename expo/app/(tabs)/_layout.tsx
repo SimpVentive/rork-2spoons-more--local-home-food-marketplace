@@ -33,7 +33,7 @@ export default function TabLayout(): React.ReactElement {
         
         // If not signed in via Rork Auth, redirect to auth screen
         if (!authUser) {
-          router.replace('/(auth)' as never);
+          router.replace('/(auth)/welcome' as never);
           return;
         }
 
