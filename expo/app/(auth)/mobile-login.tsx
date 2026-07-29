@@ -102,7 +102,7 @@ export default function MobileLoginScreen() {
       if (state.isAdmin) {
         router.replace('/(admin)' as never);
       } else if (!state.userPreference) {
-        router.replace('/user-preference' as never);
+        router.replace('/setup-location' as never);
       } else {
         router.replace('/(tabs)/home' as never);
       }
@@ -133,7 +133,7 @@ export default function MobileLoginScreen() {
       if (state.isAdmin) {
         router.replace('/(admin)' as never);
       } else if (!state.userPreference) {
-        router.replace('/user-preference' as never);
+        router.replace('/setup-location' as never);
       } else {
         router.replace('/(tabs)/home' as never);
       }
