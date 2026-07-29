@@ -7,11 +7,17 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { X, Search, MapPin } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import colors from '@/constants/colors';
 import Button from './Button';
+import {
+  GoogleMap,
+  Marker,
+  useJsApiLoader,
+} from '@react-google-maps/api';
 
 interface LocationPickerProps {
   initialLocation?: {
@@ -40,7 +46,10 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey:
+      process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY!,
+  });
   useEffect(() => {
     requestLocationPermission();
   }, []);
@@ -138,6 +147,27 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     onSelectLocation(location);
   };
   
+  const handleMapClick = async (e: google.maps.MapMouseEvent) => {
+    if (!e.latLng) return;
+
+    const latitude = e.latLng.lat();
+    const longitude = e.latLng.lng();
+
+    const address = await Location.reverseGeocodeAsync({
+      latitude,
+      longitude,
+    });
+
+    setLocation({
+      latitude,
+      longitude,
+      address:
+        address.length > 0
+          ? formatAddress(address[0])
+          : "Selected Location",
+    });
+  };
+  
   return (
     <Modal
       visible={true}
@@ -188,16 +218,54 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
             </View>
           )}
           
-          <View style={styles.webMapFallback}>
-            <Text style={styles.webMapText}>
-              Map view is not available on web. Please enter an address in the search box.
-            </Text>
-            
-            <View style={styles.selectedLocationContainer}>
-              <Text style={styles.selectedLocationLabel}>Selected Location:</Text>
-              <Text style={styles.selectedLocationText}>{location.address || 'No location selected'}</Text>
+          {Platform.OS === "web" ? (
+            <View
+              style={{
+                flex: 1,
+                margin: 16,
+                borderRadius: 10,
+                overflow: "hidden",
+              }}
+            >
+              {isLoaded && (
+                <GoogleMap
+                  mapContainerStyle={{
+                    width: "100%",
+                    height: "100%",
+                  }}
+                  zoom={15}
+                  center={{
+                    lat: location.latitude,
+                    lng: location.longitude,
+                  }}
+                  onClick={handleMapClick}
+                >
+                  <Marker
+                    position={{
+                      lat: location.latitude,
+                      lng: location.longitude,
+                    }}
+                  />
+                </GoogleMap>
+              )}
             </View>
-          </View>
+          ) : (
+            <View style={styles.webMapFallback}>
+              <Text style={styles.webMapText}>
+                Map placeholder for native.
+              </Text>
+
+              <View style={styles.selectedLocationContainer}>
+                <Text style={styles.selectedLocationLabel}>
+                  Selected Location
+                </Text>
+
+                <Text style={styles.selectedLocationText}>
+                  {location.address}
+                </Text>
+              </View>
+            </View>
+          )}
           
           <View style={styles.footer}>
             <Button
