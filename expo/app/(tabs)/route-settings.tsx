@@ -48,7 +48,7 @@ export default function RouteSettingsScreen() {
 
   useEffect(() => {
     if (!user) {
-      router.replace('/(auth)' as any);
+      router.replace('/(auth)/welcome' as any);
     }
   }, [user]);
 

@@ -126,7 +126,7 @@ export default function AdminDashboard() {
   };
   const handleLogout = () => {
     logout();
-    router.replace('/(auth)' as any);
+    router.replace('/(auth)/welcome' as any);
   };
   const loadStats = async () => {
     try {
@@ -950,11 +950,20 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     marginBottom: 16,
     borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
+      },
+    }),
   },
   statCardHeader: {
     flexDirection: 'row',

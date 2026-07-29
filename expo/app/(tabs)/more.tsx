@@ -35,9 +35,11 @@ import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function MoreScreen() {
   const { user, logout, userPreference, switchRole } = useAuthStore();
+  const { signOut, isSigningIn } = useAuth();
   const router = useRouter();
   
   const handleLogout = () => {
@@ -53,9 +55,9 @@ export default function MoreScreen() {
           text: 'Logout',
           onPress: async () => {
             try {
-              await logout();
+              await signOut();
               setTimeout(() => {
-                router.replace('/(auth)' as never);
+                router.replace('/(auth)/welcome' as never);
               }, 100); 
             } catch (error) {
               console.error('Logout error:', error);

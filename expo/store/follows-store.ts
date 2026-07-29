@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '@/lib/supabase';
+import { zustandStorage } from '@/lib/storage';
 
 interface Follow {
   id: string;
@@ -105,7 +106,7 @@ export const useFollowsStore = create<FollowsState>()(
     }),
     {
       name: '2spoons-follows-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: zustandStorage,
     }
   )
 );

@@ -7,6 +7,7 @@ import {
   TouchableOpacity, 
   RefreshControl,
   Alert,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { 
@@ -120,7 +121,7 @@ export default function NotificationsScreen() {
         title="Not Logged In"
         message="Please log in to view your notifications"
         buttonTitle="Login"
-        onButtonPress={() => router.replace('/(auth)' as any)}
+        onButtonPress={() => router.replace('/(auth)/welcome' as any)}
       />
     );
   }
@@ -251,11 +252,20 @@ const styles = StyleSheet.create({
   },
   activeTab: {
     backgroundColor: colors.white,
-    shadowColor: colors.shadow, // Now using the shadow color from constants
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 1,
+      },
+      web: {
+        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+      },
+    }),
   },
   tabText: {
     fontSize: 14,

@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { Notification, DishNotification } from '@/types';
+import { zustandStorage } from '@/lib/storage';
 
 interface NotificationsState {
   notifications: Notification[];
@@ -271,7 +272,7 @@ export const useNotificationsStore = create<NotificationsState>()(
     }),
     {
       name: 'notifications-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: zustandStorage,
       partialize: (state) => ({
         dishNotifications: state.dishNotifications,
       }),

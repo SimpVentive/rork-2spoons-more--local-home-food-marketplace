@@ -139,7 +139,7 @@ export default function ProfileScreen() {
         title="Not Logged In"
         message="Please log in to view your profile"
         buttonTitle="Login"
-        onButtonPress={() => router.replace('/(auth)' as any)}
+        onButtonPress={() => router.replace('/(auth)/welcome' as any)}
       />
     );
   }

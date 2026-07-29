@@ -67,7 +67,7 @@ export default function AnalyticsScreen() {
         title="Not Logged In"
         message="Please log in to view your analytics"
         buttonTitle="Login"
-        onButtonPress={() => router.replace('/(auth)' as any)}
+        onButtonPress={() => router.replace('/(auth)/welcome' as any)}
       />
     );
   }
@@ -303,11 +303,7 @@ const styles = StyleSheet.create({
   },
   activeTimeRange: {
     backgroundColor: colors.white,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+    boxShadow: "0px 1px 2px rgba(0,0,0,0.1)",
   },
   timeRangeText: {
     fontSize: 14,

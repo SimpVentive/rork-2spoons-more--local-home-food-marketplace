@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { Review } from '@/types';
+import { zustandStorage } from '@/lib/storage';
 
 interface ReviewsState {
   reviews: Review[];
@@ -229,7 +230,7 @@ export const useReviewsStore = create<ReviewsState>()(
     }),
     {
       name: 'reviews-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: zustandStorage,
     }
   )
 );

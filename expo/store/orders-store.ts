@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { Order, OrderStatus, DeliveryMethod, PaymentMethod } from '@/types';
 import { useAuthStore } from './auth-store';
+import { zustandStorage } from '@/lib/storage';
 
 interface OrdersState {
   orders: Order[];
@@ -360,7 +361,7 @@ export const useOrdersStore = create<OrdersState>()(
     }),
     {
       name: 'orders-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: zustandStorage,
     }
   )
 );
