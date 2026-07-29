@@ -48,25 +48,7 @@ export default function HomeScreen() {
   const [recentReviews, setRecentReviews] = useState<Review[]>([]);
   
   const router = useRouter();
-  
-  useEffect(() => {
-    if (isInitialized) {
-      fetchListings();
-      loadTopSellingItems();
-      loadTopChefs();
-      loadRecentReviews();
-    }
-  }, [isInitialized]);
-  
-  if (!isInitialized) {
-    return (
-      <LoadingState 
-        message="Welcome back! Loading your personalized feed..."
-        size="large"
-      />
-    );
-  }
-  
+
   const loadTopSellingItems = async () => {
     try {
       const items = await getTopSellingItems(5);
@@ -76,7 +58,7 @@ export default function HomeScreen() {
       setTopSellingItems(listings.slice(0, 5));
     }
   };
-  
+
   const loadTopChefs = async () => {
     try {
       const chefs = await fetchTopChefs(5);
@@ -85,7 +67,7 @@ export default function HomeScreen() {
       console.error("Error loading top chefs:", error);
     }
   };
-  
+
   const loadRecentReviews = async () => {
     try {
       const reviews = await reviewsStore.fetchRecentReviews(5);
@@ -94,6 +76,24 @@ export default function HomeScreen() {
       console.error("Error loading recent reviews:", error);
     }
   };
+
+  useEffect(() => {
+    if (isInitialized) {
+      fetchListings();
+      loadTopSellingItems();
+      loadTopChefs();
+      loadRecentReviews();
+    }
+  }, [isInitialized]);
+
+  if (!isInitialized) {
+    return (
+      <LoadingState
+        message="Welcome back! Loading your personalized feed..."
+        size="large"
+      />
+    );
+  }
   
   const onRefresh = async () => {
     setRefreshing(true);
