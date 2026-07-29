@@ -137,10 +137,15 @@ export default function EditProfileScreen() {
         },
         {
           text: 'Logout',
-          onPress: () => {
-            //logout();
-            signOut();
-            router.replace('/(auth)/welcome' as any);
+          onPress: async () => {
+            try {
+              await signOut();
+              setTimeout(() => {
+                router.replace('/(auth)/welcome' as never);
+              }, 100); 
+            } catch (error) {
+              console.error('Logout error:', error);
+            }
           },
           style: 'destructive',
         },

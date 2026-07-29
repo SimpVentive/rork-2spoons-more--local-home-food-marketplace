@@ -9,6 +9,12 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import { Platform } from "react-native";
+import {
+  GoogleMap,
+  Marker,
+  useJsApiLoader,
+} from "@react-google-maps/api";
 import { X, Search, MapPin, Navigation, CheckCircle, Route } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import colors from '@/constants/colors';
@@ -52,6 +58,18 @@ export default function LocationPickerNativeWeb({
     address: string;
   }>>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey:
+      process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY!,
+  });
+
+  const [selectedLocation, setSelectedLocation] = useState(
+    initialLocation ?? {
+      latitude: 17.4123,
+      longitude: 78.2679,
+      address: "",
+    }
+  );
 
   useEffect(() => {
     if (visible) {
@@ -143,6 +161,21 @@ export default function LocationPickerNativeWeb({
     onClose();
   };
 
+  const handleMapClick = async (e: google.maps.MapMouseEvent) => {
+    if (!e.latLng) return;
+
+    const latitude = e.latLng.lat();
+    const longitude = e.latLng.lng();
+
+    const address = await reverseGeocode(latitude, longitude);
+
+    setSelectedLocation({
+      latitude,
+      longitude,
+      address,
+    });
+  };
+
   return (
     <Modal
       visible={visible}
@@ -171,10 +204,35 @@ export default function LocationPickerNativeWeb({
           </View>
         </View>
 
-        <View style={styles.webMapFallback}>
-          <MapPin size={48} color={colors.textLight} />
-          <Text style={styles.webMapText}>Map view is not available on web</Text>
-          <Text style={styles.webMapSubtext}>Please use the mobile app for full map functionality</Text>
+        <View
+          style={{
+            height: 350,
+            margin: 16,
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+          {isLoaded && (
+            <GoogleMap
+              mapContainerStyle={{
+                width: "100%",
+                height: "100%",
+              }}
+              zoom={15}
+              center={{
+                lat: selectedLocation.latitude,
+                lng: selectedLocation.longitude,
+              }}
+              onClick={handleMapClick}
+            >
+              <Marker
+                position={{
+                  lat: selectedLocation.latitude,
+                  lng: selectedLocation.longitude,
+                }}
+              />
+            </GoogleMap>
+          )}
         </View>
 
         <ScrollView style={styles.resultsContainer}>
