@@ -611,12 +611,8 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
         userPreference: state.userPreference,
         isAdmin: state.isAdmin,
+        isInitialized: state.isInitialized,
       }),
-      onRehydrateStorage: () => (state) => {
-        if (state && state.user) {
-          state.isInitialized = true;
-        }
-      },
     }
   )
 );
