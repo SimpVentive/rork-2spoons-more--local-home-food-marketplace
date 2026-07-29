@@ -214,6 +214,7 @@ export const useAuthStore = create<AuthState>()(
             isAdmin: user.isAdmin === true,
             userPreference: user.isChef ? { type: 'seller' } : { type: 'buyer' },
             isLoading: false,
+            isInitialized: true,
           });
           return user;
 
@@ -247,6 +248,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isAdmin: true,
             userPreference: user.isChef ? { type: 'seller' } : { type: 'buyer' },
+            isInitialized: true,
           });
           return true;
         } catch (error) {

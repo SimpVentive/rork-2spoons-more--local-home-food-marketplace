@@ -677,11 +677,11 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   topItemName: {
-    fontSize: typography.sizes.xs,
+    fontSize: 13,
     fontWeight: typography.weights.bold,
     color: colors.text,
     marginBottom: 4,
-    lineHeight: 16,
+    lineHeight: 18,
   },
   topItemPrice: {
     fontSize: typography.sizes.sm,
@@ -725,12 +725,12 @@ const styles = StyleSheet.create({
     borderColor: colors.white,
   },
   chefName: {
-    fontSize: typography.sizes.sm,
+    fontSize: 15,
     fontWeight: typography.weights.bold,
     color: colors.text,
     textAlign: 'center',
     marginBottom: 6,
-    lineHeight: 18,
+    lineHeight: 20,
   },
   chefRating: {
     flexDirection: 'row',
@@ -743,7 +743,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   chefSpecialty: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textLight,
     textAlign: 'center',
   },

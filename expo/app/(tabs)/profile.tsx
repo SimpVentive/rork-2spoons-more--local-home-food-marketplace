@@ -82,7 +82,7 @@ export default function ProfileScreen() {
   
   const handleLogout = () => {
     logout();
-    router.replace('/(auth)' as any);
+    router.replace('/thank-you' as any);
   };
   
   const handleViewAnalytics = () => {
@@ -818,8 +818,8 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   listingName: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.text,
     marginBottom: 4,
   },
