@@ -32,6 +32,7 @@ jobs:
           EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
           EXPO_PUBLIC_RORK_APP_KEY=${{ secrets.EXPO_PUBLIC_RORK_APP_KEY }}
           EXPO_PUBLIC_SKIP_PHONE_OTP=${{ secrets.EXPO_PUBLIC_SKIP_PHONE_OTP }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
           EOF
 
       - name: Install Frontend Dependencies
@@ -73,6 +74,7 @@ jobs:
             EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
             EXPO_PUBLIC_RORK_APP_KEY=${{ secrets.EXPO_PUBLIC_RORK_APP_KEY }}
             EXPO_PUBLIC_SKIP_PHONE_OTP=${{ secrets.EXPO_PUBLIC_SKIP_PHONE_OTP }}
+            EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
             EOF
 
             echo "Node: $(node -v)"
