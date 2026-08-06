@@ -288,6 +288,9 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
 
       const user = useAuthStore.getState().user;
       if (!user) throw new Error('Not authenticated');
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('supabase session:', session);
+      console.log('zustand user:', user);
 
       // Upload image if it's a local file URI
       let imageUrl = listing.image;

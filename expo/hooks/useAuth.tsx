@@ -390,100 +390,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (isSupabaseConfigured && !allowLocalFallback) {
         // --------------------------------------------------
-        // Find existing profile by phone
+        // Exchange the (already-verified) phone number for a
+        // REAL Supabase Auth session via the phone-auth Edge
+        // Function. This replaces the old direct profiles
+        // select/insert — the Edge Function does that lookup
+        // itself using the service role key, then hands back a
+        // one-time token we exchange for a session below.
         // --------------------------------------------------
-        const { data: existingUser, error: findError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("phone", phoneDigits)
-          .maybeSingle();
+        const { data: authData, error: authError } = await supabase
+          .functions.invoke("phone-auth", {
+            body: { phone: phoneDigits },
+          });
 
-        if (findError) {
-          throw findError;
+        if (authError) {
+          throw authError;
         }
 
-        if (existingUser) {
-          resolvedAuthUser = {
-            id: existingUser.id,
-            email:
-              existingUser.email ||
-              `${phoneDigits}@phone.2spoons.app`,
-            name:
-              existingUser.name ||
-              `User ${phoneDigits.slice(-4)}`,
-            picture: existingUser.avatar_url ?? undefined,
-            phone: existingUser.phone,
-          };
-        } else {
-          // ----------------------------------------------
-          // Create new profile
-          // ----------------------------------------------
-
-          const userId = generateUuid();
-
-          const newProfile = {
-            id: userId,
-            phone: phoneDigits,
-            email: `${phoneDigits}@phone.2spoons.app`,
-            name: `User ${phoneDigits.slice(-4)}`,
-            avatar_url: null,
-
-            address: "",
-
-            experience: "",
-
-            cuisine_types: [],
-
-            payment_methods: [],
-
-            location_lat: 0,
-            location_lng: 0,
-
-            office_address: "",
-
-            office_lat: 0,
-            office_lng: 0,
-
-            home_to_office_route: [],
-
-            office_to_home_route: [],
-
-            routes_same_as_home_to_office: true,
-
-            detour_preference: 500,
-
-            is_chef: false,
-            allow_profile_display: true,
-            is_verified: true,
-            is_admin: false,
-
-            rating: 0,
-            review_count: 0,
-
-            first_post_date: null,
-            post_count: 0,
-            free_posts_remaining: 3,
-          };
-
-          const { data: insertedUser, error: insertError } =
-            await supabase
-              .from("profiles")
-              .insert(newProfile)
-              .select()
-              .single();
-
-          if (insertError) {
-            throw insertError;
-          }
-
-          resolvedAuthUser = {
-            id: insertedUser.id,
-            email: insertedUser.email,
-            name: insertedUser.name,
-            picture: insertedUser.avatar_url ?? undefined,
-            phone: insertedUser.phone,
-          };
+        // supabase-js only rejects on transport failures; a non-2xx
+        // JSON error body from the function shows up here instead.
+        if (authData?.error) {
+          throw new Error(authData.error);
         }
+
+        const { email: authEmail, tokenHash } = authData;
+
+        // Exchange the one-time token for a real session. After this,
+        // supabase.auth.getSession() returns a live session and every
+        // subsequent request automatically carries a valid
+        // Authorization header, so auth.uid() resolves correctly in
+        // RLS policies.
+        //
+        // IMPORTANT: generateLink() produces a token meant to be
+        // verified via `token_hash`, NOT the `email` + `token` pair
+        // (that pair is for 6-digit OTP codes, a different mechanism).
+        // Using the wrong one causes a misleading "otp_expired" error
+        // regardless of actual expiry.
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: "magiclink",
+          });
+
+        if (sessionError) {
+          throw sessionError;
+        }
+
+        const sessionUser = sessionData.user;
+
+        resolvedAuthUser = {
+          id: sessionUser.id,
+          email: sessionUser.email ?? authEmail,
+          name:
+            sessionUser.user_metadata?.name ||
+            `User ${phoneDigits.slice(-4)}`,
+          picture: sessionUser.user_metadata?.avatar_url ?? undefined,
+          phone: phoneDigits,
+        };
       }
 
       // ---------------------------------------
