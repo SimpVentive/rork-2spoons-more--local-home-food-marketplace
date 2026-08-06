@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
+import { uploadImage, uploadImages, deleteImage } from '@/lib/image-upload';
 import { FoodListing, FilterOptions, RouteSearchParams } from '@/types';
 import { useAuthStore } from './auth-store';
 
@@ -288,6 +289,12 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       const user = useAuthStore.getState().user;
       if (!user) throw new Error('Not authenticated');
 
+      // Upload image if it's a local file URI
+      let imageUrl = listing.image;
+      if (listing.image && listing.image.startsWith('file://')) {
+        imageUrl = await uploadImage(listing.image, 'listings');
+      }
+
       const { data, error } = await supabase
         .from('food_listings')
         .insert({
@@ -297,7 +304,7 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
           seller_rating: user.rating || 0,
           dish_name: listing.dishName,
           description: listing.description,
-          image: listing.image,
+          image: imageUrl,
           ingredients: listing.ingredients,
           allergens: listing.allergens,
           quantity: listing.quantity,
@@ -353,7 +360,14 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       if (updates.dishName !== undefined) dbUpdates.dish_name = updates.dishName;
       if (updates.description !== undefined) dbUpdates.description = updates.description;
       if (updates.price !== undefined) dbUpdates.price = updates.price;
-      if (updates.image !== undefined) dbUpdates.image = updates.image;
+      if (updates.image !== undefined) {
+        // Upload image if it's a local file URI
+        if (updates.image.startsWith('file://')) {
+          dbUpdates.image = await uploadImage(updates.image, 'listings');
+        } else {
+          dbUpdates.image = updates.image;
+        }
+      }
       if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
       if (updates.remainingQuantity !== undefined) dbUpdates.remaining_quantity = updates.remainingQuantity;
       if (updates.isVegetarian !== undefined) dbUpdates.is_vegetarian = updates.isVegetarian;
