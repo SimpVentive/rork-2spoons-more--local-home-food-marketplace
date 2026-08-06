@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Platform, Image, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Phone, Shield } from 'lucide-react-native';
+import { Phone } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/auth-store';
 import Button from '@/components/Button';
@@ -56,12 +56,12 @@ export default function WelcomeScreen() {
           <Text style={styles.appName}>2Spoons More</Text>
           <Text style={styles.tagline}>Homemade food, shared with love</Text>
         </View>
-        
+
         <View style={styles.footer}>
           <Text style={styles.description}>
             Connect with home chefs in your neighborhood and discover delicious homemade meals
           </Text>
-          
+
           <View style={styles.buttonContainer}>
             <Button
               title="Continue with Phone Number"
@@ -71,14 +71,6 @@ export default function WelcomeScreen() {
               icon={<Phone size={18} color={colors.white} />}
             />
           </View>
-
-          <TouchableOpacity
-            style={styles.adminLink}
-            onPress={() => router.push('/admin-login' as never)}
-          >
-            <Shield size={16} color={colors.white} />
-            <Text style={styles.adminLinkText}>Admin Login</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -157,19 +149,5 @@ const styles = StyleSheet.create({
   },
   mobileButtonText: {
     color: colors.white,
-  },
-  adminLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 24,
-    paddingVertical: 8,
-    gap: 8,
-  },
-  adminLinkText: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '600',
-    opacity: 0.8,
   },
 });

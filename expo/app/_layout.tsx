@@ -62,6 +62,7 @@ export default function RootLayout() {
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(admin)" options={{ headerShown: false }} />
             <Stack.Screen name="setup-location" options={{ title: 'Set Your Location' }} />
+            <Stack.Screen name="admin-access-[token]" options={{ headerShown: false }} />
             <Stack.Screen name="listing/[id]" options={{ title: 'Dish Details' }} />
             <Stack.Screen name="order/[id]" options={{ title: 'Order Details' }} />
             <Stack.Screen name="profile/[id]" options={{ title: 'Profile' }} />
