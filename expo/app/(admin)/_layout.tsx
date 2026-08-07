@@ -50,6 +50,8 @@ export default function AdminLayout() {
             return;
         }
 
+        
+
         // Already inside admin → do nothing.
     }, [authState, hasCheckedAuth]); 
   const handleLogout = () => {
