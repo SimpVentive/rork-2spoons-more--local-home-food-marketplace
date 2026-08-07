@@ -136,6 +136,7 @@ export async function fetchTopChefs(limit: number = 10): Promise<User[]> {
 // Fetch all users
 export async function fetchAllUsers(): Promise<User[]> {
   try {
+    console.count("fetchAllUsers");
     const { data, error } = await supabase
       .from('profiles')
       .select('*')

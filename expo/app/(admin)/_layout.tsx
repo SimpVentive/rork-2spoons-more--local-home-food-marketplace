@@ -36,89 +36,22 @@ export default function AdminLayout() {
     useEffect(() => {
       setIsMounted(true);
     }, []);
-  
-    // Get auth state after mounting
+
     useEffect(() => {
-      if (!isMounted) return;
-      
-      const initializeAuth = async () => {
-        try {
-          console.log('TabLayout: Initializing auth...');
-          
-          // Initialize the auth store first
-          await useAuthStore.getState().initialize();
-          
-          // Then get the state
-          const { isAuthenticated, userPreference, user, isInitialized } = useAuthStore.getState();
-          
-          console.log('TabLayout: Auth state after init:', { 
-            isAuthenticated, 
-            userPreference, 
-            isInitialized,
-            userName: user?.name,
-            isAdmin: user?.isAdmin 
-          });
-          
-          setAuthState({ isAuthenticated, userPreference, user });
-          setHasCheckedAuth(true);
-        } catch (error) {
-          console.error('Error getting auth state:', error);
-          setAuthState({ isAuthenticated: false, userPreference: null, user: null });
-          setHasCheckedAuth(true);
+        if (!authState || !hasCheckedAuth) return;
+
+        if (!authState.isAuthenticated) {
+            router.replace("/(auth)/welcome");
+            return;
         }
-      };
-      
-      initializeAuth();
-    }, [isMounted]);
-  // Check authentication and redirect if needed, but only after mounting and getting auth state
-    useEffect(() => {
-      if (!isMounted || !authState || !hasCheckedAuth) return;
-      
-      console.log('TabLayout: Checking auth for navigation...', {
-        isAuthenticated: authState.isAuthenticated,
-        isAdmin: authState.user?.isAdmin,
-        userPreference: authState.userPreference
-      });
-      
-      // Add a small delay to ensure everything is properly initialized
-      const checkAuth = async () => {
-        try {
-          if (!authState.isAuthenticated) {
-            console.log('TabLayout: User not authenticated, redirecting to auth');
-            router.replace('/(auth)/welcome' as any);
+
+        if (!authState.user?.isAdmin) {
+            router.replace("/(tabs)/home");
             return;
-          }
-          
-          // IMPORTANT: Admin users should NEVER see the tabs - redirect them immediately
-          if (authState.user?.isAdmin === true) {
-            console.log('TabLayout: Admin user detected, redirecting to admin panel');
-            router.replace('/(admin)' as any);
-            return;
-          }
-          else{
-            console.log('TabLayout: Admin user detected, redirecting to user panel');
-            router.replace('/(tabs)/home' as any);
-            return;
-          }
-          
-          if (authState?.userPreference === undefined || authState?.userPreference === null) {
-            console.log('TabLayout: No user preference, redirecting to preference selection');
-            router.replace('/user-preference' as any);
-            return;
-          }
-          
-          console.log('TabLayout: User authenticated and ready for tabs');
-        } catch (error) {
-          console.error('Navigation error:', error);
-          // Don't redirect on error, let user stay in tabs
         }
-      };
-  
-      // Use setTimeout to ensure navigation happens after render
-      const timeoutId = setTimeout(checkAuth, 50);
-      
-      return () => clearTimeout(timeoutId);
-    }, [isMounted, authState, hasCheckedAuth, router]);  
+
+        // Already inside admin → do nothing.
+    }, [authState, hasCheckedAuth]); 
   const handleLogout = () => {
     logout();
     router.replace('/(auth)/welcome' as any);
