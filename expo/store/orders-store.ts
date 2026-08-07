@@ -86,11 +86,20 @@ export const useOrdersStore = create<OrdersState>()(
           }
 
           // Fetch orders where user is buyer or seller
-          const { data, error } = await supabase
+          const query = supabase
+            .from('orders')
+            .select('*');
+
+          const { data, error } = await (
+            user.isAdmin
+              ? query
+              : query.or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+          ).order('created_at', { ascending: false });
+          /*const { data, error } = await supabase
             .from('orders')
             .select('*')
             .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false });*/
 
           if (error) {
             console.error('Fetch orders error:', error.message);
