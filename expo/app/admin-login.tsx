@@ -56,7 +56,7 @@ export default function AdminLoginScreen() {
           
           if (isAuthenticated && isAdmin) {
             console.log('Redirecting to admin dashboard');
-            router.replace('/(admin)' as any);
+            router.replace('/dashboard' as any);
           } else {
             console.log('Admin authentication failed');
             setError('Admin authentication failed. Please try again.');

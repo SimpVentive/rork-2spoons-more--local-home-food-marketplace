@@ -5,6 +5,8 @@ node_modules/
 android/
 ios/
 *.apk
+*.lock
+dist
 
 # Expo
 .expo/

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import AdminLoginScreen from '../admin-login';
+import AdminLoginScreen from '../../admin-login';
 
 export default function AdminAccessScreen() {
   const router = useRouter();

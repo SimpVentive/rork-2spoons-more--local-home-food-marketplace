@@ -44,7 +44,13 @@ export default function ManageUsers() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'buyers' | 'chefs' | 'admins'>('all');
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
+useEffect(() => {
+    console.log("Users mounted");
 
+    return () => {
+        console.log("Users unmounted");
+    };
+}, []);
   useEffect(() => {
     loadUsers();
   }, []);
