@@ -37,10 +37,13 @@ export default function UserDetailsScreen() {
   const [user, setUser] = useState<UserType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [earnings, setEarnings] = useState(0);
+  const [completedOrders, setCompletedOrders] = useState(0);
 
   useEffect(() => {
     if (id) {
       loadUserDetails();
+      loadUserEarnings();
     }
   }, [id]);
 
@@ -98,6 +101,27 @@ export default function UserDetailsScreen() {
       Alert.alert('Error', 'Failed to load user details');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadUserEarnings = async () => {
+    try {
+      // Get all completed orders where this user is the seller
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('total_price, status')
+        .eq('seller_id', id)
+        .eq('status', 'completed');
+
+      if (error) throw error;
+
+      if (orders) {
+        const totalEarnings = orders.reduce((sum, order) => sum + (order.total_price || 0), 0);
+        setEarnings(totalEarnings);
+        setCompletedOrders(orders.length);
+      }
+    } catch (error) {
+      console.error('Error loading user earnings:', error);
     }
   };
 
@@ -259,11 +283,25 @@ export default function UserDetailsScreen() {
             </View>
 
             {user.isChef && (
-              <View style={styles.statCard}>
-                <ChefHat size={24} color={colors.secondary} />
-                <Text style={styles.statValue}>{user.cuisineTypes.length}</Text>
-                <Text style={styles.statLabel}>Cuisines</Text>
-              </View>
+              <>
+                <View style={styles.statCard}>
+                  <ChefHat size={24} color={colors.secondary} />
+                  <Text style={styles.statValue}>{user.cuisineTypes.length}</Text>
+                  <Text style={styles.statLabel}>Cuisines</Text>
+                </View>
+
+                <View style={styles.statCard}>
+                  <Text style={styles.currencySymbol}>₹</Text>
+                  <Text style={styles.statValue}>{earnings.toLocaleString()}</Text>
+                  <Text style={styles.statLabel}>Earnings</Text>
+                </View>
+
+                <View style={styles.statCard}>
+                  <ShoppingBag size={24} color="#FF9800" />
+                  <Text style={styles.statValue}>{completedOrders}</Text>
+                  <Text style={styles.statLabel}>Completed</Text>
+                </View>
+              </>
             )}
           </View>
         </View>
@@ -480,6 +518,12 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xs,
     color: colors.textLight,
     marginTop: spacing.xs,
+  },
+  currencySymbol: {
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.primary,
+    marginBottom: spacing.xs,
   },
   actionButtons: {
     gap: spacing.md,

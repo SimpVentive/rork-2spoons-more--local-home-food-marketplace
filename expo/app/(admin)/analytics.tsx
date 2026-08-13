@@ -22,6 +22,8 @@ export default function AnalyticsScreen() {
     totalRevenue: 0,
     approvedListings: 0,
     pendingListings: 0,
+    totalEarnings: 0,
+    completedOrders: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -63,6 +65,17 @@ export default function AnalyticsScreen() {
         .from('orders')
         .select('*', { count: 'exact' });
 
+      const { count: completedOrders, data: completedOrdersData } = await supabase
+        .from('orders')
+        .select('total_price', { count: 'exact' })
+        .eq('status', 'completed');
+
+      // Calculate total earnings
+      let totalEarnings = 0;
+      if (completedOrdersData) {
+        totalEarnings = completedOrdersData.reduce((sum, order) => sum + (order.total_price || 0), 0);
+      }
+
       setStats({
         totalUsers: totalUsers || 0,
         totalChefs: totalChefs || 0,
@@ -71,6 +84,8 @@ export default function AnalyticsScreen() {
         approvedListings: approvedListings || 0,
         pendingListings: pendingListings || 0,
         totalRevenue: 0,
+        totalEarnings: totalEarnings,
+        completedOrders: completedOrders || 0,
       });
     } catch (error) {
       console.error('Error loading analytics:', error);
@@ -123,6 +138,22 @@ export default function AnalyticsScreen() {
           </View>
           <Text style={styles.metricValue}>{stats.totalOrders}</Text>
           <Text style={styles.metricLabel}>Orders</Text>
+        </View>
+
+        <View style={styles.metricCard}>
+          <View style={[styles.metricIconContainer, { backgroundColor: '#FCE4EC' }]}>
+            <BarChart3 size={24} color="#E91E63" />
+          </View>
+          <Text style={styles.metricValue}>₹{stats.totalEarnings.toLocaleString()}</Text>
+          <Text style={styles.metricLabel}>Total Earnings</Text>
+        </View>
+
+        <View style={styles.metricCard}>
+          <View style={[styles.metricIconContainer, { backgroundColor: '#E0F2F1' }]}>
+            <ShoppingBag size={24} color="#009688" />
+          </View>
+          <Text style={styles.metricValue}>{stats.completedOrders}</Text>
+          <Text style={styles.metricLabel}>Completed</Text>
         </View>
       </View>
 
