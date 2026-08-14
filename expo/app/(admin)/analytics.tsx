@@ -6,14 +6,17 @@ import {
   ScrollView,
   ActivityIndicator,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import { BarChart3, TrendingUp, Users, ShoppingBag } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
 export default function AnalyticsScreen() {
+  const router = useRouter();
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalChefs: 0,
@@ -108,53 +111,53 @@ export default function AnalyticsScreen() {
 
       {/* Key Metrics */}
       <View style={styles.metricsGrid}>
-        <View style={styles.metricCard}>
+        <TouchableOpacity style={styles.metricCard} onPress={() => router.push('/admin/drill-users-list' as any)}>
           <View style={styles.metricIconContainer}>
             <Users size={24} color={colors.primary} />
           </View>
           <Text style={styles.metricValue}>{stats.totalUsers}</Text>
           <Text style={styles.metricLabel}>Total Users</Text>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.metricCard}>
+        <TouchableOpacity style={styles.metricCard} onPress={() => router.push('/admin/drill-users-list?filter=chefs' as any)}>
           <View style={[styles.metricIconContainer, { backgroundColor: '#F3E5F5' }]}>
             <ShoppingBag size={24} color="#9C27B0" />
           </View>
           <Text style={styles.metricValue}>{stats.totalChefs}</Text>
           <Text style={styles.metricLabel}>Chefs</Text>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.metricCard}>
+        <TouchableOpacity style={styles.metricCard} onPress={() => router.push('/(admin)/listings' as any)}>
           <View style={[styles.metricIconContainer, { backgroundColor: '#E8F5E9' }]}>
             <BarChart3 size={24} color="#43A047" />
           </View>
           <Text style={styles.metricValue}>{stats.totalListings}</Text>
           <Text style={styles.metricLabel}>Listings</Text>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.metricCard}>
+        <TouchableOpacity style={styles.metricCard} onPress={() => router.push('/(admin)/orders' as any)}>
           <View style={[styles.metricIconContainer, { backgroundColor: '#FFF3E0' }]}>
             <TrendingUp size={24} color="#FB8C00" />
           </View>
           <Text style={styles.metricValue}>{stats.totalOrders}</Text>
           <Text style={styles.metricLabel}>Orders</Text>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.metricCard}>
+        <TouchableOpacity style={styles.metricCard} onPress={() => router.push('/(admin)/orders?filter=completed' as any)}>
           <View style={[styles.metricIconContainer, { backgroundColor: '#FCE4EC' }]}>
             <BarChart3 size={24} color="#E91E63" />
           </View>
           <Text style={styles.metricValue}>₹{stats.totalEarnings.toLocaleString()}</Text>
           <Text style={styles.metricLabel}>Total Earnings</Text>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.metricCard}>
+        <TouchableOpacity style={styles.metricCard} onPress={() => router.push('/(admin)/orders?filter=completed' as any)}>
           <View style={[styles.metricIconContainer, { backgroundColor: '#E0F2F1' }]}>
             <ShoppingBag size={24} color="#009688" />
           </View>
           <Text style={styles.metricValue}>{stats.completedOrders}</Text>
           <Text style={styles.metricLabel}>Completed</Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Listing Status */}
