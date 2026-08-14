@@ -72,7 +72,10 @@ export default function RootLayout() {
             <Stack.Screen name="file-complaint" options={{ title: 'File Complaint' }} />
             <Stack.Screen name="seller-onboarding" options={{ title: 'Seller Setup' }} />
             <Stack.Screen name="user-preference" options={{ title: 'Account Type' }} />
+            <Stack.Screen name="seller-profile-setup" options={{ title: 'Complete Your Profile' }} />
             <Stack.Screen name="admin-login" options={{ title: 'Admin Login' }} />
+            <Stack.Screen name="admin/user-details/[id]" options={{ title: 'User Details' }} />
+            <Stack.Screen name="admin/drill-users-list" options={{ title: 'All Users' }} />
             <Stack.Screen name="scan" options={{ title: 'Scan QR Code' }} />
             <Stack.Screen name="analytics" options={{ title: 'Analytics' }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
