@@ -85,7 +85,7 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       const { data, error } = await supabase
         .from('food_listings')
         .select('*')
-        .eq('is_approved', true)
+        //.eq('is_approved', true)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
