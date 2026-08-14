@@ -165,17 +165,17 @@ export default function AnalyticsScreen() {
         <Text style={styles.sectionTitle}>Listing Status</Text>
 
         <View style={styles.statusRow}>
-          <View style={styles.statusItem}>
+          <TouchableOpacity style={styles.statusItem} onPress={() => router.push('/(admin)/listings?filter=approved' as any)}>
             <View style={[styles.statusDot, { backgroundColor: colors.success }]} />
             <Text style={styles.statusLabel}>Approved</Text>
             <Text style={styles.statusValue}>{stats.approvedListings}</Text>
-          </View>
+          </TouchableOpacity>
 
-          <View style={styles.statusItem}>
+          <TouchableOpacity style={styles.statusItem} onPress={() => router.push('/(admin)/listings?filter=pending' as any)}>
             <View style={[styles.statusDot, { backgroundColor: colors.warning }]} />
             <Text style={styles.statusLabel}>Pending</Text>
             <Text style={styles.statusValue}>{stats.pendingListings}</Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.statusBar}>
@@ -202,29 +202,29 @@ export default function AnalyticsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Quick Summary</Text>
 
-        <View style={styles.summaryItem}>
+        <TouchableOpacity style={styles.summaryItem} onPress={() => router.push('/admin/drill-users-list' as any)}>
           <Text style={styles.summaryLabel}>Total Platform Users</Text>
           <Text style={styles.summaryValue}>{stats.totalUsers}</Text>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.summaryItem}>
+        <TouchableOpacity style={styles.summaryItem} onPress={() => router.push('/admin/drill-users-list?filter=chefs' as any)}>
           <Text style={styles.summaryLabel}>Active Chefs</Text>
           <Text style={styles.summaryValue}>{stats.totalChefs}</Text>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.summaryItem}>
+        <TouchableOpacity style={styles.summaryItem} onPress={() => router.push('/(admin)/orders' as any)}>
           <Text style={styles.summaryLabel}>Total Transactions</Text>
           <Text style={styles.summaryValue}>{stats.totalOrders}</Text>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.summaryItem}>
+        <TouchableOpacity style={styles.summaryItem} onPress={() => router.push('/(admin)/listings' as any)}>
           <Text style={styles.summaryLabel}>Approval Rate</Text>
           <Text style={styles.summaryValue}>
             {stats.totalListings > 0
               ? `${Math.round((stats.approvedListings / stats.totalListings) * 100)}%`
               : 'N/A'}
           </Text>
-        </View>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
