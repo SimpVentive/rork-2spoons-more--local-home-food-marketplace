@@ -81,25 +81,51 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
   fetchListings: async () => {
     try {
       set({ isLoading: true, error: null });
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        set({ isLoading: false });
+        return;
+      }
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('food_listings')
-        .select('*')
-        //.eq('is_approved', true)
-        .eq('is_active', true)
+        .select('*');
+
+      if (!user.isAdmin) {
+        query = query
+          .eq('is_active', true)
+          .eq('is_approved', true);
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Fetch listings error:', error.message);
-        set({ error: 'Failed to fetch listings. Please try again.', isLoading: false });
+
+        set({
+          error: 'Failed to fetch listings. Please try again.',
+          isLoading: false,
+        });
+
         return;
       }
 
       const listings = (data || []).map(rowToListing);
-      set({ listings, filteredListings: listings, isLoading: false });
+
+      set({
+        listings,
+        filteredListings: listings,
+        isLoading: false,
+      });
+
     } catch (error) {
       console.error('Error fetching listings:', error);
-      set({ error: 'Failed to fetch listings. Please try again.', isLoading: false });
+
+      set({
+        error: 'Failed to fetch listings. Please try again.',
+        isLoading: false,
+      });
     }
   },
 

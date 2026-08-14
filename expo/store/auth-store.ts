@@ -226,21 +226,37 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      adminLogin: async (email: string, _password: string) => {
+      adminLogin: async (email: string, password: string) => {
         try {
-          // Fetch the profile by email to check if admin
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('email', email)
-            .single();
+          const { data: authData, error: authError } =
+            await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
 
-          if (error || !data) {
+          if (authError || !authData.user) {
+            console.error('Admin auth error:', authError?.message);
             return false;
           }
 
-          const user = rowToUser(data);
+          // Fetch profile
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authData.user.id)
+            .single();
+
+          if (profileError || !profile) {
+            console.error('Profile error:', profileError?.message);
+
+            await supabase.auth.signOut();
+            return false;
+          }
+
+          const user = rowToUser(profile);
+
           if (!user.isAdmin) {
+            await supabase.auth.signOut();
             return false;
           }
 
@@ -248,10 +264,14 @@ export const useAuthStore = create<AuthState>()(
             user,
             isAuthenticated: true,
             isAdmin: true,
-            userPreference: user.isChef ? { type: 'seller' } : { type: 'buyer' },
+            userPreference: user.isChef
+              ? { type: 'seller' }
+              : { type: 'buyer' },
             isInitialized: true,
           });
+
           return true;
+
         } catch (error) {
           console.error('Admin login error:', error);
           return false;
