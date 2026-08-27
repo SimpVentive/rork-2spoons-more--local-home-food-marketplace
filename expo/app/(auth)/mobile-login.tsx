@@ -93,18 +93,30 @@ export default function MobileLoginScreen() {
       return;
     }
 
-    const normalizedPhone = formatPhoneNumber(phoneNumber);
-
+    // In development mode with BYPASS_PHONE_OTP, we authenticate immediately
+    // In production, we would send OTP via SMS here
     setLoading(true);
     try {
-      await phoneSignIn(normalizedPhone);
-      const state = useAuthStore.getState();
-      if (state.isAdmin) {
-        router.replace('/(admin)' as never);
-      } else if (!state.userPreference) {
-        router.replace('/setup-location' as never);
+      if (BYPASS_PHONE_OTP) {
+        // Development mode: skip OTP screen, go straight to authentication
+        const normalizedPhone = formatPhoneNumber(phoneNumber);
+        await phoneSignIn(normalizedPhone);
+
+        // Wait a moment for state to update
+        setTimeout(() => {
+          const state = useAuthStore.getState();
+          if (state.isAdmin) {
+            router.replace('/(admin)' as never);
+          } else if (!state.userPreference) {
+            router.replace('/setup-location' as never);
+          } else {
+            router.replace('/(tabs)/home' as never);
+          }
+        }, 100);
       } else {
-        router.replace('/(tabs)/home' as never);
+        // Production mode: show OTP screen for user to enter OTP
+        startCountdown();
+        setStep('otp');
       }
     } catch (err) {
       const message = getErrorMessage(err);
@@ -128,15 +140,22 @@ export default function MobileLoginScreen() {
 
     setLoading(true);
     try {
+      // Verify OTP and authenticate user
+      // In production, this would verify the OTP code with Supabase
+      // For now, we authenticate with the phone number
       await phoneSignIn(normalizedPhone);
-      const state = useAuthStore.getState();
-      if (state.isAdmin) {
-        router.replace('/(admin)' as never);
-      } else if (!state.userPreference) {
-        router.replace('/setup-location' as never);
-      } else {
-        router.replace('/(tabs)/home' as never);
-      }
+
+      // Wait a moment for state to update
+      setTimeout(() => {
+        const state = useAuthStore.getState();
+        if (state.isAdmin) {
+          router.replace('/(admin)' as never);
+        } else if (!state.userPreference) {
+          router.replace('/setup-location' as never);
+        } else {
+          router.replace('/(tabs)/home' as never);
+        }
+      }, 100);
     } catch (err) {
       const message = getErrorMessage(err);
       setOtpError(message || 'Verification failed. Please try again.');

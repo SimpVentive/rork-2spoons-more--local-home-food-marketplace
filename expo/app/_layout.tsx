@@ -76,6 +76,13 @@ export default function RootLayout() {
             <Stack.Screen name="admin-login" options={{ title: 'Admin Login' }} />
             <Stack.Screen name="admin/user-details/[id]" options={{ title: 'User Details' }} />
             <Stack.Screen name="admin/drill-users-list" options={{ title: 'All Users' }} />
+            <Stack.Screen name="admin/edit-user/[id]" options={{ title: 'Edit User' }} />
+            <Stack.Screen name="admin/listing-details/[id]" options={{ title: 'Listing Details' }} />
+            <Stack.Screen name="admin/edit-listing/[id]" options={{ title: 'Edit Listing' }} />
+            <Stack.Screen name="admin/add-listing" options={{ title: 'Add Listing' }} />
+            <Stack.Screen name="admin/order-details/[id]" options={{ title: 'Order Details' }} />
+            <Stack.Screen name="admin/complaint-details/[id]" options={{ title: 'Complaint Details' }} />
+            <Stack.Screen name="admin/activity-log" options={{ title: 'Activity Log' }} />
             <Stack.Screen name="scan" options={{ title: 'Scan QR Code' }} />
             <Stack.Screen name="analytics" options={{ title: 'Analytics' }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
