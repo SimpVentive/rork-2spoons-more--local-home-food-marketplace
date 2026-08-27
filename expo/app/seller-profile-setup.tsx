@@ -27,6 +27,8 @@ import Button from '@/components/Button';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
+import { uploadImage } from '@/lib/image-upload';
+import { supabase } from '@/lib/supabase';
 
 export default function SellerProfileSetupScreen() {
   const router = useRouter();
@@ -112,15 +114,64 @@ export default function SellerProfileSetupScreen() {
 
     setIsLoading(true);
     try {
-      // Save profile information
-      await updateProfile({
-        isChef: true,
-      });
+      // Upload FASI certificate
+      let fasiUrl = fasiCertificate;
+      if (fasiCertificate.startsWith('file://')) {
+        fasiUrl = await uploadImage(fasiCertificate, 'seller-documents');
+      }
 
+      // Upload ingredient photos
+      const photoUrls: string[] = [];
+      for (const photo of ingredientPhotos) {
+        let photoUrl = photo;
+        if (photo.startsWith('file://')) {
+          photoUrl = await uploadImage(photo, 'seller-photos');
+        }
+        photoUrls.push(photoUrl);
+      }
+
+      // Upload cooking video if present
+      let videoUrl: string | null = null;
+      if (cookingVideo && cookingVideo.startsWith('file://')) {
+        videoUrl = await uploadImage(cookingVideo, 'seller-videos');
+      } else if (cookingVideo) {
+        videoUrl = cookingVideo;
+      }
+
+      // Save profile information with URLs
+      const updates: any = {
+        isChef: true,
+      };
+
+      if (user?.id) {
+        // Store seller documents in a separate table
+        const { error: docError } = await supabase
+          .from('seller_documents')
+          .upsert({
+            user_id: user.id,
+            fasi_certificate_url: fasiUrl,
+            ingredient_photos: photoUrls,
+            cooking_video_url: videoUrl,
+            updated_at: new Date().toISOString(),
+          });
+
+        if (docError) {
+          console.error('Error saving seller documents:', docError);
+          Alert.alert('Error', 'Failed to save seller documents');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Update profile
+      await updateProfile(updates);
+
+      Alert.alert('Success', 'Your profile has been updated!');
       setTimeout(() => {
         router.replace('/(tabs)/home' as any);
       }, 500);
     } catch (error) {
+      console.error('Error:', error);
       Alert.alert('Error', 'Failed to save profile. Please try again.');
     } finally {
       setIsLoading(false);

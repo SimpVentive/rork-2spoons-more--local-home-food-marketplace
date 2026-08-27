@@ -30,6 +30,7 @@ import Input from '@/components/Input';
 import Button from '@/components/Button';
 import colors from '@/constants/colors';
 import { useAuth } from '@/hooks/useAuth';
+import { uploadImage } from '@/lib/image-upload';
 
 export default function EditProfileScreen() {
   const { user, updateProfile, logout } = useAuthStore();
@@ -101,7 +102,7 @@ export default function EditProfileScreen() {
         Alert.alert('Permission Required', 'Please allow access to your photo library to upload images.');
         return;
       }
-      
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
@@ -110,7 +111,18 @@ export default function EditProfileScreen() {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setProfileImage(result.assets[0].uri);
+        setIsLoading(true);
+        try {
+          // Upload image to Supabase Storage
+          const publicUrl = await uploadImage(result.assets[0].uri, 'profiles');
+          setProfileImage(publicUrl);
+          Alert.alert('Success', 'Image uploaded successfully');
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          Alert.alert('Error', 'Failed to upload image. Please try again.');
+        } finally {
+          setIsLoading(false);
+        }
       }
     } catch (error) {
       console.error('Error picking image:', error);

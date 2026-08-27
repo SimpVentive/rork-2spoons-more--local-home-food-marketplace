@@ -14,8 +14,10 @@ export async function uploadImage(fileUri: string, bucket: string = 'listings'):
       throw new Error('No file URI provided');
     }
 
+    console.log(`Uploading image from ${fileUri} to bucket: ${bucket}`);
+
     // Get file extension
-    const fileExtension = fileUri.split('.').pop() || 'jpg';
+    const fileExtension = fileUri.split('.').pop()?.toLowerCase() || 'jpg';
     const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
 
     // Read file as base64
@@ -23,14 +25,28 @@ export async function uploadImage(fileUri: string, bucket: string = 'listings'):
       encoding: FileSystem.EncodingType.Base64,
     });
 
+    console.log(`File read successfully, size: ${base64Data.length} bytes`);
+
     // Convert base64 to binary
     const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+
+    // Determine correct content type
+    const contentTypeMap: Record<string, string> = {
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      gif: 'image/gif',
+      webp: 'image/webp',
+    };
+    const contentType = contentTypeMap[fileExtension] || `image/${fileExtension}`;
+
+    console.log(`Uploading as: ${fileName}, type: ${contentType}`);
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(fileName, binaryData, {
-        contentType: `image/${fileExtension}`,
+        contentType,
         upsert: false,
       });
 
@@ -43,6 +59,8 @@ export async function uploadImage(fileUri: string, bucket: string = 'listings'):
       throw new Error('No data returned from upload');
     }
 
+    console.log(`Upload successful, path: ${data.path}`);
+
     // Get public URL
     const { data: publicData } = supabase.storage
       .from(bucket)
@@ -52,6 +70,7 @@ export async function uploadImage(fileUri: string, bucket: string = 'listings'):
       throw new Error('Failed to get public URL');
     }
 
+    console.log(`Public URL generated: ${publicData.publicUrl}`);
     return publicData.publicUrl;
   } catch (error) {
     console.error('Image upload failed:', error);
