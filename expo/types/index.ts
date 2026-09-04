@@ -158,7 +158,7 @@ export interface Order {
   dishName: string;
   quantity: number;
   totalPrice: number;
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'completed' | 'cancelled';
   pickupTime: string;
   createdAt: string;
   updatedAt: string;
