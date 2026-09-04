@@ -1,36 +1,45 @@
-import * as FileSystem from 'expo-file-system';
 import { supabase } from './supabase';
-import { useAuthStore } from '@/store/auth-store';
 
 /**
- * Upload an image file to Supabase Storage and return the public URL
- * @param fileUri - Local file URI from device
- * @param bucket - Supabase storage bucket name (default: 'listings')
- * @returns Public URL of the uploaded image
+ * Upload image to Supabase Storage.
  */
-export async function uploadImage(fileUri: string, bucket: string = 'listings'): Promise<string> {
+export async function uploadImage(
+  fileUri: string,
+  bucket: string = 'listings'
+): Promise<string> {
   try {
     if (!fileUri) {
       throw new Error('No file URI provided');
     }
 
-    console.log(`Uploading image from ${fileUri} to bucket: ${bucket}`);
+    console.log('Uploading image:', fileUri);
+    console.log('Bucket:', bucket);
 
-    // Get file extension
-    const fileExtension = fileUri.split('.').pop()?.toLowerCase() || 'jpg';
-    const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
+    // Get extension safely.
+    // Remove query params first because web/blob URLs can contain them.
+    const cleanUri = fileUri.split('?')[0];
 
-    // Read file as base64
-    const base64Data = await FileSystem.readAsStringAsync(fileUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    let fileExtension =
+      cleanUri.split('.').pop()?.toLowerCase() || 'jpg';
 
-    console.log(`File read successfully, size: ${base64Data.length} bytes`);
+    // Ensure extension is actually supported.
+    const validExtensions = [
+      'jpg',
+      'jpeg',
+      'png',
+      'gif',
+      'webp',
+    ];
 
-    // Convert base64 to binary
-    const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+    if (!validExtensions.includes(fileExtension)) {
+      fileExtension = 'jpg';
+    }
 
-    // Determine correct content type
+    const fileName =
+      `${Date.now()}_${Math.random()
+        .toString(36)
+        .substring(2, 11)}.${fileExtension}`;
+
     const contentTypeMap: Record<string, string> = {
       jpg: 'image/jpeg',
       jpeg: 'image/jpeg',
@@ -38,83 +47,186 @@ export async function uploadImage(fileUri: string, bucket: string = 'listings'):
       gif: 'image/gif',
       webp: 'image/webp',
     };
-    const contentType = contentTypeMap[fileExtension] || `image/${fileExtension}`;
 
-    console.log(`Uploading as: ${fileName}, type: ${contentType}`);
+    const contentType =
+      contentTypeMap[fileExtension] || 'image/jpeg';
 
-    // Upload to Supabase Storage
+    console.log('Reading image data...');
+
+    /*
+     * Works with Expo ImagePicker URI and avoids
+     * FileSystem.EncodingType.Base64 completely.
+     */
+    const response = await fetch(fileUri);
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to read image: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+
+    console.log(
+      `Image loaded: ${arrayBuffer.byteLength} bytes`
+    );
+
+    console.log(
+      `Uploading ${fileName} as ${contentType}`
+    );
+
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(fileName, binaryData, {
+      .upload(fileName, arrayBuffer, {
         contentType,
         upsert: false,
+        cacheControl: '3600',
       });
 
     if (error) {
-      console.error('Upload error:', error);
+      console.error(
+        'Supabase upload error:',
+        JSON.stringify(error, null, 2)
+      );
+
       throw error;
     }
 
-    if (!data) {
-      throw new Error('No data returned from upload');
+    if (!data?.path) {
+      throw new Error(
+        'Upload succeeded but no file path was returned'
+      );
     }
 
-    console.log(`Upload successful, path: ${data.path}`);
+    console.log(
+      'Upload successful:',
+      data.path
+    );
 
-    // Get public URL
     const { data: publicData } = supabase.storage
       .from(bucket)
       .getPublicUrl(data.path);
 
-    if (!publicData || !publicData.publicUrl) {
-      throw new Error('Failed to get public URL');
+    if (!publicData?.publicUrl) {
+      throw new Error(
+        'Failed to generate public URL'
+      );
     }
 
-    console.log(`Public URL generated: ${publicData.publicUrl}`);
+    console.log(
+      'Public URL:',
+      publicData.publicUrl
+    );
+
     return publicData.publicUrl;
+
   } catch (error) {
-    console.error('Image upload failed:', error);
+    console.error(
+      'Image upload failed:',
+      error
+    );
+
     throw error;
   }
 }
 
+
 /**
- * Upload multiple images and return their public URLs
+ * Upload multiple images.
  */
 export async function uploadImages(
   fileUris: string[],
   bucket: string = 'listings'
 ): Promise<string[]> {
+  if (!fileUris || fileUris.length === 0) {
+    return [];
+  }
+
   try {
-    const uploadPromises = fileUris.map(uri => uploadImage(uri, bucket));
-    return Promise.all(uploadPromises);
+    const uploads = fileUris.map((uri) =>
+      uploadImage(uri, bucket)
+    );
+
+    return await Promise.all(uploads);
+
   } catch (error) {
-    console.error('Batch upload failed:', error);
+    console.error(
+      'Batch upload failed:',
+      error
+    );
+
     throw error;
   }
 }
 
+
 /**
- * Delete an image from Supabase Storage
+ * Delete image from Supabase Storage.
  */
-export async function deleteImage(publicUrl: string, bucket: string = 'listings'): Promise<void> {
+export async function deleteImage(
+  publicUrl: string,
+  bucket: string = 'listings'
+): Promise<void> {
   try {
-    // Extract file path from public URL
-    const fileName = publicUrl.split('/').pop();
-    if (!fileName) {
-      throw new Error('Could not extract filename from URL');
+    if (!publicUrl) {
+      throw new Error(
+        'No public URL provided'
+      );
     }
+
+    /*
+     * Public URL normally looks like:
+     *
+     * https://xxx.supabase.co/storage/v1/object/public/listings/file.jpg
+     */
+
+    const marker = `/object/public/${bucket}/`;
+
+    const markerIndex =
+      publicUrl.indexOf(marker);
+
+    if (markerIndex === -1) {
+      throw new Error(
+        'Invalid Supabase Storage public URL'
+      );
+    }
+
+    // Also works when you later use folders:
+    // users/123/avatar.jpg
+    const filePath = decodeURIComponent(
+      publicUrl.substring(
+        markerIndex + marker.length
+      )
+    );
+
+    console.log(
+      'Deleting Supabase file:',
+      filePath
+    );
 
     const { error } = await supabase.storage
       .from(bucket)
-      .remove([fileName]);
+      .remove([filePath]);
 
     if (error) {
-      console.error('Delete error:', error);
+      console.error(
+        'Delete error:',
+        error
+      );
+
       throw error;
     }
+
+    console.log(
+      'Image deleted successfully'
+    );
+
   } catch (error) {
-    console.error('Image deletion failed:', error);
+    console.error(
+      'Image deletion failed:',
+      error
+    );
+
     throw error;
   }
 }

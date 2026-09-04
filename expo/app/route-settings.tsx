@@ -38,6 +38,13 @@ export default function RouteSettingsScreen() {
   const router = useRouter();
 
   const [officeAddress, setOfficeAddress] = useState(user?.officeAddress || '');
+  const [officeLocation, setOfficeLocation] = useState<{ latitude: number; longitude: number }>(
+    user?.officeLocation ?? { latitude: 17.4400, longitude: 78.3800 }
+  );
+  const [location, setLocation] = useState<{ latitude: number; longitude: number }>(
+    user?.location ?? { latitude: 17.4400, longitude: 78.3800 }
+  );
+  const [address, setAddress] = useState(user?.address || '');
   const [homeToOfficeRoute, setHomeToOfficeRoute] = useState<RouteLocation[]>(user?.homeToOfficeRoute || []);
   const [officeToHomeRoute, setOfficeToHomeRoute] = useState<RouteLocation[]>(user?.officeToHomeRoute || []);
   const [routesSameAsHomeToOffice, setRoutesSameAsHomeToOffice] = useState(user?.routesSameAsHomeToOffice !== false);
@@ -68,12 +75,14 @@ export default function RouteSettingsScreen() {
       setIsLoading(true);
       
       // Mock office location coordinates (in real app, you'd geocode the address)
-      const officeLocation = {
+      /*const officeLocation = {
         latitude: 17.4400,
         longitude: 78.3800,
-      };
-
+      };*/
+      console.log('Saving route settings:', address, location, officeAddress, officeLocation, homeToOfficeRoute, officeToHomeRoute, routesSameAsHomeToOffice, detourPreference);
       const success = await updateProfile({
+        address,
+        location,
         officeAddress,
         officeLocation,
         homeToOfficeRoute,
@@ -102,9 +111,16 @@ export default function RouteSettingsScreen() {
   };
 
   const handleLocationSelected = async (location: { latitude: number; longitude: number; address: string }) => {
+    console.log(`Location selected for ${pickingLocationFor}:`, location);
     if (pickingLocationFor === 'office') {
       setOfficeAddress(location.address);
-    } else if (pickingLocationFor === 'homeToOffice' || pickingLocationFor === 'officeToHome') {
+      setOfficeLocation({ latitude: location.latitude, longitude: location.longitude });
+    }
+    else if (pickingLocationFor === 'home') {
+      setAddress(location.address);
+      setLocation({ latitude: location.latitude, longitude: location.longitude });
+    }
+    else if (pickingLocationFor === 'homeToOffice' || pickingLocationFor === 'officeToHome') {
       // Add to route
       const newLocation: RouteLocation = {
         id: `location-${Date.now()}`,
@@ -246,11 +262,20 @@ export default function RouteSettingsScreen() {
           <Text style={styles.sectionDescription}>
             Your current home address
           </Text>
-          
-          <View style={styles.locationDisplay}>
-            <Home size={20} color={colors.primary} />
-            <Text style={styles.locationText}>{user.address}</Text>
-          </View>
+          <Input
+            label="Home Address"
+            value={address}
+            onChangeText={setAddress}
+            placeholder="Enter your Home address"
+            leftIcon={<Home size={20} color={colors.primary} />}
+          />
+          <TouchableOpacity
+            style={styles.selectLocationButton}
+            onPress={() => openLocationPicker('home')}
+          >
+            <MapPin size={20} color={colors.primary} />
+            <Text style={styles.selectLocationText}>Select on Map</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -450,10 +475,12 @@ export default function RouteSettingsScreen() {
         <LocationPicker
           initialLocation={
             pickingLocationFor === 'office' && user.officeLocation
-              ? { ...user.officeLocation, address: officeAddress }
+              ? { ...user.officeLocation, address: officeAddress } 
+              : pickingLocationFor === 'home' && user.location
+              ? { ...user.location, address: address }
               : undefined
           }
-          onSelectLocation={handleLocationSelected}
+          onLocationSelect={handleLocationSelected}
           onClose={() => {
             setLocationPickerVisible(false);
             setPickingLocationFor(null);

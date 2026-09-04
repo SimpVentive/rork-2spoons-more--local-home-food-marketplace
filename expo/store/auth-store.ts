@@ -130,7 +130,7 @@ export const useAuthStore = create<AuthState>()(
             id: authUserId,
             email: authEmail || '',
             name: authName || '',
-            avatar_url: authPicture || '',
+            //avatar_url: authPicture || '',
           };
 
           if (authPhone) {
@@ -292,7 +292,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { user } = get();
           if (!user) throw new Error('User not found');
-
+          console.log('Updating profile with:', updates);
           const dbUpdates: Record<string, unknown> = {};
           if (updates.name !== undefined) dbUpdates.name = updates.name;
           if (updates.email !== undefined) dbUpdates.email = updates.email;
@@ -304,6 +304,12 @@ export const useAuthStore = create<AuthState>()(
           if (updates.paymentMethods !== undefined) dbUpdates.payment_methods = updates.paymentMethods;
           if (updates.isChef !== undefined) dbUpdates.is_chef = updates.isChef;
           if (updates.allowProfileDisplay !== undefined) dbUpdates.allow_profile_display = updates.allowProfileDisplay;
+          if (updates.officeAddress !== undefined) dbUpdates.office_address = updates.officeAddress;
+          if (updates.homeAddress !== undefined) dbUpdates.address = updates.homeAddress;
+          if (updates.officeLocation !== undefined) {
+            dbUpdates.office_lat = updates.officeLocation.latitude;
+            dbUpdates.office_lng = updates.officeLocation.longitude;
+          }
           if (updates.location) {
             dbUpdates.location_lat = updates.location.latitude;
             dbUpdates.location_lng = updates.location.longitude;
