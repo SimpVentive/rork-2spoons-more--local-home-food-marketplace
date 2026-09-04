@@ -128,8 +128,8 @@ export const useAuthStore = create<AuthState>()(
 
           const profileSeed: Record<string, unknown> = {
             id: authUserId,
-            email: authEmail || '',
-            name: authName || '',
+            //email: authEmail || '',
+            //name: authName || '',
             //avatar_url: authPicture || '',
           };
 
