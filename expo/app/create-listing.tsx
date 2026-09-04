@@ -270,14 +270,26 @@ export default function CreateListingScreen() {
       });
       
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const updatedItems = formData.lunchBoxItems.map(item => {
-          if (item.id === itemId) {
-            return { ...item, image: result.assets[0].uri };
-          }
-          return item;
-        });
+        setIsImageLoading(true);
+        try {
+          // Upload image to Supabase Storage
+          const lunchBoxImageUrl = await uploadImage(result.assets[0].uri, 'listings');
+          const updatedItems = formData.lunchBoxItems.map(item => {
+            if (item.id === itemId) {
+              return { ...item, image: lunchBoxImageUrl };
+            }
+            return item;
+          });
+          
+          updateFormData('lunchBoxItems', updatedItems);
+          Alert.alert('Success', 'Image uploaded successfully');
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          Alert.alert('Error', 'Failed to upload image. Please try again.');
+        } finally {
+          setIsImageLoading(false);
+        }
         
-        updateFormData('lunchBoxItems', updatedItems);
       }
     } catch (error) {
       console.error('Error picking image:', error);
