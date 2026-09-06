@@ -252,11 +252,11 @@ export default function EditUserScreen() {
         <View style={styles.infoSection}>
           <Text style={styles.infoLabel}>Rating</Text>
           <Text style={styles.infoValue}>{user.rating.toFixed(1)}★</Text>
-          <Text style={styles.infoLabel} style={{ marginTop: spacing.md }}>
+          <Text style={[styles.infoLabel, { marginTop: spacing.md }}>
             Posts
           </Text>
           <Text style={styles.infoValue}>{user.postCount}</Text>
-          <Text style={styles.infoLabel} style={{ marginTop: spacing.md }}>
+          <Text style={[styles.infoLabel, { marginTop: spacing.md }}>
             Reviews
           </Text>
           <Text style={styles.infoValue}>{user.reviewCount}</Text>
