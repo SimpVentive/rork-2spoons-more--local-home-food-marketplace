@@ -237,7 +237,7 @@ export default function ActivityLogScreen() {
                 {getActionIcon(activity.actionType)}
               </View>
               <View style={styles.activityContent}>
-                <Text style={styles.actionLabel} style={{ color: getActionColor(activity.actionType) }}>
+                <Text style={[styles.actionLabel, { color: getActionColor(activity.actionType) }]}>
                   {activity.action}
                 </Text>
                 <Text style={styles.description}>{activity.description}</Text>
