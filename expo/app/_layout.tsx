@@ -65,6 +65,7 @@ export default function RootLayout() {
             <Stack.Screen name="admin-access/[token]/index" options={{ headerShown: false }} />
             <Stack.Screen name="listing/[id]" options={{ title: 'Dish Details' }} />
             <Stack.Screen name="order/[id]" options={{ title: 'Order Details' }} />
+            <Stack.Screen name="order-route/[id]" options={{ title: 'Pickup Route' }} />
             <Stack.Screen name="profile/[id]" options={{ title: 'Profile' }} />
             <Stack.Screen name="edit-profile" options={{ title: 'Edit Profile' }} />
             <Stack.Screen name="route-settings" options={{ title: 'Route Settings' }} />

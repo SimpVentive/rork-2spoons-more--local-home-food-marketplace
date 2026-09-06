@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { Order, OrderStatus, DeliveryMethod, PaymentMethod } from '@/types';
 import { useAuthStore } from './auth-store';
+import { useNotificationsStore } from './notifications-store';
 import { zustandStorage } from '@/lib/storage';
 
 interface OrdersState {
@@ -212,6 +213,35 @@ export const useOrdersStore = create<OrdersState>()(
 
           const newOrder = rowToOrder(data);
           set(state => ({ orders: [...state.orders, newOrder], isLoading: false }));
+
+          // Send notification to seller
+          try {
+            await useNotificationsStore.getState().addNotification({
+              userId: orderData.sellerId,
+              title: '🛒 New Order Received!',
+              message: `${buyerUser?.name || 'A customer'} ordered ${orderData.listingSnapshot?.dishName || 'your dish'}`,
+              type: 'order',
+              relatedId: newOrder.id,
+              data: { orderId: newOrder.id, buyerName: buyerUser?.name, dishName: orderData.listingSnapshot?.dishName },
+            });
+          } catch (notifError) {
+            console.error('Error sending seller notification:', notifError);
+          }
+
+          // Send notification to buyer
+          try {
+            await useNotificationsStore.getState().addNotification({
+              userId: orderData.buyerId,
+              title: '✅ Order Placed Successfully!',
+              message: `Your order for ${orderData.listingSnapshot?.dishName || 'the dish'} has been placed. Waiting for seller confirmation.`,
+              type: 'order',
+              relatedId: newOrder.id,
+              data: { orderId: newOrder.id, sellerName: orderData.listingSnapshot?.sellerName },
+            });
+          } catch (notifError) {
+            console.error('Error sending buyer notification:', notifError);
+          }
+
           return newOrder;
         } catch (error) {
           console.error('Place order error:', error);
@@ -389,11 +419,43 @@ export const useOrdersStore = create<OrdersState>()(
 
           updatedOrders[orderIndex] = updatedOrder;
 
-          set({
-            orders: updatedOrders,
-            isLoading: false,
-            error: null,
-          });
+          set({ orders: updatedOrders, isLoading: false, error: null });
+
+          // Send notification to buyer about status change
+          try {
+            const statusMessages: Record<string, { title: string; message: string }> = {
+              confirmed: {
+                title: '✅ Order Confirmed!',
+                message: 'The seller has confirmed your order. Get ready to pick it up!'
+              },
+              ready: {
+                title: '🎉 Order Ready for Pickup!',
+                message: 'Your order is ready! Head over to the seller to pick it up.'
+              },
+              completed: {
+                title: '✨ Order Completed!',
+                message: 'Thank you for your order! Please rate your experience.'
+              },
+              cancelled: {
+                title: '❌ Order Cancelled',
+                message: 'Your order has been cancelled.'
+              },
+            };
+
+            const statusMsg = statusMessages[mappedStatus];
+            if (statusMsg && updatedOrder.buyerId) {
+              await useNotificationsStore.getState().addNotification({
+                userId: updatedOrder.buyerId,
+                title: statusMsg.title,
+                message: statusMsg.message,
+                type: 'order',
+                relatedId: id,
+                data: { orderId: id, status: mappedStatus },
+              });
+            }
+          } catch (notifError) {
+            console.error('Error sending status notification:', notifError);
+          }
 
           return updatedOrder;
 
@@ -437,6 +499,21 @@ export const useOrdersStore = create<OrdersState>()(
           updatedOrders[orderIndex] = updatedOrder;
 
           set({ orders: updatedOrders, isLoading: false });
+
+          // Send cancellation notification to buyer
+          try {
+            await useNotificationsStore.getState().addNotification({
+              userId: updatedOrder.buyerId,
+              title: '❌ Order Cancelled',
+              message: `Your order has been cancelled. Reason: ${reason}`,
+              type: 'order',
+              relatedId: id,
+              data: { orderId: id, reason },
+            });
+          } catch (notifError) {
+            console.error('Error sending cancellation notification:', notifError);
+          }
+
           return updatedOrder;
         } catch (error) {
           console.error('Cancel order error:', error);
