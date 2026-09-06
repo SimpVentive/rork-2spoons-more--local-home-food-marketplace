@@ -57,10 +57,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
     "Supabase is not configured. Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to expo/.env and restart the app."
   );
 }
-const realtimeTransport =
-  typeof WebSocket === "undefined" ? require("ws") : undefined;
 
-export const supabase = createClient(supabaseUrl || "https://lofazplzvbwcyzdlvmoo.supabase.co", supabaseAnonKey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvZmF6cGx6dmJ3Y3l6ZGx2bW9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1ODc0NDQsImV4cCI6MjA5NjE2MzQ0NH0.HbtEhcqhDmzDXw2uydDBDeIap3yftNpz3HmL5U9ErL4", {
+export const supabase = createClient(supabaseUrl || "https://example.supabase.co", supabaseAnonKey || "dummy-key", {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -70,7 +68,6 @@ export const supabase = createClient(supabaseUrl || "https://lofazplzvbwcyzdlvmo
   global: {
     fetch: authFetch,
   },
-  realtime: realtimeTransport ? { transport: realtimeTransport } : undefined,
 });
 
 // Helper function to convert snake_case from DB to User type
