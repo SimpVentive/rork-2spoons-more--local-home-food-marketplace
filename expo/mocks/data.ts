@@ -99,8 +99,7 @@ export const CUISINE_TYPES = ESSENTIAL_CUISINE_TYPES;
 
 // Lazy-loaded extended cuisine types
 export const getExtendedCuisineTypes = () => [
-  'Thai', 'Japanese', 'American', 'Mediterranean', 'Middle Eastern',
-  'Korean', 'Vietnamese', 'French', 'Spanish', 'Greek', 'Turkish'
+  'American', 'Mediterranean', 'Korean', 'Vietnamese', 'French', 'Spanish', 'Greek', 'Turkish'
 ];
 
 // Minimal South Indian subcuisines for initial load
