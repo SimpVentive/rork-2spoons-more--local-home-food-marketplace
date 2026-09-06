@@ -301,8 +301,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: spacing.md,
     marginBottom: spacing.md,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
   },
   activityIcon: {
     width: 40,

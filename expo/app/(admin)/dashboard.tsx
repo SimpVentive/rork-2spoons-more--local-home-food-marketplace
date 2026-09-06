@@ -275,7 +275,6 @@ export default function AdminDashboard() {
     onPress?: () => void;
   }) => (
     <TouchableOpacity 
-      style={[styles.statCard, { borderLeftColor: color }]}
       onPress={onPress}
       disabled={!onPress}
     >
@@ -412,7 +411,6 @@ export default function AdminDashboard() {
     onPress?: () => void;
   }) => (
     <TouchableOpacity 
-      style={[styles.alertItem, { borderLeftColor: color }]}
       onPress={onPress}
       disabled={!onPress}
     >
@@ -949,7 +947,6 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: 8,
     marginBottom: 16,
-    borderLeftWidth: 4,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -1078,7 +1075,6 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: colors.white,
     borderRadius: 8,
-    borderLeftWidth: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,

@@ -189,8 +189,6 @@ const styles = StyleSheet.create({
     backgroundColor: `${colors.primary}08`,
     borderRadius: 12,
     padding: spacing.lg,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
     marginBottom: spacing.lg,
   },
   addressIconContainer: {
