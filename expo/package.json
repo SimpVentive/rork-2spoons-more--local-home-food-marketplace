@@ -10,7 +10,7 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
-    "@ai-sdk/provider-utils": "3.0.19",
+    "@ai-sdk/provider-utils": "^3.0.33",
     "@ai-sdk/react": "2.0.256",
     "@expo/vector-icons": "^15.1.1",
     "@hono/trpc-server": "^0.4.2",
