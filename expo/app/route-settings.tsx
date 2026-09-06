@@ -34,7 +34,7 @@ import * as Location from 'expo-location';
 
 export default function RouteSettingsScreen() {
   const { user, updateProfile } = useAuthStore();
-  const { listings } = useListingsStore();
+  const { listings, fetchListings } = useListingsStore();
   const router = useRouter();
 
   const [officeAddress, setOfficeAddress] = useState(user?.officeAddress || '');
@@ -58,7 +58,8 @@ export default function RouteSettingsScreen() {
   const [newLocationName, setNewLocationName] = useState('');
   const [newLocationAddress, setNewLocationAddress] = useState('');
   const [addingToRoute, setAddingToRoute] = useState<'homeToOffice' | 'officeToHome' | null>(null);
-
+  
+  
   useEffect(() => {
     if (!user) {
       router.replace('/(auth)/welcome' as any);
@@ -109,7 +110,7 @@ export default function RouteSettingsScreen() {
     setPickingLocationFor(type);
     setLocationPickerVisible(true);
   };
-
+console.log(listings, 'listings in route settings');
   const handleLocationSelected = async (location: { latitude: number; longitude: number; address: string }) => {
     console.log(`Location selected for ${pickingLocationFor}:`, location);
     if (pickingLocationFor === 'office') {
@@ -182,13 +183,12 @@ export default function RouteSettingsScreen() {
   // Get dishes available on the current route
   const getDishesOnRoute = () => {
     if (!user || !homeToOfficeRoute.length) return [];
-
     const routePoints = [
       { latitude: user.location.latitude, longitude: user.location.longitude, name: 'Home' },
       ...homeToOfficeRoute,
       ...(user.officeLocation ? [{ ...user.officeLocation, name: 'Office' }] : []),
     ];
-
+    console.log('Calculating dishes on route with points:', listings, routePoints);
     return listings.filter(listing => {
       return routePoints.some(point => {
         const distance = calculateDistance(
@@ -197,7 +197,6 @@ export default function RouteSettingsScreen() {
           listing.location.latitude,
           listing.location.longitude
         ) * 1000; // Convert to meters
-        
         return distance <= (user.detourPreference || 500);
       });
     }).map(listing => ({

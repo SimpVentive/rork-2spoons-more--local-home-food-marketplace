@@ -165,6 +165,53 @@ export default function RouteSettingsScreen() {
     </View>
   );
 
+  // Get dishes available on the current route
+  const getDishesOnRoute = () => {
+    if (!user || !homeToOfficeRoute.length) return [];
+
+    const routePoints = [
+      { latitude: user.location.latitude, longitude: user.location.longitude, name: 'Home' },
+      ...homeToOfficeRoute,
+      ...(user.officeLocation ? [{ ...user.officeLocation, name: 'Office' }] : []),
+    ];
+    console.log('Calculating dishes on route with points:', listings, routePoints);
+    return listings.filter(listing => {
+      return routePoints.some(point => {
+        const distance = calculateDistance(
+          point.latitude,
+          point.longitude,
+          listing.location.latitude,
+          listing.location.longitude
+        ) * 1000; // Convert to meters
+        
+        return distance <= (user.detourPreference || 500);
+      });
+    }).map(listing => ({
+      latitude: listing.location.latitude,
+      longitude: listing.location.longitude,
+      dishName: listing.dishName,
+      availableUntil: listing.availableUntil,
+      sellerName: listing.sellerName,
+    }));
+  };
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2); 
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    const distance = R * c; // Distance in km
+    return distance;
+  };
+
+  const deg2rad = (deg: number): number => {
+    return deg * (Math.PI/180);
+  };
+
   if (!user) {
     return (
       <View style={styles.loadingContainer}>
@@ -178,6 +225,8 @@ export default function RouteSettingsScreen() {
     ...homeToOfficeRoute,
     ...(user.officeLocation ? [{ ...user.officeLocation, name: 'Office' }] : []),
   ] : [];
+
+  const dishesOnRoute = getDishesOnRoute();
 
   return (
     <>
@@ -409,7 +458,7 @@ export default function RouteSettingsScreen() {
             setPickingLocationFor(null);
           }}
           routePoints={routePoints}
-          dishesOnRoute={[]}
+          dishesOnRoute={dishesOnRoute}
         />
       )}
     </>
