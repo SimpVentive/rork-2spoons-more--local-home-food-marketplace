@@ -35,6 +35,13 @@ export default function RouteSettingsScreen() {
   const router = useRouter();
 
   const [officeAddress, setOfficeAddress] = useState(user?.officeAddress || '');
+  const [address, setAddress] = useState(user?.address || '');
+  const [officeLocation, setOfficeLocation] = useState<{ latitude: number; longitude: number }>(
+    user?.officeLocation ?? { latitude: 17.4400, longitude: 78.3800 }
+  );
+  const [location, setLocation] = useState<{ latitude: number; longitude: number }>(
+    user?.location ?? { latitude: 17.4400, longitude: 78.3800 }
+  );
   const [homeToOfficeRoute, setHomeToOfficeRoute] = useState<RouteLocation[]>(user?.homeToOfficeRoute || []);
   const [officeToHomeRoute, setOfficeToHomeRoute] = useState<RouteLocation[]>(user?.officeToHomeRoute || []);
   const [routesSameAsHomeToOffice, setRoutesSameAsHomeToOffice] = useState(user?.routesSameAsHomeToOffice !== false);
@@ -61,12 +68,14 @@ export default function RouteSettingsScreen() {
     try {
       setIsLoading(true);
       
-      const officeLocation = {
+      /*const officeLocation = {
         latitude: 17.4400,
         longitude: 78.3800,
-      };
+      };*/
 
       const success = await updateProfile({
+        address,
+        location,
         officeAddress,
         officeLocation,
         homeToOfficeRoute,
@@ -96,7 +105,13 @@ export default function RouteSettingsScreen() {
   const handleLocationSelected = async (location: { latitude: number; longitude: number; address: string }) => {
     if (pickingLocationFor === 'office') {
       setOfficeAddress(location.address);
-    } else if (pickingLocationFor === 'homeToOffice' || pickingLocationFor === 'officeToHome') {
+      setOfficeLocation({ latitude: location.latitude, longitude: location.longitude });
+    }
+    else if (pickingLocationFor === 'home') {
+      setAddress(location.address);
+      setLocation({ latitude: location.latitude, longitude: location.longitude });
+    }
+    else if (pickingLocationFor === 'homeToOffice' || pickingLocationFor === 'officeToHome') {
       const newLocation: RouteLocation = {
         id: `location-${Date.now()}`,
         name: newLocationName.trim() || 'Route Point',
@@ -176,11 +191,20 @@ export default function RouteSettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Home Location</Text>
           <Text style={styles.sectionDescription}>Your current home address</Text>
-          
-          <View style={styles.locationDisplay}>
-            <Home size={20} color={colors.primary} />
-            <Text style={styles.locationText}>{user.address}</Text>
-          </View>
+          <Input
+            label="Home Address"
+            value={address}
+            onChangeText={setAddress}
+            placeholder="Enter your Home address"
+            leftIcon={<Home size={20} color={colors.primary} />}
+          />
+          <TouchableOpacity
+            style={styles.selectLocationButton}
+            onPress={() => openLocationPicker('home')}
+          >
+            <MapPin size={20} color={colors.primary} />
+            <Text style={styles.selectLocationText}>Select on Map</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -359,15 +383,27 @@ export default function RouteSettingsScreen() {
           style={styles.saveButton}
         />
       </ScrollView>
-
+      {/* <LocationPicker
+          visible={showLocationPicker}
+          initialLocation={formData.pickupLocation}
+          onLocationSelect={handleLocationSelect}
+          onClose={() => setShowLocationPicker(false)}
+          title="Select Pickup Location"
+          showRoute={false}
+          routeStart={null}
+          routeEnd={null}
+        /> */}
       {locationPickerVisible && (
+        
         <LocationPicker
           initialLocation={
             pickingLocationFor === 'office' && user.officeLocation
-              ? { ...user.officeLocation, address: officeAddress }
+              ? { ...user.officeLocation, address: officeAddress } 
+              : pickingLocationFor === 'home' && user.location
+              ? { ...user.location, address: address }
               : undefined
           }
-          onSelectLocation={handleLocationSelected}
+          onLocationSelect={handleLocationSelected}
           onClose={() => {
             setLocationPickerVisible(false);
             setPickingLocationFor(null);

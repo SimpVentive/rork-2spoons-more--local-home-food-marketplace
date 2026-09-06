@@ -253,44 +253,173 @@ export const useOrdersStore = create<OrdersState>()(
       updateOrderStatus: async (id, status) => {
         try {
           set({ isLoading: true, error: null });
+
           const now = new Date().toISOString();
 
-          const mappedStatus = (() => {
-            if (status === 'accepted') return 'confirmed' as const;
-            if (status === 'delivered') return 'completed' as const;
-            if (status === 'canceled') return 'cancelled' as const;
-            if (status === 'in_delivery') return 'ready' as const;
-            return status as Order['status'];
-          })();
+          /*
+          * Map UI status to DB status.
+          *
+          * pending
+          *    ↓
+          * confirmed
+          *    ↓
+          * ready
+          *    ↓
+          * delivered
+          *    ↓
+          * completed
+          */
+          let mappedStatus: Order['status'];
 
-          const dbUpdates: Record<string, unknown> = { status: mappedStatus, updated_at: now };
-          if (status === 'accepted' || status === 'confirmed') dbUpdates.accepted_at = now;
-          else if (status === 'ready') dbUpdates.ready_at = now;
-          else if (status === 'delivered' || status === 'completed') {
-            dbUpdates.delivered_at = now;
-            dbUpdates.completed_at = now;
-          } else if (status === 'canceled') dbUpdates.cancelled_at = now;
+          switch (status) {
+            case 'accepted':
+              mappedStatus = 'confirmed';
+              break;
 
-          const { error } = await supabase
+            case 'confirmed':
+              mappedStatus = 'confirmed';
+              break;
+
+            case 'ready':
+              mappedStatus = 'ready';
+              break;
+
+            case 'delivered':
+              mappedStatus = 'delivered';
+              break;
+
+            case 'completed':
+              mappedStatus = 'completed';
+              break;
+
+            case 'canceled':
+              mappedStatus = 'cancelled';
+              break;
+
+            default:
+              mappedStatus = status as Order['status'];
+          }
+
+          /*
+          * Basic status update
+          */
+          const dbUpdates: Record<string, unknown> = {
+            status: mappedStatus,
+            updated_at: now,
+          };
+
+          /*
+          * Update the correct timeline timestamp.
+          */
+          switch (mappedStatus) {
+            case 'confirmed':
+              dbUpdates.accepted_at = now;
+              break;
+
+            case 'ready':
+              dbUpdates.ready_at = now;
+              break;
+
+            case 'delivered':
+              dbUpdates.delivered_at = now;
+              break;
+
+            case 'completed':
+              dbUpdates.completed_at = now;
+              break;
+
+            case 'cancelled':
+              dbUpdates.cancelled_at = now;
+              break;
+          }
+
+          console.log('Updating order:', id);
+          console.log('Status:', status);
+          console.log('Mapped status:', mappedStatus);
+          console.log('DB updates:', dbUpdates);
+
+          /*
+          * Update Supabase
+          */
+          const { data, error } = await supabase
             .from('orders')
             .update(dbUpdates)
-            .eq('id', id);
+            .eq('id', id)
+            .select()
+            .single();
 
           if (error) {
-            console.error('Update order status error:', error.message);
-            set({ error: error.message, isLoading: false });
+            console.error(
+              'Update order status error:',
+              error.message
+            );
+
+            set({
+              error: error.message,
+              isLoading: false,
+            });
+
             throw error;
           }
 
-          const state = get();
-          const orderIndex = state.orders.findIndex(o => o.id === id);
-          if (orderIndex === -1) throw new Error('Order not found');
+          if (!data) {
+            throw new Error(
+              'Order was not returned after update'
+            );
+          }
 
-          const updatedOrder = { ...state.orders[orderIndex], ...dbUpdates, status: mappedStatus };
+          /*
+          * Update Zustand state.
+          */
+          const state = get();
+
+          const orderIndex = state.orders.findIndex(
+            order => order.id === id
+          );
+
+          if (orderIndex === -1) {
+            throw new Error('Order not found');
+          }
+
+          /*
+          * Convert database snake_case fields
+          * to your frontend camelCase fields.
+          */
+          const updatedOrder: Order = {
+            ...state.orders[orderIndex],
+
+            status: mappedStatus,
+
+            acceptedAt:
+              data.accepted_at ??
+              state.orders[orderIndex].acceptedAt,
+
+            readyAt:
+              data.ready_at ??
+              state.orders[orderIndex].readyAt,
+
+            deliveredAt:
+              data.delivered_at ??
+              state.orders[orderIndex].deliveredAt,
+
+            completedAt:
+              data.completed_at ??
+              state.orders[orderIndex].completedAt,
+
+            cancelledAt:
+              data.cancelled_at ??
+              state.orders[orderIndex].cancelledAt,
+
+            updatedAt:
+              data.updated_at ??
+              now,
+          };
+
           const updatedOrders = [...state.orders];
+
           updatedOrders[orderIndex] = updatedOrder;
 
-          set({ orders: updatedOrders, isLoading: false });
+          set({ orders: updatedOrders, isLoading: false, error: null });
 
           // Send notification to buyer about status change
           try {
@@ -329,9 +458,18 @@ export const useOrdersStore = create<OrdersState>()(
           }
 
           return updatedOrder;
+
         } catch (error) {
-          console.error('Update order status error:', error);
-          set({ error: 'Failed to update order', isLoading: false });
+          console.error(
+            'Update order status error:',
+            error
+          );
+
+          set({
+            error: 'Failed to update order',
+            isLoading: false,
+          });
+
           throw error;
         }
       },

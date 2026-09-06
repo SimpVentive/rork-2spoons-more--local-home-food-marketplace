@@ -74,46 +74,62 @@ export default function OrderDetailsScreen() {
   
   const getStatusActions = () => {
     if (!isSeller) return null;
-    
+
     switch (order.status) {
+
       case 'pending':
         return (
           <View style={styles.actionButtons}>
             <Button
               title="Accept Order"
-              onPress={() => handleStatusUpdate('confirmed')}
+              onPress={() =>
+                handleStatusUpdate('confirmed')
+              }
               style={styles.acceptButton}
             />
+
             <Button
               title="Reject"
-              onPress={() => handleStatusUpdate('canceled')}
+              onPress={() =>
+                handleStatusUpdate('canceled')
+              }
               variant="outline"
               style={styles.rejectButton}
               textStyle={styles.rejectButtonText}
             />
           </View>
         );
+
       case 'confirmed':
         return (
           <Button
             title="Mark as Ready"
-            onPress={() => handleStatusUpdate('ready')}
+            onPress={() =>
+              handleStatusUpdate('ready')
+            }
           />
         );
+
       case 'ready':
         return (
           <Button
             title="Mark as Delivered"
-            onPress={() => handleStatusUpdate('completed')}
+            onPress={() =>
+              handleStatusUpdate('delivered')
+            }
           />
         );
-      case 'completed':
+
+      case 'delivered':
         return (
           <Button
             title="Mark as Completed"
-            onPress={() => handleStatusUpdate('completed')}
+            onPress={() =>
+              handleStatusUpdate('completed')
+            }
           />
         );
+
       default:
         return null;
     }

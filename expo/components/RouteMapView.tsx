@@ -20,7 +20,7 @@ interface RouteMapViewProps {
 }
 
 export default function RouteMapView(props: RouteMapViewProps) {
-  if (Platform.OS === 'web') {
+  /*if (Platform.OS === 'web') {
     // Simple fallback for web to avoid react-native-maps issues
     
     return (
@@ -103,8 +103,8 @@ export default function RouteMapView(props: RouteMapViewProps) {
         </View>
       </View>
     );
-  } else {
+  } else {*/
     const RouteMapViewNative = require('./RouteMapView.native').default;
     return <RouteMapViewNative {...props} />;
-  }
+  /*}*/
 }

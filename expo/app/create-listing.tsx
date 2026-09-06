@@ -35,6 +35,7 @@ import LocationPicker from '@/components/LocationPicker';
 import SubscriptionModal from '@/components/SubscriptionModal';
 import colors from '@/constants/colors';
 import { CUISINE_TYPES, PACKAGING_TYPES, SOUTH_INDIAN_SUBCUISINES, SOUTH_INDIAN_CUISINES_FLAT } from '@/mocks/data';
+import { uploadImage } from '@/lib/image-upload';
 
 // Lunchbox image from Unsplash (online URL instead of local asset)
 const LUNCHBOX_IMAGE_URL = "https://images.unsplash.com/photo-1576866209830-589e1bfbaa4d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80";
@@ -79,10 +80,12 @@ export default function CreateListingScreen() {
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showUntilPicker, setShowUntilPicker] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [listingImage, setListingImage] = useState('');
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showSubcuisines, setShowSubcuisines] = useState(false);
   const [availableSubcuisines, setAvailableSubcuisines] = useState<string[]>([]);
-  
+  const [isImageLoading, setIsImageLoading] = useState(false);
+
   useEffect(() => {
     // Check if user is eligible to post
     if (user) {
@@ -153,7 +156,7 @@ export default function CreateListingScreen() {
         newErrors.dishName = 'Dish name is required';
       }
       
-      if (!formData.image) {
+      if (listingImage.trim() === '') {
         newErrors.image = 'Please add an image of your dish';
       }
     }
@@ -191,8 +194,43 @@ export default function CreateListingScreen() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   const pickImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Required', 'Please allow access to your photo library to upload images.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setIsImageLoading(true);
+        try {
+          // Upload image to Supabase Storage
+          const publicUrl = await uploadImage(result.assets[0].uri, 'listings');
+          setListingImage(publicUrl);
+          Alert.alert('Success', 'Image uploaded successfully');
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          Alert.alert('Error', 'Failed to upload image. Please try again.');
+        } finally {
+          setIsImageLoading(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image');
+    }
+  };
+  
+  /*const pickImage = async () => {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permissionResult.granted) {
@@ -214,7 +252,7 @@ export default function CreateListingScreen() {
       console.error('Error picking image:', error);
       Alert.alert('Error', 'Failed to pick image. Please try again.');
     }
-  };
+  };*/
   
   const pickLunchBoxItemImage = async (itemId: string) => {
     try {
@@ -232,14 +270,26 @@ export default function CreateListingScreen() {
       });
       
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const updatedItems = formData.lunchBoxItems.map(item => {
-          if (item.id === itemId) {
-            return { ...item, image: result.assets[0].uri };
-          }
-          return item;
-        });
+        setIsImageLoading(true);
+        try {
+          // Upload image to Supabase Storage
+          const lunchBoxImageUrl = await uploadImage(result.assets[0].uri, 'listings');
+          const updatedItems = formData.lunchBoxItems.map(item => {
+            if (item.id === itemId) {
+              return { ...item, image: lunchBoxImageUrl };
+            }
+            return item;
+          });
+          
+          updateFormData('lunchBoxItems', updatedItems);
+          Alert.alert('Success', 'Image uploaded successfully');
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          Alert.alert('Error', 'Failed to upload image. Please try again.');
+        } finally {
+          setIsImageLoading(false);
+        }
         
-        updateFormData('lunchBoxItems', updatedItems);
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -294,7 +344,7 @@ export default function CreateListingScreen() {
         description: formData.description || '',
         image: formData.isLunchBox 
           ? (formData.lunchBoxItems[0]?.image || '') 
-          : (formData.image || ''),
+          : (listingImage || ''),
         ingredients: [],
         allergens: [],
         availableQuantity: quantity,
@@ -531,9 +581,9 @@ export default function CreateListingScreen() {
           // Single dish form
           <>
             <TouchableOpacity style={styles.imagePickerContainer} onPress={pickImage}>
-              {formData.image ? (
+              {listingImage ? (
                 <Image
-                  source={{ uri: formData.image }}
+                  source={{ uri: listingImage }}
                   style={styles.dishImage}
                   contentFit="cover"
                 />

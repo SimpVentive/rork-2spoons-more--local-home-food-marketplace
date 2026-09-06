@@ -479,7 +479,7 @@ export default function AdminDashboard() {
           color={colors.adminPrimary}
           percentChange={stats.userGrowth}
           isPositive={true}
-          onPress={() => router.push('/admin/users' as any)}
+          onPress={() => router.push('/(admin)/users' as any)}
         />
         
         <StatCard
@@ -489,7 +489,7 @@ export default function AdminDashboard() {
           color={colors.adminSuccess}
           percentChange={stats.revenueGrowth}
           isPositive={true}
-          onPress={() => router.push('/admin/top-earners' as any)}
+          onPress={() => router.push('/(admin)/top-earners' as any)}
         />
         
         <StatCard
@@ -499,7 +499,7 @@ export default function AdminDashboard() {
           color={colors.adminWarning}
           percentChange={stats.orderGrowth}
           isPositive={true}
-          onPress={() => router.push('/admin/orders' as any)}
+          onPress={() => router.push('/(admin)/orders' as any)}
         />
         
         <StatCard
@@ -509,7 +509,7 @@ export default function AdminDashboard() {
           color={colors.adminError}
           percentChange={stats.complaintGrowth}
           isPositive={false}
-          onPress={() => router.push('/admin/complaints' as any)}
+          onPress={() => router.push('/(admin)/complaints' as any)}
         />
       </View>
       
@@ -845,7 +845,7 @@ export default function AdminDashboard() {
         
         <TouchableOpacity 
           style={styles.viewAllButton}
-          onPress={() => router.push('/admin/top-earners' as any)}
+          onPress={() => router.push('/(admin)/top-earners' as any)}
         >
           <Text style={styles.viewAllButtonText}>View All Chefs</Text>
         </TouchableOpacity>
