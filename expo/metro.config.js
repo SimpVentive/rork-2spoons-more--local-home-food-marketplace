@@ -1,6 +1,11 @@
 const { getDefaultConfig } = require("expo/metro-config");
-const { withRorkMetro } = require("@rork-ai/toolkit-sdk/metro");
 
 const config = getDefaultConfig(__dirname);
 
-module.exports = withRorkMetro(config);
+// Exclude problematic packages that have incompatible dynamic imports
+config.resolver.blockList = [
+  /node_modules\/@ai-sdk\/react/,
+  /node_modules\/@ai-sdk\/provider-utils/,
+];
+
+module.exports = config;

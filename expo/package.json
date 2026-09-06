@@ -16,7 +16,6 @@
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-native-community/slider": "5.0.1",
-    "@rork-ai/toolkit-sdk": "latest",
     "@supabase/supabase-js": "^2.111.0",
     "@trpc/client": "^11.18.0",
     "@trpc/react-query": "^11.18.0",
