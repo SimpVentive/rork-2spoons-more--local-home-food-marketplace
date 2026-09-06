@@ -115,7 +115,7 @@ export default function OrderRouteScreen() {
       const duration = Math.round(distance * 5);
 
       // Create Google Maps directions URL
-      const directionUrl = `https://www.google.com/maps/dir/?api=1&destination=${sellerData.location_lat},${sellerData.location_lng}&travelmode=driving`;
+      const directionUrl = `https://www.google.com/maps/dir/?api=1&destination=${order.listingSnapshot?.location.latitude},${order.listingSnapshot?.location.longitude}&travelmode=driving`;
 
       setRouteInfo({ distance, duration, directionUrl });
     } catch (error) {
