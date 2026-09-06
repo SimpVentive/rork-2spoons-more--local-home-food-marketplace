@@ -263,9 +263,11 @@ const styles = StyleSheet.create({
   mapContainer: {
     flex: 1,
     position: 'relative',
+    height: '100%',
   },
   map: {
     flex: 1,
+    height: '100%',
   },
   mapControlsContainer: {
     position: 'absolute',
