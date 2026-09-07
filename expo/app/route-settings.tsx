@@ -182,30 +182,36 @@ console.log(listings, 'listings in route settings');
 
   // Get dishes available on the current route
   const getDishesOnRoute = () => {
-    if (!user || !homeToOfficeRoute.length) return [];
+    if (!location || !homeToOfficeRoute.length) return [];
+
     const routePoints = [
-      { latitude: user.location.latitude, longitude: user.location.longitude, name: 'Home' },
+      { latitude: location.latitude, longitude: location.longitude, name: 'Home' },
       ...homeToOfficeRoute,
-      ...(user.officeLocation ? [{ ...user.officeLocation, name: 'Office' }] : []),
+      ...(officeLocation ? [{ ...officeLocation, name: 'Office' }] : []),
     ];
-    console.log('Calculating dishes on route with points:', listings, routePoints);
-    return listings.filter(listing => {
-      return routePoints.some(point => {
-        const distance = calculateDistance(
-          point.latitude,
-          point.longitude,
-          listing.location.latitude,
-          listing.location.longitude
-        ) * 1000; // Convert to meters
-        return distance <= (user.detourPreference || 500);
-      });
-    }).map(listing => ({
-      latitude: listing.location.latitude,
-      longitude: listing.location.longitude,
-      dishName: listing.dishName,
-      availableUntil: listing.availableUntil,
-      sellerName: listing.sellerName,
-    }));
+
+    const maxDetour = parseInt(detourPreference) || 500;
+
+    return listings
+      .filter(listing => {
+        if (!listing.location) return false; // guard against shape mismatch
+        return routePoints.some(point => {
+          const distance = calculateDistance(
+            point.latitude,
+            point.longitude,
+            listing.location.latitude,
+            listing.location.longitude
+          ) * 1000;
+          return distance <= maxDetour;
+        });
+      })
+      .map(listing => ({
+        latitude: listing.location.latitude,
+        longitude: listing.location.longitude,
+        dishName: listing.dishName,
+        availableUntil: listing.availableUntil,
+        sellerName: listing.sellerName,
+      }));
   };
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {

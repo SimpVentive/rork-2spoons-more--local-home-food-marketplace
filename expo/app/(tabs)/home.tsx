@@ -22,6 +22,7 @@ import {
 import { useAuthStore } from '@/store/auth-store';
 import { useListingsStore } from '@/store/listings-store';
 import { useReviewsStore } from '@/store/reviews-store';
+import { useNotificationsStore } from '@/store/notifications-store';
 import { LoadingState } from '@/components/LoadingState';
 import { NotifyMeModal } from '@/components/NotifyMeModal';
 import { FoodListing, User, Review } from '@/types';
@@ -40,6 +41,17 @@ export default function HomeScreen() {
   } = useListingsStore();
   
   const reviewsStore = useReviewsStore();
+
+  const {
+    fetchNotifications,
+    subscribeToNotifications,
+    getUnreadCount,
+  } = useNotificationsStore();
+
+  // Subscribe to the notifications slice directly so this component
+  // re-renders whenever the notifications array changes (new item, mark-as-read, etc.)
+  const notifications = useNotificationsStore(state => state.notifications);
+  const unreadCount = user?.id ? getUnreadCount(user.id) : 0;
   
   const [refreshing, setRefreshing] = useState(false);
   const [notifyModalVisible, setNotifyModalVisible] = useState(false);
@@ -86,6 +98,16 @@ export default function HomeScreen() {
     }
   }, [isInitialized]);
 
+  // Keep the bell badge live: fetch on mount, subscribe for real-time updates
+  useEffect(() => {
+    if (!user?.id) return;
+
+    fetchNotifications(user.id);
+
+    const unsubscribe = subscribeToNotifications(user.id);
+    return () => unsubscribe();
+  }, [user?.id]);
+
   if (!isInitialized) {
     return (
       <LoadingState
@@ -101,6 +123,9 @@ export default function HomeScreen() {
     await loadTopSellingItems();
     await loadRecentReviews();
     await loadTopChefs();
+    if (user?.id) {
+      await fetchNotifications(user.id);
+    }
     setRefreshing(false);
   };
   
@@ -162,9 +187,13 @@ export default function HomeScreen() {
               onPress={() => router.push('/(tabs)/notifications' as never)}
             >
               <Bell size={20} color={colors.primary} />
-              <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>3</Text>
-              </View>
+              {unreadCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
             
             <TouchableOpacity onPress={() => router.push('/(tabs)/profile' as never)}>

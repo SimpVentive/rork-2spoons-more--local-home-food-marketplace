@@ -559,12 +559,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function signOut() {
+  /*async function signOut() {
     await removeStorageItem("access_token");
     await removeStorageItem("refresh_token");
     await removeStorageItem("phone_session");
     useAuthStore.getState().logout();
     setUser(null);
+  }*/
+  async function signOut() {
+    try {
+      // 1. Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("Supabase signOut error:", error);
+      }
+
+      // 2. Remove custom authentication storage
+      await removeStorageItem("access_token");
+      await removeStorageItem("refresh_token");
+      await removeStorageItem("phone_session");
+      await removeStorageItem("auth-storage");
+      await removeStorageItem("complaints-storage");
+      await removeStorageItem("notifications-storage");
+      await removeStorageItem("orders-storage");
+
+      // 3. Clear Zustand state
+      useAuthStore.getState().logout();
+
+      // 4. Clear local hook state
+      setUser(null);
+
+    } catch (error) {
+      console.error("Logout error:", error);
+
+      // Always clear local state
+      await removeStorageItem("access_token");
+      await removeStorageItem("refresh_token");
+      await removeStorageItem("phone_session");
+      await removeStorageItem("auth-storage");
+      await removeStorageItem("complaints-storage");
+      await removeStorageItem("notifications-storage");
+      await removeStorageItem("orders-storage");
+
+      useAuthStore.getState().logout();
+      setUser(null);
+
+      throw error;
+    }
   }
 
   return (

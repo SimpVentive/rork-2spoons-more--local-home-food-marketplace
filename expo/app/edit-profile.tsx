@@ -31,6 +31,7 @@ import Button from '@/components/Button';
 import colors from '@/constants/colors';
 import { useAuth } from '@/hooks/useAuth';
 import { uploadImage } from '@/lib/image-upload';
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 export default function EditProfileScreen() {
   const { user, updateProfile, logout } = useAuthStore();
@@ -48,6 +49,20 @@ export default function EditProfileScreen() {
   const [isChef, setIsChef] = useState(user?.isChef || false);
   const [commissionPercentage, setCommissionPercentage] = useState(user?.commissionPercentage || 10);
   const [isLoading, setIsLoading] = useState(false);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogout = () => setShowLogoutConfirm(true);
+
+  const performLogout = async () => {
+    setShowLogoutConfirm(false);
+    try {
+      await signOut();
+      router.replace("/(auth)/welcome" as never);
+    } catch (error) {
+      console.error("Logout error:", error);
+      router.replace("/(auth)/welcome" as never);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -138,7 +153,7 @@ export default function EditProfileScreen() {
     }
   };
 
-  const handleLogout = () => {
+  /*const handleLogout = () => {
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
@@ -163,7 +178,7 @@ export default function EditProfileScreen() {
         },
       ]
     );
-  };
+  };*/
 
   const cuisineOptions = [
     'South Indian',
@@ -331,6 +346,15 @@ export default function EditProfileScreen() {
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
+      <ConfirmModal
+        visible={showLogoutConfirm}
+        title="Logout"
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        destructive
+        onConfirm={performLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
     </ScrollView>
   );
 }

@@ -20,6 +20,7 @@ interface OrdersState {
   cancelOrder: (id: string, reason: string) => Promise<Order>;
   requestRefund: (id: string, reason: string) => Promise<Order>;
   rateOrder: (id: string, rating: number, comment?: string) => Promise<Order>;
+  subscribeToOrders: () => () => void;
   placeOrder: (orderData: {
     buyerId: string;
     sellerId: string;
@@ -223,6 +224,7 @@ export const useOrdersStore = create<OrdersState>()(
               type: 'order',
               relatedId: newOrder.id,
               data: { orderId: newOrder.id, buyerName: buyerUser?.name, dishName: orderData.listingSnapshot?.dishName },
+              isRead: false,
             });
           } catch (notifError) {
             console.error('Error sending seller notification:', notifError);
@@ -237,6 +239,7 @@ export const useOrdersStore = create<OrdersState>()(
               type: 'order',
               relatedId: newOrder.id,
               data: { orderId: newOrder.id, sellerName: orderData.listingSnapshot?.sellerName },
+              isRead: false,
             });
           } catch (notifError) {
             console.error('Error sending buyer notification:', notifError);
@@ -451,6 +454,7 @@ export const useOrdersStore = create<OrdersState>()(
                 type: 'order',
                 relatedId: id,
                 data: { orderId: id, status: mappedStatus },
+                isRead: false,
               });
             }
           } catch (notifError) {
@@ -473,8 +477,54 @@ export const useOrdersStore = create<OrdersState>()(
           throw error;
         }
       },
+      subscribeToOrders: () => {
+        const channel = supabase
+          .channel('orders-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'orders',
+            },
+            (payload) => {
+              const updatedRow = payload.new;
+              const state = get();
+              const orderIndex = state.orders.findIndex(o => o.id === updatedRow.id);
 
-      cancelOrder: async (id, reason) => {
+              if (orderIndex === -1) {
+                // Order not in local state (e.g. new order for this user) — refetch
+                get().fetchOrders();
+                return;
+              }
+
+              const updatedOrder = rowToOrder(updatedRow);
+              const updatedOrders = [...state.orders];
+              updatedOrders[orderIndex] = updatedOrder;
+
+              set({ orders: updatedOrders });
+            }
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'orders',
+            },
+            (payload) => {
+              // New order created (e.g. buyer places one) — refetch to respect buyer/seller filter
+              get().fetchOrders();
+            }
+          )
+          .subscribe();
+
+        // return unsubscribe function
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      },
+      cancelOrder: async (id:any, reason:any) => {
         try {
           set({ isLoading: true, error: null });
           const now = new Date().toISOString();
@@ -509,6 +559,7 @@ export const useOrdersStore = create<OrdersState>()(
               type: 'order',
               relatedId: id,
               data: { orderId: id, reason },
+              isRead: false,
             });
           } catch (notifError) {
             console.error('Error sending cancellation notification:', notifError);
@@ -522,7 +573,7 @@ export const useOrdersStore = create<OrdersState>()(
         }
       },
 
-      requestRefund: async (id, reason) => {
+      requestRefund: async (id:any, reason:any) => {
         try {
           set({ isLoading: true, error: null });
           const now = new Date().toISOString();
@@ -555,7 +606,7 @@ export const useOrdersStore = create<OrdersState>()(
         }
       },
 
-      rateOrder: async (id, rating, comment) => {
+      rateOrder: async (id:any, rating:any, comment:any) => {
         try {
           set({ isLoading: true, error: null });
           const now = new Date().toISOString();
@@ -587,6 +638,7 @@ export const useOrdersStore = create<OrdersState>()(
           throw error;
         }
       },
+      reset: () => set({ orders: [] }),
     }),
     {
       name: 'orders-storage',

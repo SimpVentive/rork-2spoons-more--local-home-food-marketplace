@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { Notification, DishNotification } from '@/types';
 import { zustandStorage } from '@/lib/storage';
+import { RealtimeChannel } from '@supabase/supabase-js';
+
 
 interface NotificationsState {
   notifications: Notification[];
@@ -11,6 +13,7 @@ interface NotificationsState {
   isLoading: boolean;
   error: string | null;
   fetchNotifications: (userId: string) => Promise<void>;
+  subscribeToNotifications: (userId: string) => () => void;
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: (userId: string) => Promise<void>;
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => Promise<void>;
@@ -52,7 +55,8 @@ function rowToDishNotification(row: Record<string, unknown>): DishNotification {
     createdAt: row.created_at as string,
   };
 }
-
+let notificationsChannel: RealtimeChannel | null = null;
+let subscriberCount = 0;
 export const useNotificationsStore = create<NotificationsState>()(
   persist(
     (set, get) => ({
@@ -60,6 +64,7 @@ export const useNotificationsStore = create<NotificationsState>()(
       dishNotifications: [],
       isLoading: false,
       error: null,
+      
 
       fetchNotifications: async (userId: string) => {
         try {
@@ -152,6 +157,42 @@ export const useNotificationsStore = create<NotificationsState>()(
         } catch (error) {
           console.error('Add notification error:', error);
         }
+      },
+
+      subscribeToNotifications: (userId: string) => {
+        subscriberCount += 1;
+
+        // Only create the channel once, no matter how many screens call this
+        if (!notificationsChannel) {
+          notificationsChannel = supabase
+            .channel(`notifications-${userId}`)
+            .on(
+              'postgres_changes',
+              {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'notifications',
+                filter: `user_id=eq.${userId}`,
+              },
+              (payload) => {
+                const newNotification = rowToNotification(payload.new);
+                set(state => ({
+                  notifications: [newNotification, ...state.notifications],
+                }));
+              }
+            )
+            .subscribe();
+        }
+
+        // Return an unsubscribe function that decrements the ref count
+        // and only actually tears down the channel when nobody's using it
+        return () => {
+          subscriberCount = Math.max(0, subscriberCount - 1);
+          if (subscriberCount === 0 && notificationsChannel) {
+            supabase.removeChannel(notificationsChannel);
+            notificationsChannel = null;
+          }
+        };
       },
 
       deleteNotification: async (notificationId: string) => {

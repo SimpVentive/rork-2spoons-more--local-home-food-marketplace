@@ -306,6 +306,8 @@ export const useAuthStore = create<AuthState>()(
           if (updates.allowProfileDisplay !== undefined) dbUpdates.allow_profile_display = updates.allowProfileDisplay;
           if (updates.officeAddress !== undefined) dbUpdates.office_address = updates.officeAddress;
           if (updates.homeAddress !== undefined) dbUpdates.address = updates.homeAddress;
+          if(updates.homeToOfficeRoute !== undefined) dbUpdates.home_to_office_route = updates.homeToOfficeRoute;
+          if(updates.officeToHomeRoute !== undefined) dbUpdates.office_to_home_route = updates.officeToHomeRoute;
           if (updates.officeLocation !== undefined) {
             dbUpdates.office_lat = updates.officeLocation.latitude;
             dbUpdates.office_lng = updates.officeLocation.longitude;

@@ -31,14 +31,23 @@ import { Notification } from '@/types';
 
 export default function NotificationsScreen() {
   const { user } = useAuthStore();
-  const { notifications, fetchNotifications, markAsRead, markAllAsRead } = useNotificationsStore();
+  const { 
+    notifications, 
+    fetchNotifications, 
+    markAsRead, 
+    markAllAsRead,
+    subscribeToNotifications,
+  } = useNotificationsStore();
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
 
   useEffect(() => {
-    if (user?.id) {
-      fetchNotifications(user.id);
-    }
+    if (!user?.id) return;
+
+    fetchNotifications(user.id);
+
+    const unsubscribe = subscribeToNotifications(user.id);
+    return () => unsubscribe();
   }, [user?.id]);
 
   const router = useRouter();

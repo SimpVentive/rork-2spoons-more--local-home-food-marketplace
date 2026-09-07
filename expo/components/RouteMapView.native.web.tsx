@@ -16,8 +16,10 @@ interface RouteMapViewNativeProps {
   }>;
 
   dishesOnRoute: Array<{
-    latitude: number;
-    longitude: number;
+    location: {
+      latitude: number;
+      longitude: number;
+    };
     dishName: string;
     availableUntil: string;
     sellerName: string;
@@ -43,7 +45,7 @@ export default function RouteMapViewNativeWeb({
 
   const mapRef =
     useRef<any>(null);
-
+  const markersRef = useRef<any[]>([]);
   const apiKey =
     process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -180,6 +182,44 @@ export default function RouteMapViewNativeWeb({
         const bounds =
           new window.google.maps.LatLngBounds();
 
+          
+        /**
+         * Dish markers
+         */
+        dishesOnRoute.forEach(dish => {
+          const position = {
+            lat: dish.location.latitude,
+            lng: dish.location.longitude,
+          };
+          bounds.extend(position);
+
+          const marker = new window.google.maps.Marker({
+            position,
+            map,
+            title: dish.dishName,
+            icon: {
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 10,
+              fillColor: '#ff7043',
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 3,
+            },
+          });
+
+          const content = `
+            <div style="min-width:200px;padding:8px;">
+              <strong>${escapeHtml(dish.dishName)}</strong><br/><br/>
+              <b>Seller:</b> ${escapeHtml(dish.sellerName)}<br/>
+              <b>Available until:</b> ${escapeHtml(dish.availableUntil)}
+            </div>`;
+          const infoWindow = new window.google.maps.InfoWindow({ content });
+          marker.addListener('click', () => {
+            infoWindow.open({ anchor: marker, map });
+            onDishPress?.(dish);
+          });
+          markersRef.current.push(marker);
+        });
         /**
          * Route marker points
          */
@@ -250,107 +290,6 @@ export default function RouteMapViewNativeWeb({
           }
         );
 
-        /**
-         * Dish markers
-         */
-        dishesOnRoute.forEach(
-          dish => {
-
-            const position = {
-              lat:
-                dish.latitude,
-
-              lng:
-                dish.longitude,
-            };
-
-            bounds.extend(position);
-
-            const marker =
-              new window.google.maps.Marker({
-
-                position,
-
-                map,
-
-                title:
-                  dish.dishName,
-
-                icon: {
-                  path:
-                    window.google.maps
-                      .SymbolPath.CIRCLE,
-
-                  scale: 10,
-
-                  fillColor:
-                    '#ff7043',
-
-                  fillOpacity: 1,
-
-                  strokeColor:
-                    '#ffffff',
-
-                  strokeWeight: 3,
-                },
-
-              });
-
-            const content = `
-                <div style="
-                    min-width:200px;
-                    padding:8px;
-                ">
-
-                    <strong>
-                        ${escapeHtml(
-                          dish.dishName
-                        )}
-                    </strong>
-
-                    <br/><br/>
-
-                    <b>Seller:</b>
-
-                    ${escapeHtml(
-                      dish.sellerName
-                    )}
-
-                    <br/>
-
-                    <b>
-                        Available until:
-                    </b>
-
-                    ${escapeHtml(
-                      dish.availableUntil
-                    )}
-
-                </div>
-            `;
-
-            const infoWindow =
-              new window.google.maps
-                .InfoWindow({
-                  content,
-                });
-
-            marker.addListener(
-              'click',
-              () => {
-
-                infoWindow.open({
-                  anchor: marker,
-                  map,
-                });
-
-                onDishPress?.(dish);
-
-              }
-            );
-
-          }
-        );
 
         /**
          * Draw actual driving route

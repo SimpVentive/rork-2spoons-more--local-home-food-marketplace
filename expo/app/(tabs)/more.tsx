@@ -1,4 +1,5 @@
 import React from 'react';
+import { useState } from "react";
 import {
   View,
   Text,
@@ -14,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import {
   User,
+  Bell,
   ShoppingBag,
   Wallet,
   LogOut,
@@ -36,38 +38,63 @@ import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 import { useAuth } from '@/hooks/useAuth';
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 export default function MoreScreen() {
   const { user, logout, userPreference, switchRole } = useAuthStore();
   const { signOut, isSigningIn } = useAuth();
   const router = useRouter();
-  
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          onPress: async () => {
-            try {
-              await signOut();
-              setTimeout(() => {
-                router.replace('/(auth)/welcome' as never);
-              }, 100); 
-            } catch (error) {
-              console.error('Logout error:', error);
-            }
-          },
-          style: 'destructive',
-        },
-      ]
-    );
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogout = () => setShowLogoutConfirm(true);
+
+  const performLogout = async () => {
+    setShowLogoutConfirm(false);
+    try {
+      await signOut();
+      router.replace("/(auth)/welcome" as never);
+    } catch (error) {
+      console.error("Logout error:", error);
+      router.replace("/(auth)/welcome" as never);
+    }
   };
+  /*const handleLogout = () => {
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm("Are you sure you want to logout?");
+      if (confirmed) {
+        performLogout();
+      }
+    }
+    else{
+      Alert.alert(
+        "Logout",
+        "Are you sure you want to logout?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Logout",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await signOut();
+
+                // Navigate only after auth state is cleared
+                router.replace("/(auth)/welcome" as never);
+              } catch (error) {
+                console.error("Logout error:", error);
+
+                // Still send user to auth screen
+                router.replace("/(auth)/welcome" as never);
+              }
+            },
+          },
+        ]
+      );
+    }
+  };*/
 
   const handleSwitchRole = async () => {
     try {
@@ -210,6 +237,13 @@ export default function MoreScreen() {
         >
           <Search size={22} color={colors.primary} />
           <Text style={styles.menuItemText}>Search</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => router.push('/(tabs)/notifications' as never)}
+        >
+          <Bell size={22} color={colors.primary} />
+          <Text style={styles.menuItemText}>Notifications</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -354,7 +388,17 @@ export default function MoreScreen() {
       </TouchableOpacity>
       
       <Text style={styles.versionText}>Version 1.0.0</Text>
+      <ConfirmModal
+  visible={showLogoutConfirm}
+  title="Logout"
+  message="Are you sure you want to logout?"
+  confirmText="Logout"
+  destructive
+  onConfirm={performLogout}
+  onCancel={() => setShowLogoutConfirm(false)}
+/>
     </ScrollView>
+    
   );
 }
 

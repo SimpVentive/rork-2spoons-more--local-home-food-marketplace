@@ -19,7 +19,14 @@ import { Order } from '@/types';
 
 export default function OrdersScreen() {
   const { user } = useAuthStore();
-  const { orders, getBuyerOrders, getSellerOrders, isLoading } = useOrdersStore();
+  const { 
+    orders, 
+    getBuyerOrders, 
+    getSellerOrders, 
+    isLoading, 
+    fetchOrders, 
+    subscribeToOrders, 
+  } = useOrdersStore();
   const [activeTab, setActiveTab] = useState<'buying' | 'selling'>('buying');
   const [refreshing, setRefreshing] = useState(false);
   
@@ -29,14 +36,24 @@ export default function OrdersScreen() {
   const sellingOrders = user ? getSellerOrders(user.id) : [];
   
   const displayOrders = activeTab === 'buying' ? buyingOrders : sellingOrders;
+
+  // Initial fetch + live updates while this screen is mounted
+  useEffect(() => {
+    if (!user) return;
+
+    fetchOrders();
+
+    const unsubscribe = subscribeToOrders();
+    return () => unsubscribe();
+  }, [user]);
   
   const onRefresh = async () => {
     setRefreshing(true);
-    // In a real app, this would fetch the latest orders from the server
-    // For now, we'll just simulate a delay
-    setTimeout(() => {
+    try {
+      await fetchOrders();
+    } finally {
       setRefreshing(false);
-    }, 1000);
+    }
   };
   
   const handleOrderPress = (order: Order) => {
