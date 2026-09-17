@@ -1,14 +1,15 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Link, useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,6 +19,7 @@ import { spacing } from '@/constants/spacing';
 import colors from "@/constants/colors"; // ✅
 
 export default function RegisterScreen() {
+  const insets = useSafeAreaInsets();
   const { user, isLoading: authLoading } = useAuth();
   const { syncProfile } = useAuthStore();
   const router = useRouter();
@@ -53,8 +55,11 @@ export default function RegisterScreen() {
     >
       <StatusBar style="dark" />
       
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: spacing['2xl'] + insets.bottom + 20 }
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

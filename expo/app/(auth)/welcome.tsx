@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform, Image, ActivityIndicator } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,6 +14,7 @@ import { spacing } from '@/constants/spacing';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, isLoading: authLoading } = useAuth();
 
   // If already authenticated, redirect to main app
@@ -51,7 +53,12 @@ export default function WelcomeScreen() {
         style={styles.gradient}
       />
       
-      <View style={styles.content}>
+      <View style={[
+        styles.content,
+        {
+          paddingBottom: (Platform.OS === 'ios' ? 40 : 24) + insets.bottom + 20,
+        }
+      ]}>
         <View style={styles.header}>
           <Text style={styles.appName}>2Spoons More</Text>
           <Text style={styles.tagline}>Homemade food, shared with love</Text>

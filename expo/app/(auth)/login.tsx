@@ -1,14 +1,15 @@
 import React, { useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  ScrollView, 
-  KeyboardAvoidingView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,6 +19,7 @@ import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
 export default function LoginScreen() {
+  const insets = useSafeAreaInsets();
   const { user, isSigningIn, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -49,8 +51,11 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: spacing['2xl'] + insets.bottom + 20 }
+        ]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.logoContainer}>
