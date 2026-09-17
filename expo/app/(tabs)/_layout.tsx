@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs, useRouter } from 'expo-router';
-import { 
-  Home, 
-  User, 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  Home,
+  User,
   RefreshCw,
   Heart,
   UtensilsCrossed,
@@ -21,6 +22,7 @@ const HiddenTab = () => null;
 
 export default function TabLayout(): React.ReactElement {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(true);
   const { user: authUser, isLoading: authLoading } = useAuth();
   const { user, isAuthenticated, userPreference, isAdmin, syncProfile, switchRole, initialize } = useAuthStore();
@@ -112,7 +114,13 @@ export default function TabLayout(): React.ReactElement {
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textLight,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            paddingBottom: Platform.OS === 'android' ? 12 + insets.bottom : 28 + insets.bottom,
+            height: Platform.OS === 'android' ? 75 + insets.bottom : 95 + insets.bottom,
+          },
+        ],
         tabBarLabelStyle: styles.tabBarLabel,
         headerStyle: {
           backgroundColor: colors.white,
@@ -124,7 +132,7 @@ export default function TabLayout(): React.ReactElement {
           fontSize: 18,
         },
         headerRight: () => (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.switchButton}
             onPress={() => {
               try {
@@ -256,18 +264,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    height: Platform.OS === 'android' ? 75 : 95,
-    paddingBottom: Platform.OS === 'android' ? 12 : 28,
     paddingTop: 8,
   },
   tabBarLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    marginTop: 4,
+    marginTop: 6,
+    marginBottom: 2,
   },
   tabIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 4,
   },
   iconWrapper: {
     padding: 4,
