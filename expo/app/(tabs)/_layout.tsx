@@ -59,7 +59,9 @@ export default function TabLayout(): React.ReactElement {
           router.replace('/user-preference' as never);
           return;
         }
-        
+
+        // Initialize the store to allow home screen to load
+        await initialize();
         setIsLoading(false);
       } catch (error) {
         console.error('Tab layout init error:', error);
