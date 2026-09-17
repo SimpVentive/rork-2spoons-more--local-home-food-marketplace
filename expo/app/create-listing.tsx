@@ -205,8 +205,7 @@ export default function CreateListingScreen() {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
+        allowsEditing: false,
         quality: 0.8,
       });
 
@@ -261,11 +260,10 @@ export default function CreateListingScreen() {
         Alert.alert('Permission Required', 'Please allow access to your photo library to upload images.');
         return;
       }
-      
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
+        allowsEditing: false,
         quality: 0.8,
       });
       
