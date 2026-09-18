@@ -409,7 +409,7 @@ export default function RouteMapViewNativeWeb({
             height: '100%',
           }}
 
-        />
+        ></div>
 
       </View>
 

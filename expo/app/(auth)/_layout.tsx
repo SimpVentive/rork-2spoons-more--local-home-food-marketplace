@@ -7,12 +7,20 @@ export default function AuthLayout() {
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',
+        contentStyle: {
+          backgroundColor: '#fff',
+        },
       }}
     >
       <Stack.Screen name="welcome" />
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
-      <Stack.Screen name="mobile-login" options={{ title: 'Phone Login' }} />
+      <Stack.Screen
+        name="mobile-login"
+        options={{
+          title: 'Phone Login',
+        }}
+      />
     </Stack>
   );
 }

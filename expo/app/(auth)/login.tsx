@@ -1,16 +1,18 @@
 import React, { useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  ScrollView, 
-  KeyboardAvoidingView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
@@ -18,13 +20,14 @@ import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
 export default function LoginScreen() {
-  const { user, isSigningIn, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   // Redirect when authenticated
   useEffect(() => {
     if (user && !authLoading) {
       const state = useAuthStore.getState();
+
       if (state.isAdmin) {
         router.replace('/(admin)' as never);
       } else if (!state.userPreference) {
@@ -33,249 +36,172 @@ export default function LoginScreen() {
         router.replace('/(tabs)/home' as never);
       }
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, router]);
 
+  // Loading screen
   if (authLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator
+            size="large"
+            color={colors.primary}
+          />
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.logoContainer}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1' }}
-            style={styles.logo}
-          />
-          <Text style={styles.appName}>2Spoons More</Text>
-          <Text style={styles.tagline}>Homemade food, delivered with love</Text>
-        </View>
-        
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>Welcome</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
-          
-          {isSigningIn && (
-            <ActivityIndicator size="small" color={colors.primary} style={styles.signingInIndicator} />
-          )}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          {/* Logo */}
+          <View style={styles.logoContainer}>
+            <Image
+              source={{
+                uri: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1',
+              }}
+              style={styles.logo}
+              contentFit="cover"
+            />
 
-          <TouchableOpacity
-            style={styles.mobileButton}
-            onPress={() => router.push('/(auth)/mobile-login' as never)}
-            disabled={isSigningIn}
-          >
-            <Text style={styles.mobileButtonText}>Continue with Phone Number</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <Text style={styles.appName}>
+              2Spoons More
+            </Text>
+
+            <Text style={styles.tagline}>
+              Homemade food, delivered with love
+            </Text>
+          </View>
+
+          {/* Login */}
+          <View style={styles.formContainer}>
+            <Text style={styles.title}>
+              Welcome
+            </Text>
+
+            <Text style={styles.subtitle}>
+              Sign in to continue
+            </Text>
+
+            <TouchableOpacity
+              style={styles.mobileButton}
+              onPress={() =>
+                router.push('/(auth)/mobile-login' as never)
+              }
+              activeOpacity={0.8}
+            >
+              <Text style={styles.mobileButtonText}>
+                Continue with Phone Number
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 40,
+  },
+
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.background,
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 24,
-  },
+
   logoContainer: {
     alignItems: 'center',
-    marginTop: 48,
-    marginBottom: 32,
+    marginTop: 20,
+    marginBottom: 40,
   },
+
   logo: {
     width: 100,
     height: 100,
     borderRadius: spacing.radius.lg,
   },
+
   appName: {
     fontSize: typography.sizes['2xl'],
     fontWeight: typography.weights.bold,
     color: colors.primary,
     marginTop: spacing.lg,
   },
+
   tagline: {
     fontSize: typography.sizes.base,
     color: colors.textLight,
     marginTop: spacing.sm,
+    textAlign: 'center',
   },
+
   formContainer: {
-    paddingHorizontal: 24,
+    width: '100%',
   },
+
   title: {
     fontSize: typography.sizes['2xl'],
     fontWeight: typography.weights.bold,
     color: colors.text,
     marginBottom: spacing.sm,
   },
+
   subtitle: {
     fontSize: typography.sizes.base,
     color: colors.textLight,
     marginBottom: spacing['2xl'],
   },
-  errorContainer: {
-    backgroundColor: '#FEE2E2',
-    padding: spacing.md,
-    borderRadius: spacing.radius.md,
-    marginBottom: spacing.lg,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  errorText: {
-    color: '#DC2626',
-    fontSize: typography.sizes.sm,
-    flex: 1,
-  },
-  errorDismiss: {
-    marginLeft: spacing.sm,
-    padding: spacing.xs,
-  },
-  errorDismissText: {
-    color: '#DC2626',
-    fontWeight: typography.weights.semibold,
-    fontSize: typography.sizes.sm,
-  },
-  signingInIndicator: {
-    marginBottom: 16,
-  },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#4285F4',
-    paddingVertical: spacing.lg,
-    borderRadius: spacing.radius.md,
-    marginBottom: spacing.md,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-      web: {
-        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-      },
-    }),
-  },
-  googleButtonText: {
-    color: '#4285F4',
-    backgroundColor: colors.white,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    textAlign: 'center',
-    lineHeight: 28,
-    fontSize: 16,
-    fontWeight: '700',
-    marginRight: 12,
-    overflow: 'hidden',
-  },
-  googleButtonLabel: {
-    color: colors.white,
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
-  },
-  appleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#000',
-    paddingVertical: spacing.lg,
-    borderRadius: spacing.radius.md,
-    marginBottom: spacing.md,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-      web: {
-        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.15)',
-      },
-    }),
-  },
-  appleButtonText: {
-    color: colors.white,
-    fontSize: 22,
-    marginRight: 12,
-    lineHeight: 28,
-  },
-  appleButtonLabel: {
-    color: colors.white,
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dividerText: {
-    color: colors.textLight,
-    paddingHorizontal: 16,
-    fontSize: 14,
-  },
-  emailButton: {
-    alignItems: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-  },
-  emailButtonText: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-  },
+
   mobileButton: {
-    alignItems: 'center',
-    paddingVertical: 14,
+    width: '100%',
+    minHeight: 52,
+    paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.primary,
     backgroundColor: `${colors.primary}10`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
   },
+
   mobileButtonText: {
     color: colors.primary,
     fontSize: 16,
     fontWeight: '600',
+    textAlign: 'center',
   },
 });

@@ -199,7 +199,7 @@ export default function TabLayout(): React.ReactElement {
       <Tabs.Screen
         name="following"
         options={{
-          title: 'Following',
+          title: 'Follow',
           tabBarIcon: ({ color }) => (
             <TabIcon icon={<Heart size={24} color={color} />} />
           ),
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   tabBarLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
     marginTop: 6,
     marginBottom: 2,
@@ -275,10 +275,10 @@ const styles = StyleSheet.create({
   tabIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    padding: 8,
   },
   iconWrapper: {
-    padding: 4,
+    padding: 2,
   },
   badge: {
     position: 'absolute',

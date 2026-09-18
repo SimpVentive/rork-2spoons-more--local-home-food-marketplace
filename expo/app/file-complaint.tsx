@@ -207,7 +207,6 @@ export default function FileComplaintScreen() {
         <Button
           title="Cancel"
           onPress={() => router.back()}
-          variant="outline"
           style={styles.cancelButton}
         />
         <Button
@@ -352,6 +351,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   cancelButton: {
+    backgroundColor: colors.warning,
     flex: 1,
     marginRight: 8,
   },
