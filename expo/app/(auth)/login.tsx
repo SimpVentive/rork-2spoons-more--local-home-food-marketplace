@@ -9,6 +9,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,7 +21,12 @@ import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
 export default function LoginScreen() {
+<<<<<<< HEAD
   const { user, isLoading: authLoading } = useAuth();
+=======
+  const insets = useSafeAreaInsets();
+  const { user, isSigningIn, isLoading: authLoading } = useAuth();
+>>>>>>> e98ba982b522029decd60adb5c4c91091aa9ffe9
   const router = useRouter();
 
   // Redirect when authenticated
@@ -53,10 +59,24 @@ export default function LoginScreen() {
   }
 
   return (
+<<<<<<< HEAD
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+=======
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+    >
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: spacing['2xl'] + insets.bottom + 20 }
+        ]}
+        keyboardShouldPersistTaps="handled"
+>>>>>>> e98ba982b522029decd60adb5c4c91091aa9ffe9
       >
         <ScrollView
           style={styles.scrollView}

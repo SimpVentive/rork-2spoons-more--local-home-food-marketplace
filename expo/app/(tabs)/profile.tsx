@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
   TouchableOpacity,
   RefreshControl,
   Platform,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { 
@@ -40,6 +41,7 @@ import { FoodListing } from '@/types';
 import SubscriptionModal from '@/components/SubscriptionModal';
 
 export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
   const { user, logout, switchRole, checkPostingEligibility } = useAuthStore();
   const { getSellerListings, fetchListings } = useListingsStore();
   const { reviews, fetchSellerReviews } = useReviewsStore();
@@ -231,7 +233,10 @@ export default function ProfileScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.contentContainer}
+      contentContainerStyle={[
+        styles.contentContainer,
+        { paddingBottom: 32 + insets.bottom + 40 }
+      ]}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }

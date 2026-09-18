@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Key, Phone } from 'lucide-react-native';
 import Input from '@/components/Input';
@@ -28,6 +29,7 @@ const BYPASS_PHONE_OTP = true;
 
 export default function MobileLoginScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { phoneSignIn, isSigningIn } = useAuth();
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -194,7 +196,10 @@ export default function MobileLoginScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={[
+        styles.scrollContent,
+        { paddingBottom: spacing['2xl'] + insets.bottom + 20 }
+      ]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <ArrowLeft size={24} color={colors.text} />

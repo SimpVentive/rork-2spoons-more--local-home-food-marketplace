@@ -12,6 +12,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Search, SlidersHorizontal, X, Leaf, Flame, Clock, Star, Route } from 'lucide-react-native';
 import { Image } from 'expo-image';
@@ -41,7 +42,7 @@ const QUICK_FILTERS = [
 const ALL_CUISINES = [...ESSENTIAL_CUISINE_TYPES, ...getExtendedCuisineTypes()];
 
 export default function SearchScreen() {
-
+  const insets = useSafeAreaInsets();
   const { listings, filteredListings, searchListings, fetchListings, isLoading } = useListingsStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -388,7 +389,10 @@ export default function SearchScreen() {
         renderItem={renderFoodCard}
         keyExtractor={(item) => item.id}
         numColumns={2}
-        contentContainerStyle={styles.gridContent}
+        contentContainerStyle={[
+          styles.gridContent,
+          { paddingBottom: insets.bottom + 40 }
+        ]}
         columnWrapperStyle={styles.gridRow}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={renderListHeader}

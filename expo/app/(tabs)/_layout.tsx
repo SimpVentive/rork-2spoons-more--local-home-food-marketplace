@@ -59,7 +59,9 @@ export default function TabLayout(): React.ReactElement {
           router.replace('/user-preference' as never);
           return;
         }
-        
+
+        // Initialize the store to allow home screen to load
+        await initialize();
         setIsLoading(false);
       } catch (error) {
         console.error('Tab layout init error:', error);
@@ -109,6 +111,8 @@ export default function TabLayout(): React.ReactElement {
 
   const isChef = user?.isChef === true;
 
+  const tabBarHeight = Platform.OS === 'android' ? 75 + insets.bottom : 95 + insets.bottom;
+
   return (
     <Tabs
       screenOptions={{
@@ -118,9 +122,12 @@ export default function TabLayout(): React.ReactElement {
           styles.tabBar,
           {
             paddingBottom: Platform.OS === 'android' ? 12 + insets.bottom : 28 + insets.bottom,
-            height: Platform.OS === 'android' ? 75 + insets.bottom : 95 + insets.bottom,
+            height: tabBarHeight,
           },
         ],
+        sceneContainerStyle: {
+          paddingBottom: tabBarHeight,
+        },
         tabBarLabelStyle: styles.tabBarLabel,
         headerStyle: {
           backgroundColor: colors.white,

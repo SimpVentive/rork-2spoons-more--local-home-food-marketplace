@@ -28,6 +28,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '@/store/auth-store';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
+import LocationPicker from '@/components/LocationPicker';
 import colors from '@/constants/colors';
 import { useAuth } from '@/hooks/useAuth';
 import { uploadImage } from '@/lib/image-upload';
@@ -42,6 +43,8 @@ export default function EditProfileScreen() {
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [address, setAddress] = useState(user?.address || '');
+  const [latitude, setLatitude] = useState(user?.location?.latitude || 0);
+  const [longitude, setLongitude] = useState(user?.location?.longitude || 0);
   const [experience, setExperience] = useState(user?.experience || '');
   const [cuisineTypes, setCuisineTypes] = useState<string[]>(user?.cuisineTypes || []);
   const [profileImage, setProfileImage] = useState(user?.profileImage || '');
@@ -49,7 +52,8 @@ export default function EditProfileScreen() {
   const [isChef, setIsChef] = useState(user?.isChef || false);
   const [commissionPercentage, setCommissionPercentage] = useState(user?.commissionPercentage || 10);
   const [isLoading, setIsLoading] = useState(false);
-    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   const handleLogout = () => setShowLogoutConfirm(true);
 
@@ -70,6 +74,13 @@ export default function EditProfileScreen() {
     }
   }, [user]);
 
+  const handleLocationSelect = (location: { latitude: number; longitude: number; address: string }) => {
+    setAddress(location.address);
+    setLatitude(location.latitude);
+    setLongitude(location.longitude);
+    setShowLocationPicker(false);
+  };
+
   const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert('Error', 'Please enter your name');
@@ -81,6 +92,11 @@ export default function EditProfileScreen() {
       return;
     }
 
+    if (latitude === 0 && longitude === 0) {
+      Alert.alert('Error', 'Please set your location on the map');
+      return;
+    }
+
     try {
       setIsLoading(true);
       const success = await updateProfile({
@@ -88,6 +104,10 @@ export default function EditProfileScreen() {
         email,
         phone,
         address,
+        location: {
+          latitude,
+          longitude,
+        },
         experience,
         cuisineTypes,
         profileImage,
@@ -256,13 +276,28 @@ export default function EditProfileScreen() {
           leftIcon={<Phone size={20} color={colors.textLight} />}
         />
 
-        <Input
-          label="Address"
-          value={address}
-          onChangeText={setAddress}
-          placeholder="Enter your address"
-          leftIcon={<MapPin size={20} color={colors.textLight} />}
-        />
+        <View style={styles.addressSection}>
+          <Text style={styles.label}>Pickup Location</Text>
+          <TouchableOpacity
+            style={styles.locationButton}
+            onPress={() => setShowLocationPicker(true)}
+          >
+            <MapPin size={20} color={colors.white} />
+            <View style={styles.locationButtonText}>
+              <Text style={styles.locationAddress} numberOfLines={1}>
+                {address || 'Tap to select location'}
+              </Text>
+              {latitude !== 0 && longitude !== 0 && (
+                <Text style={styles.coordinates}>
+                  {latitude.toFixed(4)}, {longitude.toFixed(4)}
+                </Text>
+              )}
+            </View>
+          </TouchableOpacity>
+          {latitude === 0 && longitude === 0 && (
+            <Text style={styles.errorText}>Required: Select your location on the map</Text>
+          )}
+        </View>
 
         <View style={styles.switchContainer}>
           <View style={styles.switchRow}>
@@ -354,6 +389,21 @@ export default function EditProfileScreen() {
         destructive
         onConfirm={performLogout}
         onCancel={() => setShowLogoutConfirm(false)}
+      />
+
+      <LocationPicker
+        visible={showLocationPicker}
+        title="Select Your Pickup Location"
+        initialLocation={{
+          latitude,
+          longitude,
+          address,
+        }}
+        onLocationSelect={handleLocationSelect}
+        onClose={() => setShowLocationPicker(false)}
+        showRoute={false}
+        routeStart={null}
+        routeEnd={null}
       />
     </ScrollView>
   );
@@ -523,5 +573,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textLight,
     lineHeight: 20,
+  },
+  addressSection: {
+    marginVertical: 16,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    padding: 16,
+    gap: 12,
+  },
+  locationButtonText: {
+    flex: 1,
+  },
+  locationAddress: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.white,
+  },
+  coordinates: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 4,
+    fontFamily: 'monospace',
+  },
+  errorText: {
+    fontSize: 12,
+    color: colors.error,
+    marginTop: 8,
   },
 });

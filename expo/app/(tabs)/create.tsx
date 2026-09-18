@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
 import { Camera, ChefHat, Clock, DollarSign, FileText, Image as ImageIcon, MapPin, Plus, Tag, Utensils, PlusCircle } from 'lucide-react-native';
@@ -12,7 +13,8 @@ import { spacing } from '@/constants/spacing';
 export default function CreateScreen() {
   const { user } = useAuthStore();
   const router = useRouter();
-  
+  const insets = useSafeAreaInsets();
+
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   
   const handleOptionSelect = (option: string) => {
@@ -65,7 +67,13 @@ export default function CreateScreen() {
         ),
       }} />
       
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: 120 + insets.bottom + 20 }
+        ]}
+      >
         <Text style={styles.title}>What would you like to create?</Text>
         
         <View style={styles.optionsContainer}>
