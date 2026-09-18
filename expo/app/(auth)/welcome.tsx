@@ -19,7 +19,6 @@ import colors from '@/constants/colors';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { user, isLoading: authLoading } = useAuth();
 
   // Redirect when already authenticated
