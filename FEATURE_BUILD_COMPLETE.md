@@ -62,7 +62,9 @@
 | PickupLocationForm | ✅ | 400 | Full address, validation, time picker |
 | CODPaymentSetup | ✅ | 450 | Toggle, config, workflow preview |
 | CODConfirmationPopup | ✅ | 350 | 3-stage flow, confirmation, denial |
-| **Total UI** | ✅ | **1550** | **Production-ready** |
+| OrderPickupSelection | ✅ | 430 | Location list, map integration, selection |
+| EarningsCard | ✅ | 520 | Earnings display, breakdown, transactions |
+| **Total UI** | ✅ | **2500** | **Production-ready** |
 
 ---
 
@@ -290,14 +292,14 @@ export class NotificationService {
 
 ```
 Phase 1: Data Models        ✅ 100% DONE
-Phase 2: UI Components      ✅ 80% DONE (4/6 components)
+Phase 2: UI Components      ✅ 100% DONE (6/6 components)
 Phase 3: Services & Logic   ⏳ 0% DONE (ready to build)
 Phase 4: Screen Integration ⏳ 0% DONE (depends on Phase 3)
 Phase 5: Database Setup     ⏳ 0% DONE (scaffolded)
 ─────────────────────────────────────────────────
-OVERALL                     ✅ 50-60% READY
+OVERALL                     ✅ 65-70% READY
 
-Estimated time to completion: 5-7 more hours
+Estimated time to completion: 4-5 more hours
 ```
 
 ---
