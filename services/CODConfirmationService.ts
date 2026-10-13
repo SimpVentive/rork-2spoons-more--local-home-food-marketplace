@@ -1,4 +1,5 @@
 import { SellerNotification, Order } from '@/types';
+import { codQueries, notificationQueries, ordersCODQueries } from '@/lib/supabase-integration';
 
 interface ScheduledConfirmation {
   orderId: string;
@@ -111,6 +112,25 @@ class CODConfirmationServiceClass {
         this.scheduledConfirmations.delete(orderId);
       }
 
+      // Update COD confirmation status in database
+      const codConfirmation = await codQueries.getCODByOrderId(orderId);
+      if (codConfirmation) {
+        await codQueries.updateCODConfirmation(codConfirmation.id, 'confirmed', amount);
+      }
+
+      // Update order COD status
+      await ordersCODQueries.updateOrderCODStatus(orderId, 'confirmed', amount);
+
+      // Create notification
+      await notificationQueries.createNotification(
+        sellerId,
+        orderId,
+        'cod_confirmed',
+        'Payment Received',
+        `₹${amount} has been credited to your wallet`,
+        { amount, orderId }
+      );
+
       // Call wallet update callback if provided
       if (onWalletUpdate) {
         await onWalletUpdate(sellerId, amount, orderId);
@@ -139,11 +159,13 @@ class CODConfirmationServiceClass {
    * Deny a COD payment with a reason
    * @param orderId - Order ID
    * @param reason - Reason for denial
+   * @param sellerId - Seller ID
    * @param onDenialLog - Callback to log the denial
    */
   async denyCOD(
     orderId: string,
     reason: string,
+    sellerId: string,
     onDenialLog?: (orderId: string, reason: string) => Promise<void>
   ): Promise<CODDenialResult> {
     try {
@@ -160,9 +182,28 @@ class CODConfirmationServiceClass {
       // Mark confirmation as complete
       const scheduled = this.scheduledConfirmations.get(orderId);
       if (scheduled) {
-        clearTimeout(scheduled.timerId as NodeJS.Timeout);
+        clearTimeout(scheduled.timerId as any);
         this.scheduledConfirmations.delete(orderId);
       }
+
+      // Update COD confirmation status in database
+      const codConfirmation = await codQueries.getCODByOrderId(orderId);
+      if (codConfirmation) {
+        await codQueries.updateCODConfirmation(codConfirmation.id, 'denied', undefined, reason);
+      }
+
+      // Update order COD status
+      await ordersCODQueries.updateOrderCODStatus(orderId, 'denied', undefined, reason);
+
+      // Create notification
+      await notificationQueries.createNotification(
+        sellerId,
+        orderId,
+        'cod_denied',
+        'Payment Not Confirmed',
+        `You reported that payment was not received. Reason: ${reason}`,
+        { reason, orderId }
+      );
 
       // Call denial log callback if provided
       if (onDenialLog) {
