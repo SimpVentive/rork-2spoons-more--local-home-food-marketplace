@@ -24,9 +24,11 @@ import { useListingsStore } from '@/store/listings-store';
 import { useReviewsStore } from '@/store/reviews-store';
 import { FoodCard } from '@/components/FoodCard';
 import { NotifyMeModal } from '@/components/NotifyMeModal';
+import { CODConfirmationPopup } from '@/components/CODConfirmationPopup';
 import { FoodListing, User, Review } from '@/types';
 import colors from '@/constants/colors';
 import { fetchTopChefs } from '@/lib/supabase';
+import { AlertCircle } from 'lucide-react-native';
 
 export default function HomeScreen() {
   const { user } = useAuthStore();
@@ -46,6 +48,8 @@ export default function HomeScreen() {
   const [topSellingItems, setTopSellingItems] = useState<FoodListing[]>([]);
   const [topChefs, setTopChefs] = useState<User[]>([]);
   const [recentReviews, setRecentReviews] = useState<Review[]>([]);
+  const [showCODConfirmation, setShowCODConfirmation] = useState(false);
+  const [pendingCODCount, setPendingCODCount] = useState(1);
   
   const router = useRouter();
   
@@ -152,7 +156,22 @@ export default function HomeScreen() {
         </View>
         
         <View style={styles.headerActions}>
-          <TouchableOpacity 
+          {/* COD Confirmation Badge for Sellers */}
+          {user && (
+            <TouchableOpacity
+              style={styles.codButton}
+              onPress={() => setShowCODConfirmation(true)}
+            >
+              <AlertCircle size={20} color={colors.error} />
+              {pendingCODCount > 0 && (
+                <View style={styles.codBadge}>
+                  <Text style={styles.codBadgeText}>{pendingCODCount}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
             style={styles.notifyButton}
             onPress={() => router.push('/(tabs)/notifications')}
           >
@@ -161,7 +180,7 @@ export default function HomeScreen() {
               <Text style={styles.notificationBadgeText}>3</Text>
             </View>
           </TouchableOpacity>
-          
+
           <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}>
             <Image
               source={{ uri: user?.profileImage || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167' }}
@@ -296,6 +315,25 @@ export default function HomeScreen() {
         visible={notifyModalVisible}
         onClose={() => setNotifyModalVisible(false)}
       />
+
+      {/* COD Confirmation Popup */}
+      <CODConfirmationPopup
+        visible={showCODConfirmation}
+        orderId="order_123"
+        buyerName="Raj Kumar"
+        dishName="Butter Chicken"
+        amount={250}
+        pickupLocation="My House"
+        onConfirm={(orderId, amount) => {
+          setShowCODConfirmation(false);
+          setPendingCODCount(Math.max(0, pendingCODCount - 1));
+        }}
+        onDeny={(orderId, reason) => {
+          setShowCODConfirmation(false);
+          setPendingCODCount(Math.max(0, pendingCODCount - 1));
+        }}
+        onCancel={() => setShowCODConfirmation(false)}
+      />
     </ScrollView>
   );
 }
@@ -332,6 +370,34 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  codButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: `${colors.error}10`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    position: 'relative',
+  },
+  codBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: colors.error,
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.white,
+  },
+  codBadgeText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: '700',
   },
   notifyButton: {
     width: 40,
