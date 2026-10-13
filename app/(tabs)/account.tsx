@@ -26,6 +26,7 @@ import {
   FileText,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
+import { EarningsCard } from '@/components/EarningsCard';
 import colors from '@/constants/colors';
 import designTokens from '@/constants/design-tokens';
 
@@ -47,6 +48,50 @@ export default function AccountScreen() {
   const router = useRouter();
   const { user, userPreference, logout } = useAuthStore();
   const isSeller = userPreference?.type === 'seller';
+  const [period, setPeriod] = useState<'day' | 'week' | 'month'>('month');
+
+  // Mock earnings data - replace with real data from store/API
+  const mockEarnings = [
+    {
+      id: 'earn_1',
+      sellerId: user?.id || '',
+      orderId: 'order_123',
+      amount: 250,
+      paymentMethod: 'cod' as const,
+      status: 'credited' as const,
+      buyerId: 'buyer_1',
+      dishName: 'Biryani',
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      creditedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'earn_2',
+      sellerId: user?.id || '',
+      orderId: 'order_124',
+      amount: 180,
+      paymentMethod: 'prepaid' as const,
+      status: 'credited' as const,
+      buyerId: 'buyer_2',
+      dishName: 'Butter Chicken',
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      creditedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'earn_3',
+      sellerId: user?.id || '',
+      orderId: 'order_125',
+      amount: 320,
+      paymentMethod: 'cod' as const,
+      status: 'pending' as const,
+      buyerId: 'buyer_3',
+      dishName: 'Samosas',
+      createdAt: new Date().toISOString(),
+      confirmationDeadline: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ];
 
   const handleLogout = () => {
     Alert.alert(
@@ -209,6 +254,26 @@ export default function AccountScreen() {
           </View>
         </View>
       </View>
+
+      {/* Earnings Section for Sellers */}
+      {isSeller && (
+        <View style={styles.earningsSection}>
+          <EarningsCard
+            totalEarnings={mockEarnings
+              .filter(e => e.status === 'credited')
+              .reduce((sum, e) => sum + (e.amount || 0), 0)}
+            pendingAmount={mockEarnings
+              .filter(e => e.status === 'pending')
+              .reduce((sum, e) => sum + (e.amount || 0), 0)}
+            creditedAmount={mockEarnings
+              .filter(e => e.status === 'credited')
+              .reduce((sum, e) => sum + (e.amount || 0), 0)}
+            transactions={mockEarnings}
+            period={period}
+            onPeriodChange={setPeriod}
+          />
+        </View>
+      )}
 
       {/* Menu Sections */}
       {sections.map((section) => (
@@ -388,5 +453,14 @@ const styles = StyleSheet.create({
   footerSubText: {
     fontSize: designTokens.typography.size.xs,
     color: designTokens.colors.textLight,
+  },
+
+  earningsSection: {
+    marginHorizontal: designTokens.spacing.md,
+    marginBottom: designTokens.spacing.lg,
+    backgroundColor: designTokens.colors.white,
+    borderRadius: designTokens.radius.lg,
+    overflow: 'hidden',
+    ...designTokens.shadows.sm,
   },
 });
