@@ -21,7 +21,9 @@ interface ButtonProps {
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
-  icon?: React.ReactNode; // Added icon prop
+  icon?: React.ReactNode;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -33,7 +35,9 @@ const Button: React.FC<ButtonProps> = ({
   disabled = false,
   style,
   textStyle,
-  icon, // Added icon prop
+  icon,
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
   const getButtonStyle = () => {
     const baseStyle: ViewStyle = {
@@ -119,6 +123,11 @@ const Button: React.FC<ButtonProps> = ({
       disabled={disabled || isLoading}
       activeOpacity={0.8}
       hitSlop={{ top: hitSlopValue, bottom: hitSlopValue, left: hitSlopValue, right: hitSlopValue }}
+      accessible={true}
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityHint={accessibilityHint}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: disabled || isLoading }}
     >
       {isLoading ? (
         <ActivityIndicator size="small" color={variant === 'outline' ? colors.primary : colors.white} />

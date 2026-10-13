@@ -29,7 +29,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
   return (
     <View style={[styles.container, style]}>
       <View style={styles.searchContainer}>
-        <Search size={20} color={colors.textLight} style={styles.searchIcon} />
+        <Search
+          size={20}
+          color={colors.textLight}
+          style={styles.searchIcon}
+          accessible={true}
+          accessibilityLabel="Search icon"
+        />
         <TextInput
           style={styles.input}
           placeholder={placeholder}
@@ -38,14 +44,22 @@ const SearchBar: React.FC<SearchBarProps> = ({
           onChangeText={onChangeText}
           onSubmitEditing={onSubmitEditing}
           returnKeyType="search"
+          accessible={true}
+          accessibilityLabel="Search input"
+          accessibilityHint={placeholder}
+          accessibilityRole="search"
         />
       </View>
-      
+
       {onFilterPress && (
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.filterButton}
           onPress={onFilterPress}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessible={true}
+          accessibilityLabel="Filter button"
+          accessibilityHint="Open filter options"
+          accessibilityRole="button"
         >
           <Sliders size={20} color={colors.white} />
         </TouchableOpacity>

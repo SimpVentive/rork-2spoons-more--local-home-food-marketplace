@@ -1,47 +1,43 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Tabs, useRouter } from 'expo-router';
-import { 
-  Home, 
-  Search, 
-  ShoppingBag, 
-  Users, 
-  Wallet, 
-  Bell, 
-  User, 
-  PieChart, 
+import {
+  Home,
+  Search,
+  ShoppingBag,
+  Users,
+  Wallet,
+  Bell,
+  User,
+  PieChart,
   PlusCircle,
-  MoreHorizontal,
   Settings,
-  Route,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
-import { Platform, StyleSheet, View, TouchableOpacity, Text, Modal, Pressable } from 'react-native';
+import designTokens from '@/constants/design-tokens';
+import { Platform, StyleSheet, View } from 'react-native';
 
 export default function TabLayout() {
   const router = useRouter();
-  const { user, userPreference } = useAuthStore();
-  const [moreMenuVisible, setMoreMenuVisible] = useState(false);
-  
+  const { user, userPreference, isAuthenticated } = useAuthStore();
+
   // Check authentication in useEffect to avoid navigation during render
   useEffect(() => {
-    const { isAuthenticated, userPreference } = useAuthStore.getState();
-    
-    if (!isAuthenticated) {
-      router.replace('/(auth)');
-    } else if (!userPreference) {
-      router.replace('/user-preference');
-    }
-  }, []);
+    const checkAuth = async () => {
+      // Give the store time to hydrate from AsyncStorage
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-  const toggleMoreMenu = () => {
-    setMoreMenuVisible(!moreMenuVisible);
-  };
+      const { isAuthenticated, userPreference } = useAuthStore.getState();
 
-  const navigateTo = (route: string) => {
-    setMoreMenuVisible(false);
-    router.push(route);
-  };
+      if (!isAuthenticated) {
+        router.replace('/(auth)');
+      } else if (!userPreference) {
+        router.replace('/user-preference');
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   // Determine if user is a seller/chef based on userPreference
   const isSeller = userPreference?.type === 'seller';
@@ -59,8 +55,8 @@ export default function TabLayout() {
             borderBottomWidth: 1,
           },
           headerTitleStyle: {
-            fontWeight: '600',
-            fontSize: 18,
+            fontWeight: designTokens.typography.weight.semibold,
+            fontSize: designTokens.typography.size.lg,
           },
           tabBarItemStyle: styles.tabBarItem,
           tabBarHideOnKeyboard: true,
@@ -75,25 +71,8 @@ export default function TabLayout() {
             tabBarLabel: 'Home',
           }}
         />
-        
-        {/* More - Always visible and always second (next to Home) */}
-        <Tabs.Screen
-          name="more"
-          options={{
-            title: 'More',
-            tabBarIcon: ({ color }) => <MoreHorizontal size={24} color={color} />,
-            tabBarLabel: 'More',
-          }}
-          listeners={{
-            tabPress: (e) => {
-              // Prevent default navigation
-              e.preventDefault();
-              toggleMoreMenu();
-            },
-          }}
-        />
-        
-        {/* For Buyers: Explore, Alerts, Profile */}
+
+        {/* For Buyers: Explore, Alerts */}
         {!isSeller && (
           <>
             <Tabs.Screen
@@ -104,7 +83,7 @@ export default function TabLayout() {
                 tabBarLabel: 'Explore',
               }}
             />
-            
+
             <Tabs.Screen
               name="notifications"
               options={{
@@ -113,30 +92,12 @@ export default function TabLayout() {
                 tabBarLabel: 'Alerts',
               }}
             />
-            
-            <Tabs.Screen
-              name="profile"
-              options={{
-                title: 'Profile',
-                tabBarIcon: ({ color }) => <User size={24} color={color} />,
-                tabBarLabel: 'Profile',
-              }}
-            />
           </>
         )}
-        
-        {/* For Sellers: Profile, Create, Followers, Wallet */}
+
+        {/* For Sellers: Create, Followers */}
         {isSeller && (
           <>
-            <Tabs.Screen
-              name="profile"
-              options={{
-                title: 'Profile',
-                tabBarIcon: ({ color }) => <User size={24} color={color} />,
-                tabBarLabel: 'Profile',
-              }}
-            />
-            
             <Tabs.Screen
               name="create"
               options={{
@@ -145,7 +106,7 @@ export default function TabLayout() {
                 tabBarLabel: 'Create',
               }}
             />
-            
+
             <Tabs.Screen
               name="following"
               options={{
@@ -154,19 +115,20 @@ export default function TabLayout() {
                 tabBarLabel: 'Followers',
               }}
             />
-            
-            <Tabs.Screen
-              name="finances"
-              options={{
-                title: 'Wallet',
-                tabBarIcon: ({ color }) => <Wallet size={24} color={color} />,
-                tabBarLabel: 'Wallet',
-              }}
-            />
           </>
         )}
-        
-        {/* Hidden tabs that will be accessible from the more menu */}
+
+        {/* Account - Always visible and always last */}
+        <Tabs.Screen
+          name="account"
+          options={{
+            title: 'Account',
+            tabBarIcon: ({ color }) => <Settings size={24} color={color} />,
+            tabBarLabel: 'Account',
+          }}
+        />
+
+        {/* Hidden tabs (accessible from Account menu) */}
         <Tabs.Screen
           name="orders"
           options={{
@@ -181,99 +143,21 @@ export default function TabLayout() {
             tabBarButton: () => null,
           }}
         />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarButton: () => null,
+          }}
+        />
+        <Tabs.Screen
+          name="finances"
+          options={{
+            title: 'Finances',
+            tabBarButton: () => null,
+          }}
+        />
       </Tabs>
-
-      {/* More Menu Modal */}
-      <Modal
-        visible={moreMenuVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setMoreMenuVisible(false)}
-      >
-        <Pressable 
-          style={styles.modalOverlay}
-          onPress={() => setMoreMenuVisible(false)}
-        >
-          <View style={styles.moreMenuContainer}>
-            {/* Orders - Always visible */}
-            <TouchableOpacity 
-              style={styles.moreMenuItem}
-              onPress={() => navigateTo('/(tabs)/orders')}
-            >
-              <ShoppingBag size={24} color={colors.text} />
-              <Text style={styles.moreMenuItemText}>Orders</Text>
-            </TouchableOpacity>
-            
-            {/* For Buyers: Following, Explore (if seller), Wallet */}
-            {!isSeller && (
-              <>
-                <TouchableOpacity 
-                  style={styles.moreMenuItem}
-                  onPress={() => navigateTo('/(tabs)/following')}
-                >
-                  <Users size={24} color={colors.text} />
-                  <Text style={styles.moreMenuItemText}>Following</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.moreMenuItem}
-                  onPress={() => navigateTo('/(tabs)/finances')}
-                >
-                  <Wallet size={24} color={colors.text} />
-                  <Text style={styles.moreMenuItemText}>Wallet</Text>
-                </TouchableOpacity>
-              </>
-            )}
-            
-            {/* For Sellers: Explore, Notifications, Analytics */}
-            {isSeller && (
-              <>
-                <TouchableOpacity 
-                  style={styles.moreMenuItem}
-                  onPress={() => navigateTo('/(tabs)/search')}
-                >
-                  <Search size={24} color={colors.text} />
-                  <Text style={styles.moreMenuItemText}>Explore</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.moreMenuItem}
-                  onPress={() => navigateTo('/(tabs)/notifications')}
-                >
-                  <Bell size={24} color={colors.text} />
-                  <Text style={styles.moreMenuItemText}>Notifications</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.moreMenuItem}
-                  onPress={() => navigateTo('/(tabs)/analytics')}
-                >
-                  <PieChart size={24} color={colors.text} />
-                  <Text style={styles.moreMenuItemText}>Analytics</Text>
-                </TouchableOpacity>
-              </>
-            )}
-            
-            {/* Route Settings - Always visible */}
-            <TouchableOpacity 
-              style={styles.moreMenuItem}
-              onPress={() => navigateTo('/route-settings')}
-            >
-              <Route size={24} color={colors.text} />
-              <Text style={styles.moreMenuItemText}>Route Settings</Text>
-            </TouchableOpacity>
-            
-            {/* Account Settings - Always visible */}
-            <TouchableOpacity 
-              style={styles.moreMenuItem}
-              onPress={() => navigateTo('/edit-profile')}
-            >
-              <Settings size={24} color={colors.text} />
-              <Text style={styles.moreMenuItemText}>Account Settings</Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Modal>
     </View>
   );
 }
@@ -284,59 +168,30 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   tabBar: {
-    borderTopColor: colors.border,
-    height: Platform.OS === 'ios' ? 85 : 60,
-    paddingBottom: Platform.OS === 'ios' ? 25 : 5,
-    paddingTop: 5,
-    elevation: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    borderTopColor: designTokens.colors.border,
+    borderTopWidth: 1,
+    height: designTokens.common.tabBarHeight,
+    paddingBottom: Platform.OS === 'ios' ? designTokens.common.safeAreaPadding : designTokens.spacing.sm,
+    paddingTop: designTokens.spacing.sm,
+    ...designTokens.shadows.lg,
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 1000,
-    backgroundColor: colors.white,
-    paddingHorizontal: 8,
+    zIndex: designTokens.zIndex.modal,
+    backgroundColor: designTokens.colors.white,
+    paddingHorizontal: designTokens.spacing.sm,
   },
   tabBarLabel: {
-    fontSize: 10,
+    fontSize: designTokens.typography.size.xs,
     marginTop: 0,
     paddingTop: 0,
   },
   tabBarItem: {
-    height: 50,
-    paddingVertical: 5,
+    height: designTokens.common.buttonHeight.medium,
+    paddingVertical: designTokens.spacing.sm,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  moreMenuContainer: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
-  },
-  moreMenuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  moreMenuItemText: {
-    fontSize: 16,
-    color: colors.text,
-    marginLeft: 16,
-    fontWeight: '500',
   },
 });
