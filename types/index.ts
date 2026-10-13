@@ -90,6 +90,10 @@ export interface FoodListing {
   isApproved?: boolean;
   isLunchBox?: boolean;
   lunchBoxItems?: LunchBoxItem[];
+  // NEW: Multi-Pickup Locations & COD
+  pickupLocations?: PickupLocation[]; // Multiple pickup points
+  paymentMethod?: 'prepaid' | 'cod' | 'both'; // Payment options
+  codDetails?: CODDetails; // Cash on Delivery settings
 }
 
 export interface LunchBoxItem {
@@ -147,7 +151,7 @@ export interface Order {
   sellerName: string;
   sellerPhone: string;
   sellerAddress: string;
-  paymentMethod: string;
+  paymentMethod: 'prepaid' | 'cod' | 'wallet';
   notes?: string;
   rating?: number;
   review?: string;
@@ -174,6 +178,23 @@ export interface Order {
   deliveredAt?: string;
   completedAt?: string;
   deliveryMethod?: string;
+  // NEW: Multi-Pickup & COD
+  pickupLocation?: PickupLocation; // Selected pickup location for this order
+  codStatus?: {
+    // Cash on Delivery tracking
+    status: 'pending' | 'confirmed' | 'denied' | 'expired';
+    confirmedAmount?: number;
+    confirmationDeadline?: string; // ISO timestamp for popup
+    confirmedAt?: string;
+    denialReason?: string;
+  };
+  notification?: {
+    // Notification tracking
+    sentToSeller: boolean;
+    sellerNotificationId?: string;
+    sentToWhatsApp?: boolean;
+    whatsAppTimestamp?: string;
+  };
 }
 
 export interface Review {
@@ -310,5 +331,83 @@ export interface DishNotification {
   email?: string;
   phone?: string;
   isActive: boolean;
+  createdAt: string;
+}
+
+// ============= NEW: Multi-Pickup & COD Features =============
+
+export interface PickupLocation {
+  id: string;
+  listingId: string;
+  type: 'home' | 'custom' | 'restaurant' | 'other';
+  name: string; // e.g., "My House", "Downtown Office"
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+    fullAddress: string;
+  };
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+  googleMapsUrl: string;
+  pickupTimeStart: string; // HH:MM format (24-hour)
+  pickupTimeEnd: string; // HH:MM format (24-hour)
+  instructions?: string; // Special pickup instructions
+  isAvailable: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CODDetails {
+  enabled: boolean;
+  pickupTimeWindowStart: string; // HH:MM format
+  pickupTimeWindowEnd: string; // HH:MM format
+  confirmationTimeoutMinutes: number; // Minutes after window closes to show popup (default: 5)
+}
+
+export interface SellerEarnings {
+  id: string;
+  sellerId: string;
+  orderId: string;
+  amount: number;
+  paymentMethod: 'cod' | 'prepaid' | 'wallet';
+  status: 'pending' | 'credited' | 'withdrawn';
+  creditedAt?: string;
+  withdrawnAt?: string;
+  transactionId?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface CODConfirmation {
+  id: string;
+  orderId: string;
+  sellerId: string;
+  status: 'pending' | 'confirmed' | 'denied' | 'expired';
+  confirmedAmount: number;
+  confirmationDeadline: string; // ISO timestamp
+  confirmedAt?: string;
+  denialReason?: string;
+  createdAt: string;
+}
+
+export interface SellerNotification {
+  id: string;
+  sellerId: string;
+  orderId: string;
+  type: 'new_order' | 'cod_confirmation' | 'payment_received' | 'order_cancelled';
+  title: string;
+  message: string;
+  buyerName: string;
+  buyerPhone: string;
+  dishName: string;
+  amount: number;
+  isRead: boolean;
+  sentToWhatsApp?: boolean;
+  whatsAppTimestamp?: string;
   createdAt: string;
 }
