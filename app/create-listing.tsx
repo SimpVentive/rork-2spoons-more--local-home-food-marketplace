@@ -33,8 +33,11 @@ import Input from '@/components/Input';
 import Button from '@/components/Button';
 import LocationPicker from '@/components/LocationPicker';
 import SubscriptionModal from '@/components/SubscriptionModal';
+import { PickupLocationManager } from '@/components/PickupLocationManager';
+import { CODPaymentSetup } from '@/components/CODPaymentSetup';
 import colors from '@/constants/colors';
 import { CUISINE_TYPES, PACKAGING_TYPES, SOUTH_INDIAN_SUBCUISINES, SOUTH_INDIAN_CUISINES_FLAT } from '@/mocks/data';
+import { PickupLocation, CODDetails } from '@/types';
 
 // Lunchbox image from Unsplash (online URL instead of local asset)
 const LUNCHBOX_IMAGE_URL = "https://images.unsplash.com/photo-1576866209830-589e1bfbaa4d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80";
@@ -73,6 +76,9 @@ export default function CreateListingScreen() {
       address: user?.address || '',
     },
     useDefaultAddress: true,
+    pickupLocations: [] as PickupLocation[],
+    paymentMethod: 'prepaid' as 'prepaid' | 'cod' | 'both',
+    codDetails: undefined as CODDetails | undefined,
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -187,7 +193,17 @@ export default function CreateListingScreen() {
     if (!formData.pickupLocation.address) {
       newErrors.pickupLocation = 'Pickup location is required';
     }
-    
+
+    if (formData.pickupLocations.length === 0) {
+      newErrors.pickupLocations = 'Please add at least one pickup location';
+    }
+
+    if (formData.paymentMethod === 'cod' || formData.paymentMethod === 'both') {
+      if (!formData.codDetails) {
+        newErrors.codDetails = 'COD settings are required when COD is enabled';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -256,8 +272,8 @@ export default function CreateListingScreen() {
       sellerRating: user.rating ?? 5, // Provide default rating of 5 if undefined
       dishName: formData.isLunchBox ? 'Lunch Box' : formData.dishName,
       description: formData.description,
-      image: formData.isLunchBox 
-        ? (formData.lunchBoxItems[0]?.image || '') 
+      image: formData.isLunchBox
+        ? (formData.lunchBoxItems[0]?.image || '')
         : formData.image,
       ingredients: [], // Empty array as default
       allergens: [], // Empty array as default
@@ -280,6 +296,9 @@ export default function CreateListingScreen() {
       spiceLevel: 'mild' as const,
       preparationTime: 30,
       pickupTime: formData.availableFrom.toISOString(),
+      pickupLocations: formData.pickupLocations,
+      paymentMethod: formData.paymentMethod,
+      codDetails: formData.codDetails,
     };
     
     const success = await addListing(newListing);
@@ -776,7 +795,7 @@ export default function CreateListingScreen() {
             {errors.packaging && (
               <Text style={styles.errorText}>{errors.packaging}</Text>
             )}
-            
+
             <View style={styles.tagsContainer}>
               {PACKAGING_TYPES.map((packaging: string) => (
                 <TouchableOpacity
@@ -799,7 +818,67 @@ export default function CreateListingScreen() {
               ))}
             </View>
           </View>
-          
+
+          {/* Multiple Pickup Locations Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Pickup Locations</Text>
+            {errors.pickupLocations && (
+              <Text style={styles.errorText}>{errors.pickupLocations}</Text>
+            )}
+            <PickupLocationManager
+              locations={formData.pickupLocations}
+              onAddLocation={(location) => {
+                updateFormData('pickupLocations', [...formData.pickupLocations, location]);
+              }}
+              onEditLocation={(location) => {
+                const updated = formData.pickupLocations.map(l => l.id === location.id ? location : l);
+                updateFormData('pickupLocations', updated);
+              }}
+              onDeleteLocation={(id) => {
+                updateFormData('pickupLocations', formData.pickupLocations.filter(l => l.id !== id));
+              }}
+            />
+          </View>
+
+          {/* COD Payment Setup Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Payment Method</Text>
+            <View style={styles.paymentMethodContainer}>
+              {(['prepaid', 'cod', 'both'] as const).map((method) => (
+                <TouchableOpacity
+                  key={method}
+                  style={[
+                    styles.paymentMethodButton,
+                    formData.paymentMethod === method && styles.selectedPaymentMethod,
+                  ]}
+                  onPress={() => updateFormData('paymentMethod', method)}
+                >
+                  <Text
+                    style={[
+                      styles.paymentMethodText,
+                      formData.paymentMethod === method && styles.selectedPaymentMethodText,
+                    ]}
+                  >
+                    {method === 'prepaid' ? 'Prepaid Only' : method === 'cod' ? 'Cash on Delivery' : 'Both'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {(formData.paymentMethod === 'cod' || formData.paymentMethod === 'both') && (
+              <>
+                {errors.codDetails && (
+                  <Text style={styles.errorText}>{errors.codDetails}</Text>
+                )}
+                <CODPaymentSetup
+                  codDetails={formData.codDetails}
+                  onSave={(codDetails) => updateFormData('codDetails', codDetails)}
+                  onCancel={() => updateFormData('paymentMethod', 'prepaid')}
+                />
+              </>
+            )}
+          </View>
+
           <View style={styles.dateTimeContainer}>
             <Text style={styles.sectionTitle}>Availability</Text>
             
@@ -1247,5 +1326,32 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '500',
     marginLeft: 8,
+  },
+  paymentMethodContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  paymentMethodButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    marginHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectedPaymentMethod: {
+    backgroundColor: colors.primary,
+  },
+  paymentMethodText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  selectedPaymentMethodText: {
+    color: colors.white,
   },
 });
