@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
   TextInput,
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -12,9 +12,9 @@ import {
   Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { 
-  Search, 
-  Send, 
+import {
+  Search,
+  Send,
   User,
   MessageSquare,
   ChevronRight,
@@ -23,9 +23,8 @@ import {
   Mail,
   Info
 } from 'lucide-react-native';
-import type { AdminConversation, AdminMessage, User as UserType } from '@/types';
+import { AdminConversation, AdminMessage, User as UserType } from '@/types';
 import { fetchUserProfile } from '@/lib/supabase';
-import { useMessagingStore } from '@/store/messaging-store';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
@@ -85,9 +84,28 @@ export default function AdminMessagingScreen() {
 
   const loadUserDetails = async (userId: string) => {
     try {
-      const user = await fetchUserProfile(userId);
-      if (user) {
-        setUserDetails(user);
+      // Fetch user profile from Supabase
+      const userData = await fetchUserProfile(userId);
+
+      if (userData) {
+        // Convert database format to User format
+        const formattedUser: UserType = {
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone,
+          address: userData.address,
+          profileImage: userData.profile_image,
+          experience: userData.experience,
+          cuisineTypes: userData.cuisine_types || [],
+          paymentMethods: userData.payment_methods || [],
+          location: userData.location,
+          isChef: userData.is_chef,
+          allowProfileDisplay: userData.allow_profile_display,
+          isVerified: userData.is_verified,
+        };
+
+        setUserDetails(formattedUser);
       }
     } catch (error) {
       console.error('Error loading user details:', error);

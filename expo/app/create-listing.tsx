@@ -33,8 +33,11 @@ import Input from '@/components/Input';
 import Button from '@/components/Button';
 import LocationPicker from '@/components/LocationPicker';
 import SubscriptionModal from '@/components/SubscriptionModal';
+import { PickupLocationManager } from '@/components/PickupLocationManager';
+import { CODPaymentSetup } from '@/components/CODPaymentSetup';
 import colors from '@/constants/colors';
 import { CUISINE_TYPES, PACKAGING_TYPES, SOUTH_INDIAN_SUBCUISINES, SOUTH_INDIAN_CUISINES_FLAT } from '@/mocks/data';
+import { PickupLocation, CODDetails } from '@/types';
 import { uploadImage } from '@/lib/image-upload';
 
 // Lunchbox image from Unsplash (online URL instead of local asset)
@@ -74,6 +77,9 @@ export default function CreateListingScreen() {
       address: user?.address || '',
     },
     useDefaultAddress: true,
+    pickupLocations: [] as PickupLocation[],
+    paymentMethod: 'prepaid' as 'prepaid' | 'cod' | 'both',
+    codDetails: undefined as CODDetails | undefined,
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -190,7 +196,17 @@ export default function CreateListingScreen() {
     if (!formData.pickupLocation.address) {
       newErrors.pickupLocation = 'Pickup location is required';
     }
-    
+
+    if (formData.pickupLocations.length === 0) {
+      newErrors.pickupLocations = 'Please add at least one pickup location';
+    }
+
+    if (formData.paymentMethod === 'cod' || formData.paymentMethod === 'both') {
+      if (!formData.codDetails) {
+        newErrors.codDetails = 'COD settings are required when COD is enabled';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -214,6 +230,7 @@ export default function CreateListingScreen() {
         try {
           // Upload image to Supabase Storage
           const publicUrl = await uploadImage(result.assets[0].uri, 'listings');
+          updateFormData('image', publicUrl);
           setListingImage(publicUrl);
           Alert.alert('Success', 'Image uploaded successfully');
         } catch (uploadError) {
@@ -297,92 +314,93 @@ export default function CreateListingScreen() {
   
   const handleSubmit = async () => {
     if (!validateForm()) return;
-    
+
     if (!user) {
       Alert.alert('Error', 'You must be logged in to create a listing');
       return;
     }
 
+    const eligibility = checkPostingEligibility();
+    if (!eligibility.eligible) {
+      Alert.alert(
+        'Subscription Required',
+        eligibility.message,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Subscribe', onPress: () => setShowSubscriptionModal(true) }
+        ]
+      );
+      return;
+    }
+
+    const quantity = parseInt(formData.quantity, 10);
+    const priceNum = parseFloat(formData.price);
+    const servingsNum = parseInt(formData.servings, 10) || 2;
+
+    if (isNaN(quantity) || isNaN(priceNum)) {
+      Alert.alert('Error', 'Please enter valid quantity and price');
+      return;
+    }
+
+    const pickupLoc = formData.pickupLocation || {
+      latitude: user.location?.latitude || 0,
+      longitude: user.location?.longitude || 0,
+      address: user.address || '',
+    };
+
+    const imageUrl = formData.isLunchBox
+      ? (formData.lunchBoxItems[0]?.image || '')
+      : (listingImage || formData.image || '');
+
+    const newListing = {
+      sellerId: user.id,
+      sellerName: user.name || 'Unknown Seller',
+      sellerImage: user.profileImage || '',
+      sellerRating: user.rating ?? 5,
+      dishName: formData.isLunchBox ? 'Lunch Box' : (formData.dishName || 'Homemade Dish'),
+      description: formData.description || '',
+      image: imageUrl,
+      ingredients: [],
+      allergens: [],
+      availableQuantity: quantity,
+      quantity,
+      remainingQuantity: quantity,
+      servings: servingsNum,
+      price: priceNum,
+      packaging: formData.packaging || 'Basic Container',
+      availableFrom: formData.availableFrom.toISOString(),
+      availableUntil: formData.availableUntil.toISOString(),
+      cuisineType: formData.cuisineType || 'Home Cooked',
+      subcuisineType: formData.subcuisineType || undefined,
+      isVegetarian: formData.isVegetarian,
+      isLunchBox: formData.isLunchBox,
+      lunchBoxItems: formData.isLunchBox ? formData.lunchBoxItems : [],
+      location: {
+        latitude: pickupLoc.latitude || 0,
+        longitude: pickupLoc.longitude || 0,
+      },
+      isActive: true,
+      address: pickupLoc.address || 'Default Address',
+      spiceLevel: 'mild' as const,
+      preparationTime: 30,
+      pickupTime: formData.availableFrom.toISOString(),
+      pickupLocations: formData.pickupLocations,
+      paymentMethod: formData.paymentMethod,
+      codDetails: formData.codDetails,
+    };
+
     try {
-      // Check if user is eligible to post
-      const eligibility = checkPostingEligibility();
-      if (!eligibility.eligible) {
-        Alert.alert(
-          'Subscription Required',
-          eligibility.message,
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Subscribe', onPress: () => setShowSubscriptionModal(true) }
-          ]
-        );
-        return;
-      }
-      
-      const quantity = parseInt(formData.quantity);
-      const priceNum = parseFloat(formData.price);
-      const servingsNum = parseInt(formData.servings) || 2;
-      
-      if (isNaN(quantity) || isNaN(priceNum)) {
-        Alert.alert('Error', 'Please enter valid quantity and price');
-        return;
-      }
-      
-      const pickupLoc = formData.pickupLocation || {
-        latitude: user.location?.latitude || 0,
-        longitude: user.location?.longitude || 0,
-        address: user.address || '',
-      };
-      
-      const newListing = {
-        sellerId: user.id,
-        sellerName: user.name || 'Unknown Seller',
-        sellerImage: user.profileImage || '',
-        sellerRating: user.rating ?? 5,
-        dishName: formData.isLunchBox ? 'Lunch Box' : (formData.dishName || 'Homemade Dish'),
-        description: formData.description || '',
-        image: formData.isLunchBox 
-          ? (formData.lunchBoxItems[0]?.image || '') 
-          : (listingImage || ''),
-        ingredients: [],
-        allergens: [],
-        availableQuantity: quantity,
-        quantity: quantity,
-        remainingQuantity: quantity,
-        servings: servingsNum,
-        price: priceNum,
-        packaging: formData.packaging || 'Basic Container',
-        availableFrom: (formData.availableFrom || new Date()).toISOString(),
-        availableUntil: (formData.availableUntil || new Date(Date.now() + 24 * 60 * 60 * 1000)).toISOString(),
-        cuisineType: formData.cuisineType || 'Home Cooked',
-        subcuisineType: formData.subcuisineType || '',
-        isVegetarian: formData.isVegetarian,
-        isLunchBox: formData.isLunchBox,
-        lunchBoxItems: formData.isLunchBox ? formData.lunchBoxItems : [],
-        location: {
-          latitude: pickupLoc.latitude || 0,
-          longitude: pickupLoc.longitude || 0,
-        },
-        isActive: true,
-        address: pickupLoc.address || 'Default Address',
-        spiceLevel: 'mild' as const,
-        preparationTime: 30,
-        pickupTime: (formData.availableFrom || new Date()).toISOString(),
-      };
-      
-      const result = await addListing(newListing);
-      
-      if (result) {
-        // Increment post count (non-blocking)
-        incrementPostCount().catch(e => console.error('Post count error:', e));
-        
-        // Navigate away immediately, then show success
+      const createdListing = await addListing(newListing);
+
+      if (createdListing) {
+        await incrementPostCount();
+
         try {
           router.back();
         } catch (e) {
           router.replace('/(tabs)/home' as never);
         }
-        
-        // Show success alert after navigation starts
+
         setTimeout(() => {
           Alert.alert('Success', 'Your listing has been created successfully!');
         }, 300);
@@ -875,7 +893,7 @@ export default function CreateListingScreen() {
             {errors.packaging && (
               <Text style={styles.errorText}>{errors.packaging}</Text>
             )}
-            
+
             <View style={styles.tagsContainer}>
               {PACKAGING_TYPES.map((packaging: string) => (
                 <TouchableOpacity
@@ -898,7 +916,67 @@ export default function CreateListingScreen() {
               ))}
             </View>
           </View>
-          
+
+          {/* Multiple Pickup Locations Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Pickup Locations</Text>
+            {errors.pickupLocations && (
+              <Text style={styles.errorText}>{errors.pickupLocations}</Text>
+            )}
+            <PickupLocationManager
+              locations={formData.pickupLocations}
+              onAddLocation={(location) => {
+                updateFormData('pickupLocations', [...formData.pickupLocations, location]);
+              }}
+              onEditLocation={(location) => {
+                const updated = formData.pickupLocations.map(l => l.id === location.id ? location : l);
+                updateFormData('pickupLocations', updated);
+              }}
+              onDeleteLocation={(id) => {
+                updateFormData('pickupLocations', formData.pickupLocations.filter(l => l.id !== id));
+              }}
+            />
+          </View>
+
+          {/* COD Payment Setup Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Payment Method</Text>
+            <View style={styles.paymentMethodContainer}>
+              {(['prepaid', 'cod', 'both'] as const).map((method) => (
+                <TouchableOpacity
+                  key={method}
+                  style={[
+                    styles.paymentMethodButton,
+                    formData.paymentMethod === method && styles.selectedPaymentMethod,
+                  ]}
+                  onPress={() => updateFormData('paymentMethod', method)}
+                >
+                  <Text
+                    style={[
+                      styles.paymentMethodText,
+                      formData.paymentMethod === method && styles.selectedPaymentMethodText,
+                    ]}
+                  >
+                    {method === 'prepaid' ? 'Prepaid Only' : method === 'cod' ? 'Cash on Delivery' : 'Both'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {(formData.paymentMethod === 'cod' || formData.paymentMethod === 'both') && (
+              <>
+                {errors.codDetails && (
+                  <Text style={styles.errorText}>{errors.codDetails}</Text>
+                )}
+                <CODPaymentSetup
+                  codDetails={formData.codDetails}
+                  onSave={(codDetails) => updateFormData('codDetails', codDetails)}
+                  onCancel={() => updateFormData('paymentMethod', 'prepaid')}
+                />
+              </>
+            )}
+          </View>
+
           <View style={styles.dateTimeContainer}>
             <Text style={styles.sectionTitle}>Availability</Text>
             
@@ -1356,5 +1434,32 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '500',
     marginLeft: 8,
+  },
+  paymentMethodContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  paymentMethodButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    marginHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectedPaymentMethod: {
+    backgroundColor: colors.primary,
+  },
+  paymentMethodText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  selectedPaymentMethodText: {
+    color: colors.white,
   },
 });

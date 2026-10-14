@@ -25,6 +25,8 @@ interface ButtonProps {
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
   icon?: React.ReactNode;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 const Button = forwardRef<any, ButtonProps>(({
@@ -38,8 +40,9 @@ const Button = forwardRef<any, ButtonProps>(({
   style,
   textStyle,
   icon,
-}, ref) => {
-  const actualLoading = isLoading || loading;
+  accessibilityLabel,
+  accessibilityHint,
+}) => {
   const getButtonStyle = () => {
     const baseStyle: ViewStyle = {
       borderRadius: spacing.radius.md,
@@ -152,13 +155,15 @@ const Button = forwardRef<any, ButtonProps>(({
     <ButtonComponent
       ref={ref}
       style={[getButtonStyle(), getSizeStyle(), getDisabledStyle(), style]}
-      hitSlop={{ 
-        top: hitSlopValue, 
-        bottom: hitSlopValue, 
-        left: hitSlopValue, 
-        right: hitSlopValue 
-      }}
-      {...buttonProps}
+      onPress={onPress}
+      disabled={disabled || isLoading}
+      activeOpacity={0.8}
+      hitSlop={{ top: hitSlopValue, bottom: hitSlopValue, left: hitSlopValue, right: hitSlopValue }}
+      accessible={true}
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityHint={accessibilityHint}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: disabled || isLoading }}
     >
       {actualLoading ? (
         <ActivityIndicator size="small" color={variant === 'outline' ? colors.primary : colors.white} />

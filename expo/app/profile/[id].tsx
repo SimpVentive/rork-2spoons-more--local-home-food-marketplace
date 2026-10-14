@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
   TouchableOpacity,
   Platform,
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { 
-  Star, 
-  MapPin, 
+import {
+  Star,
+  MapPin,
   ChefHat,
   CreditCard,
   Users,
@@ -51,13 +51,37 @@ export default function SellerProfileScreen() {
   const router = useRouter();
   
   useEffect(() => {
-    if (!id) return;
+    loadSellerProfile();
+  }, [id]);
 
-    // Fetch seller from Supabase
-    const loadSeller = async () => {
-      const foundSeller = await fetchUserProfile(id);
-      if (foundSeller) {
-        setSeller(foundSeller);
+  const loadSellerProfile = async () => {
+    try {
+      if (!id) return;
+
+      // Fetch seller profile from Supabase
+      const sellerData = await fetchUserProfile(id);
+
+      if (sellerData) {
+        // Convert database format to User format
+        const formattedSeller: User = {
+          id: sellerData.id,
+          name: sellerData.name,
+          email: sellerData.email,
+          phone: sellerData.phone,
+          address: sellerData.address,
+          profileImage: sellerData.profile_image,
+          experience: sellerData.experience,
+          cuisineTypes: sellerData.cuisine_types || [],
+          paymentMethods: sellerData.payment_methods || [],
+          location: sellerData.location,
+          isChef: sellerData.is_chef,
+          allowProfileDisplay: sellerData.allow_profile_display,
+          isVerified: sellerData.is_verified,
+          rating: sellerData.rating,
+          reviewCount: sellerData.review_count,
+        };
+
+        setSeller(formattedSeller);
 
         // Get seller listings
         const listings = getSellerListings(id);
@@ -69,10 +93,10 @@ export default function SellerProfileScreen() {
         // Get follower count
         setFollowerCount(getFollowerCount(id));
       }
-    };
-
-    loadSeller();
-  }, [id]);
+    } catch (error) {
+      console.error('Error loading seller profile:', error);
+    }
+  };
   
   const loadSellerReviews = async (sellerId: string) => {
     const reviews = await fetchSellerReviews(sellerId);

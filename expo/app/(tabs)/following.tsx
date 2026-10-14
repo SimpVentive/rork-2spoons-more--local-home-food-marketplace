@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -37,22 +37,54 @@ export default function FollowingScreen() {
       loadFollowedContent();
     }
   }, [user]);
-
+  
   const loadFollowedContent = async () => {
     if (!user) return;
 
-    // Get IDs of followed sellers
-    const followedIds = getFollowedSellers(user.id);
+    try {
+      // Get IDs of followed sellers
+      const followedIds = getFollowedSellers(user.id);
 
-    // Get seller profiles from Supabase
-    const sellers = await fetchUserProfilesByIds(followedIds);
-    setFollowedSellers(sellers);
+      if (followedIds.length === 0) {
+        setFollowedSellers([]);
+        setFollowedListings([]);
+        return;
+      }
 
-    // Get listings from followed sellers
-    const sellerListings = listings.filter(listing =>
-      followedIds.includes(listing.sellerId)
-    );
-    setFollowedListings(sellerListings);
+      // Fetch seller profiles from Supabase
+      const sellerProfiles = await fetchUserProfilesByIds(followedIds);
+
+      // Convert database format to User format
+      const formattedSellers: User[] = sellerProfiles.map((seller: any) => ({
+        id: seller.id,
+        name: seller.name,
+        email: seller.email,
+        phone: seller.phone,
+        address: seller.address,
+        profileImage: seller.profile_image,
+        experience: seller.experience,
+        cuisineTypes: seller.cuisine_types || [],
+        paymentMethods: seller.payment_methods || [],
+        location: seller.location,
+        isChef: seller.is_chef,
+        allowProfileDisplay: seller.allow_profile_display,
+        isVerified: seller.is_verified,
+        rating: seller.rating,
+        reviewCount: seller.review_count,
+      }));
+
+      setFollowedSellers(formattedSellers);
+
+      // Get listings from followed sellers
+      const sellerListings = listings.filter((listing) =>
+        followedIds.includes(listing.sellerId)
+      );
+      setFollowedListings(sellerListings);
+    } catch (error) {
+      console.error('Error loading followed content:', error);
+      setFollowedSellers([]);
+      setFollowedListings([]);
+    }
   };
 
   const onRefresh = async () => {

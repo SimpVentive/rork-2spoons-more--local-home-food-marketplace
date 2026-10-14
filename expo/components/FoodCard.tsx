@@ -1,19 +1,19 @@
-import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
   TouchableOpacity,
   Dimensions,
   Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MapPin, Clock, Star } from 'lucide-react-native';
 import colors from '@/constants/colors';
-import { imageSizes } from '@/constants/images';
-import { spacing } from '@/constants/spacing';
+import designTokens from '@/constants/design-tokens';
 import { FoodListing } from '@/types';
-import { optimizeImageUrl, generatePlaceholder } from '@/utils/imageOptimization';
+import ImagePlaceholder from './ImagePlaceholder';
 
 interface FoodCardProps {
   listing: FoodListing;
@@ -22,58 +22,67 @@ interface FoodCardProps {
   isSoldOut?: boolean;
 }
 
-export const FoodCard: React.FC<FoodCardProps> = ({ 
-  listing, 
+export const FoodCard: React.FC<FoodCardProps> = ({
+  listing,
   onPress,
   isExpired = false,
   isSoldOut = false,
 }) => {
+  const [imageError, setImageError] = useState(false);
+
   const getTimeRemaining = () => {
     const now = new Date();
     const expiryTime = new Date(listing.availableUntil);
-    
+
     if (now > expiryTime) return 'Expired';
-    
+
     const diffMs = expiryTime.getTime() - now.getTime();
     const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (diffHrs > 24) {
       const days = Math.floor(diffHrs / 24);
       return `${days}d left`;
     }
-    
+
     if (diffHrs > 0) {
       return `${diffHrs}h ${diffMins}m left`;
     }
-    
+
     return `${diffMins}m left`;
   };
   
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.container}
       onPress={() => onPress(listing)}
       activeOpacity={0.8}
+      accessible={true}
+      accessibilityLabel={`${listing.dishName} by ${listing.sellerName}`}
+      accessibilityHint={`Price ₹${listing.price}, ${listing.isVegetarian ? 'Vegetarian' : 'Non-vegetarian'}, Available for ${getTimeRemaining()}`}
+      accessibilityRole="button"
     >
       <View style={styles.imageContainer}>
-        <Image
-          source={{ 
-            uri: optimizeImageUrl({
-              uri: listing.image,
-              width: 400,
-              height: 240,
-              quality: 85,
-              format: 'webp'
-            })
-          }}
-          style={styles.image}
-          contentFit="cover"
-          placeholder={generatePlaceholder(400, 240)}
-          transition={200}
-          cachePolicy="memory-disk"
-        />
-        
+        {!imageError ? (
+          <>
+            <Image
+              source={{ uri: listing.image }}
+              style={styles.image}
+              contentFit="cover"
+              onError={() => setImageError(true)}
+            />
+            {/* Gradient overlay for better text contrast on images */}
+            <LinearGradient
+              colors={['transparent', 'rgba(0, 0, 0, 0.3)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={styles.gradient}
+            />
+          </>
+        ) : (
+          <ImagePlaceholder height={160} />
+        )}
+
         {(isExpired || isSoldOut) && (
           <View style={styles.overlayBadge}>
             <Text style={styles.overlayText}>
@@ -81,7 +90,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
             </Text>
           </View>
         )}
-        
+
         <View style={listing.isVegetarian ? styles.vegIndicator : styles.nonVegIndicator} />
       </View>
       
@@ -152,30 +161,24 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     backgroundColor: colors.white,
-    borderRadius: 12,
+    borderRadius: designTokens.radius.lg,
     overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-      web: {
-        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-      },
-    }),
+    ...designTokens.shadows.lg,
   },
   imageContainer: {
     position: 'relative',
   },
   image: {
-    width: imageSizes.listingCard.width,
-    height: imageSizes.listingCard.height,
+    width: '100%',
+    height: 160,
     backgroundColor: colors.border,
+  },
+  gradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
   },
   overlayBadge: {
     position: 'absolute',
@@ -189,98 +192,105 @@ const styles = StyleSheet.create({
   },
   overlayText: {
     color: colors.white,
-    fontWeight: 'bold',
-    fontSize: 14,
+    fontWeight: designTokens.typography.weight.bold,
+    fontSize: designTokens.typography.size.lg,
   },
   vegIndicator: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    top: designTokens.spacing.md,
+    right: designTokens.spacing.md,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: colors.vegetarian,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.white,
   },
   nonVegIndicator: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    top: designTokens.spacing.md,
+    right: designTokens.spacing.md,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: colors.nonVegetarian,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.white,
   },
   content: {
-    padding: 12,
+    padding: designTokens.spacing.lg,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: designTokens.typography.size.xl,
+    fontWeight: designTokens.typography.weight.bold,
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: designTokens.spacing.md,
+    lineHeight: designTokens.typography.lineHeight.tight,
   },
   sellerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: designTokens.spacing.sm,
   },
   sellerImage: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: colors.border,
-    marginRight: spacing.sm,
+    marginRight: designTokens.spacing.sm,
   },
   sellerName: {
-    fontSize: 12,
-    color: colors.text,
+    fontSize: designTokens.typography.size.sm,
+    color: colors.textLight,
     flex: 1,
+    fontWeight: designTokens.typography.weight.normal,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 4,
+    marginLeft: designTokens.spacing.sm,
   },
   rating: {
-    fontSize: 12,
+    fontSize: designTokens.typography.size.sm,
     color: colors.text,
     marginLeft: 2,
+    fontWeight: designTokens.typography.weight.semibold,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: designTokens.spacing.md,
   },
   locationText: {
-    fontSize: 12,
+    fontSize: designTokens.typography.size.sm,
     color: colors.textLight,
-    marginLeft: 4,
+    marginLeft: designTokens.spacing.xs,
     flex: 1,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: designTokens.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   timeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   timeText: {
-    fontSize: 12,
+    fontSize: designTokens.typography.size.sm,
     color: colors.textLight,
-    marginLeft: 4,
+    marginLeft: designTokens.spacing.xs,
   },
   expiredText: {
     color: colors.error,
+    fontWeight: designTokens.typography.weight.semibold,
   },
   price: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: designTokens.typography.size.lg,
+    fontWeight: designTokens.typography.weight.extrabold,
     color: colors.primary,
   },
 });
