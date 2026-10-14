@@ -1,0 +1,613 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Switch,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
+import {
+  User as UserIcon,
+  Mail,
+  Phone,
+  MapPin,
+  Camera,
+  ChefHat,
+  X,
+  Edit3,
+  Save,
+  LogOut,
+} from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { useAuthStore } from '@/store/auth-store';
+import Input from '@/components/Input';
+import Button from '@/components/Button';
+import LocationPicker from '@/components/LocationPicker';
+import colors from '@/constants/colors';
+import { useAuth } from '@/hooks/useAuth';
+import { uploadImage } from '@/lib/image-upload';
+import { ConfirmModal } from "@/components/ConfirmModal";
+
+export default function EditProfileScreen() {
+  const { user, updateProfile, logout } = useAuthStore();
+  const { signOut, isSigningIn } = useAuth();
+  const router = useRouter();
+
+  const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [address, setAddress] = useState(user?.address || '');
+  const [latitude, setLatitude] = useState(user?.location?.latitude || 0);
+  const [longitude, setLongitude] = useState(user?.location?.longitude || 0);
+  const [experience, setExperience] = useState(user?.experience || '');
+  const [cuisineTypes, setCuisineTypes] = useState<string[]>(user?.cuisineTypes || []);
+  const [profileImage, setProfileImage] = useState(user?.profileImage || '');
+  const [allowProfileDisplay, setAllowProfileDisplay] = useState(user?.allowProfileDisplay !== false);
+  const [isChef, setIsChef] = useState(user?.isChef || false);
+  const [commissionPercentage, setCommissionPercentage] = useState(user?.commissionPercentage || 10);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+
+  const handleLogout = () => setShowLogoutConfirm(true);
+
+  const performLogout = async () => {
+    setShowLogoutConfirm(false);
+    try {
+      await signOut();
+      router.replace("/(auth)/welcome" as never);
+    } catch (error) {
+      console.error("Logout error:", error);
+      router.replace("/(auth)/welcome" as never);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) {
+      router.replace('/(auth)/welcome' as any);
+    }
+  }, [user]);
+
+  const handleLocationSelect = (location: { latitude: number; longitude: number; address: string }) => {
+    setAddress(location.address);
+    setLatitude(location.latitude);
+    setLongitude(location.longitude);
+    setShowLocationPicker(false);
+  };
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      Alert.alert('Error', 'Please enter your name');
+      return;
+    }
+
+    if (!email.trim()) {
+      Alert.alert('Error', 'Please enter your email');
+      return;
+    }
+
+    if (latitude === 0 && longitude === 0) {
+      Alert.alert('Error', 'Please set your location on the map');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const success = await updateProfile({
+        name,
+        email,
+        phone,
+        address,
+        location: {
+          latitude,
+          longitude,
+        },
+        experience,
+        cuisineTypes,
+        profileImage,
+        allowProfileDisplay,
+        isChef,
+        commissionPercentage,
+      });
+
+      if (success) {
+        Alert.alert('Success', 'Profile updated successfully');
+        router.back();
+      } else {
+        Alert.alert('Error', 'Failed to update profile');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An unexpected error occurred');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePickImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Required', 'Please allow access to your photo library to upload images.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setIsLoading(true);
+        try {
+          // Upload image to Supabase Storage
+          const publicUrl = await uploadImage(result.assets[0].uri, 'profiles');
+          setProfileImage(publicUrl);
+          Alert.alert('Success', 'Image uploaded successfully');
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          Alert.alert('Error', 'Failed to upload image. Please try again.');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image');
+    }
+  };
+
+  const handleAddCuisine = (cuisine: string) => {
+    if (!cuisineTypes.includes(cuisine)) {
+      setCuisineTypes([...cuisineTypes, cuisine]);
+    } else {
+      setCuisineTypes(cuisineTypes.filter(c => c !== cuisine));
+    }
+  };
+
+  /*const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          onPress: async () => {
+            try {
+              await signOut();
+              setTimeout(() => {
+                router.replace('/(auth)/welcome' as never);
+              }, 100); 
+            } catch (error) {
+              console.error('Logout error:', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
+  };*/
+
+  const cuisineOptions = [
+    'South Indian',
+    'North Indian',
+    'Chinese',
+    'Italian',
+    'Mexican',
+    'Thai',
+    'Japanese',
+    'Continental',
+    'Middle Eastern',
+    'Desserts',
+  ];
+
+  if (!user) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      )}
+
+      <View style={styles.header}>
+        <Text style={styles.title}>Edit Profile</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
+          <X size={24} color={colors.text} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.profileImageContainer}>
+        <View style={styles.profileImageWrapper}>
+          <Image
+            source={{ uri: profileImage || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167' }}
+            style={styles.profileImage}
+            contentFit="cover"
+          />
+          <TouchableOpacity style={styles.editImageButton} onPress={handlePickImage}>
+            <Camera size={20} color={colors.white} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.formContainer}>
+        <Input
+          label="Full Name"
+          value={name}
+          onChangeText={setName}
+          placeholder="Enter your full name"
+          leftIcon={<UserIcon size={20} color={colors.textLight} />}
+        />
+
+        <Input
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+          leftIcon={<Mail size={20} color={colors.textLight} />}
+        />
+
+        <Input
+          label="Phone"
+          value={phone}
+          onChangeText={setPhone}
+          placeholder="Enter your phone number"
+          keyboardType="phone-pad"
+          leftIcon={<Phone size={20} color={colors.textLight} />}
+        />
+
+        <View style={styles.addressSection}>
+          <Text style={styles.label}>Pickup Location</Text>
+          <TouchableOpacity
+            style={styles.locationButton}
+            onPress={() => setShowLocationPicker(true)}
+          >
+            <MapPin size={20} color={colors.white} />
+            <View style={styles.locationButtonText}>
+              <Text style={styles.locationAddress} numberOfLines={1}>
+                {address || 'Tap to select location'}
+              </Text>
+              {latitude !== 0 && longitude !== 0 && (
+                <Text style={styles.coordinates}>
+                  {latitude.toFixed(4)}, {longitude.toFixed(4)}
+                </Text>
+              )}
+            </View>
+          </TouchableOpacity>
+          {latitude === 0 && longitude === 0 && (
+            <Text style={styles.errorText}>Required: Select your location on the map</Text>
+          )}
+        </View>
+
+        <View style={styles.switchContainer}>
+          <View style={styles.switchRow}>
+            <ChefHat size={20} color={colors.textLight} />
+            <Text style={styles.switchLabel}>I am a Chef/Home Cook</Text>
+            <Switch
+              value={isChef}
+              onValueChange={setIsChef}
+              trackColor={{ false: colors.border, true: `${colors.primary}80` }}
+              thumbColor={isChef ? colors.primary : '#f4f3f4'}
+            />
+          </View>
+        </View>
+
+        {isChef && (
+          <>
+            <Input
+              label="Cooking Experience"
+              value={experience}
+              onChangeText={setExperience}
+              placeholder="Describe your cooking experience"
+              multiline
+              numberOfLines={3}
+              leftIcon={<ChefHat size={20} color={colors.textLight} />}
+            />
+
+            <Text style={styles.sectionTitle}>Cuisine Types</Text>
+            <View style={styles.cuisineContainer}>
+              {cuisineOptions.map((cuisine) => (
+                <TouchableOpacity
+                  key={cuisine}
+                  style={[
+                    styles.cuisineTag,
+                    cuisineTypes.includes(cuisine) && styles.selectedCuisineTag,
+                  ]}
+                  onPress={() => handleAddCuisine(cuisine)}
+                >
+                  <Text
+                    style={[
+                      styles.cuisineTagText,
+                      cuisineTypes.includes(cuisine) && styles.selectedCuisineTagText,
+                    ]}
+                  >
+                    {cuisine}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.switchContainer}>
+              <View style={styles.switchRow}>
+                <UserIcon size={20} color={colors.textLight} />
+                <Text style={styles.switchLabel}>Allow Profile Display</Text>
+                <Switch
+                  value={allowProfileDisplay}
+                  onValueChange={setAllowProfileDisplay}
+                  trackColor={{ false: colors.border, true: `${colors.primary}80` }}
+                  thumbColor={allowProfileDisplay ? colors.primary : '#f4f3f4'}
+                />
+              </View>
+            </View>
+
+            <View style={styles.commissionContainer}>
+              <Text style={styles.commissionTitle}>Commission Percentage</Text>
+              <Text style={styles.commissionValue}>{commissionPercentage}%</Text>
+              <Text style={styles.commissionDescription}>
+                This is the platform fee charged on each sale. Commission rates are set by the platform and cannot be modified by sellers.
+              </Text>
+            </View>
+          </>
+        )}
+
+        <Button
+          title="Save Changes"
+          onPress={handleSave}
+          style={styles.saveButton}
+        />
+
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <LogOut size={20} color={colors.error} />
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+      <ConfirmModal
+        visible={showLogoutConfirm}
+        title="Logout"
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        destructive
+        onConfirm={performLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
+
+      <LocationPicker
+        visible={showLocationPicker}
+        title="Select Your Pickup Location"
+        initialLocation={{
+          latitude,
+          longitude,
+          address,
+        }}
+        onLocationSelect={handleLocationSelect}
+        onClose={() => setShowLocationPicker(false)}
+        showRoute={false}
+        routeStart={null}
+        routeEnd={null}
+      />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  contentContainer: {
+    paddingBottom: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  closeButton: {
+    padding: 4,
+  },
+  profileImageContainer: {
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  profileImageWrapper: {
+    position: 'relative',
+    width: 120,
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.border,
+  },
+  editImageButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: colors.primary,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.white,
+  },
+  formContainer: {
+    padding: 16,
+  },
+  switchContainer: {
+    marginVertical: 16,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.white,
+    padding: 16,
+    borderRadius: 8,
+  },
+  switchLabel: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text,
+    marginLeft: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  cuisineContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 8,
+  },
+  cuisineTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  selectedCuisineTag: {
+    backgroundColor: colors.primary,
+  },
+  cuisineTagText: {
+    fontSize: 14,
+    color: colors.text,
+  },
+  selectedCuisineTagText: {
+    color: colors.white,
+  },
+  saveButton: {
+    marginTop: 24,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.error,
+    borderRadius: 8,
+  },
+  logoutText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: colors.error,
+    fontWeight: '500',
+  },
+  commissionContainer: {
+    backgroundColor: colors.card,
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  commissionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  commissionValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: 8,
+  },
+  commissionDescription: {
+    fontSize: 14,
+    color: colors.textLight,
+    lineHeight: 20,
+  },
+  addressSection: {
+    marginVertical: 16,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    padding: 16,
+    gap: 12,
+  },
+  locationButtonText: {
+    flex: 1,
+  },
+  locationAddress: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.white,
+  },
+  coordinates: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 4,
+    fontFamily: 'monospace',
+  },
+  errorText: {
+    fontSize: 12,
+    color: colors.error,
+    marginTop: 8,
+  },
+});

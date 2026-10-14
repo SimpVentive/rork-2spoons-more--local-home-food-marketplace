@@ -1,0 +1,324 @@
+import React, { useEffect, useState } from 'react';
+import { Tabs, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  Home,
+  User,
+  RefreshCw,
+  Heart,
+  UtensilsCrossed,
+  MapPin,
+  ChefHat,
+  CreditCard,
+} from 'lucide-react-native';
+import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/auth-store';
+import colors from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
+import { Platform, StyleSheet, View, ActivityIndicator, TouchableOpacity, Text, Alert } from 'react-native';
+
+const HiddenTab = () => null;
+
+export default function TabLayout(): React.ReactElement {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const [isLoading, setIsLoading] = useState(true);
+  const { user: authUser, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, userPreference, isAdmin, syncProfile, switchRole, initialize } = useAuthStore();
+  
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        // Wait for Rork Auth to finish loading
+        if (authLoading) return;
+        
+        // If not signed in via Rork Auth, redirect to auth screen
+        if (!authUser) {
+          router.replace('/(auth)/welcome' as never);
+          return;
+        }
+
+        const isLocalPhoneBypassUser =
+          authUser.id.startsWith('phone_') || authUser.email.endsWith('@phone.2spoons.app');
+        
+        if (!isLocalPhoneBypassUser) {
+          // Sync the Supabase profile only for real authenticated backend users.
+          await syncProfile(authUser.id, authUser.email, authUser.name, authUser.picture, authUser.phone);
+        }
+        
+        // Re-check store state after sync
+        const state = useAuthStore.getState();
+        
+        if (state.user?.isAdmin === true || state.isAdmin) {
+          router.replace('/(admin)' as never);
+          return;
+        }
+        
+        if (!state.userPreference) {
+          router.replace('/user-preference' as never);
+          return;
+        }
+
+        // Initialize the store to allow home screen to load
+        await initialize();
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Tab layout init error:', error);
+        setIsLoading(false);
+      }
+    };
+    
+    initAuth();
+  }, [authUser, authLoading]);
+
+  if (authLoading || isLoading || !authUser || !isAuthenticated || !userPreference || isAdmin) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 16, color: colors.textLight }}>Loading...</Text>
+      </View>
+    );
+  }
+
+  const handleSwitchRole = async () => {
+    try {
+      await switchRole();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to switch role. Please try again.');
+    }
+  };
+
+  const TabIcon = ({ icon, badgeCount }: { 
+    icon: React.ReactNode; 
+    badgeCount?: number;
+  }) => {
+    return (
+      <View style={styles.tabIconContainer}>
+        <View style={styles.iconWrapper}>
+          {icon}
+        </View>
+        {badgeCount && badgeCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>
+              {badgeCount > 99 ? '99+' : badgeCount.toString()}
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const isChef = user?.isChef === true;
+
+  const tabBarHeight = Platform.OS === 'android' ? 75 + insets.bottom : 95 + insets.bottom;
+
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textLight,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            paddingBottom: Platform.OS === 'android' ? 12 + insets.bottom : 28 + insets.bottom,
+            height: tabBarHeight,
+          },
+        ],
+        sceneContainerStyle: {
+          paddingBottom: tabBarHeight,
+        },
+        tabBarLabelStyle: styles.tabBarLabel,
+        headerStyle: {
+          backgroundColor: colors.white,
+          borderBottomColor: colors.border,
+          borderBottomWidth: 1,
+        },
+        headerTitleStyle: {
+          fontWeight: '600',
+          fontSize: 18,
+        },
+        headerRight: () => (
+          <TouchableOpacity
+            style={styles.switchButton}
+            onPress={() => {
+              try {
+                handleSwitchRole();
+              } catch (error) {
+                console.error('Switch role error:', error);
+              }
+            }}
+          >
+            <RefreshCw size={16} color={colors.primary} />
+            <Text style={styles.switchButtonText}>
+              {isChef ? 'Buyer' : 'Seller'}
+            </Text>
+          </TouchableOpacity>
+        ),
+        tabBarHideOnKeyboard: Platform.OS === 'android',
+      }}
+    >
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: isChef ? 'Home' : 'Explore',
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={isChef ? <ChefHat size={24} color={color} /> : <Home size={24} color={color} />} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="orders"
+        options={{
+          title: 'Orders',
+          tabBarIcon: ({ color }) => (
+            <TabIcon 
+              icon={<UtensilsCrossed size={24} color={color} />} 
+              badgeCount={3}
+            />
+          ),
+          tabBarButton: isChef ? undefined : HiddenTab,
+        }}
+      />
+      <Tabs.Screen
+        name="finances"
+        options={{
+          title: 'Wallet',
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={<CreditCard size={24} color={color} />} />
+          ),
+          tabBarButton: isChef ? undefined : HiddenTab,
+        }}
+      />
+      <Tabs.Screen
+        name="route-settings"
+        options={{
+          title: 'Routes',
+          tabBarIcon: ({ color }) => (
+            <TabIcon 
+              icon={<MapPin size={24} color={color} />} 
+              badgeCount={1}
+            />
+          ),
+          tabBarButton: !isChef ? undefined : HiddenTab,
+        }}
+      />
+      <Tabs.Screen
+        name="following"
+        options={{
+          title: 'Follow',
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={<Heart size={24} color={color} />} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="more"
+        options={{
+          title: 'More',
+          tabBarIcon: ({ color }) => (
+            <TabIcon icon={<User size={24} color={color} />} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        options={{
+          title: 'Search',
+          tabBarButton: HiddenTab,
+        }}
+      />
+      <Tabs.Screen
+        name="analytics"
+        options={{
+          title: 'Analytics',
+          tabBarButton: HiddenTab,
+        }}
+      />
+      <Tabs.Screen
+        name="create"
+        options={{
+          title: 'Create',
+          tabBarButton: HiddenTab,
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Notifications',
+          tabBarButton: HiddenTab,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarButton: HiddenTab,
+        }}
+      />
+    </Tabs>
+  );
+}
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+  tabBar: {
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: 8,
+  },
+  tabBarLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  tabIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+  },
+  iconWrapper: {
+    padding: 2,
+  },
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -6,
+    backgroundColor: colors.error,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.white,
+  },
+  badgeText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  switchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 16,
+    borderRadius: 16,
+    backgroundColor: `${colors.primary}10`,
+  },
+  switchButtonText: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+});

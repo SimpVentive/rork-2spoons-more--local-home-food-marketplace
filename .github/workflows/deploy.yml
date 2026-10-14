@@ -1,0 +1,92 @@
+name: Deploy 2spoonsmore
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.20   # Same version as your server
+
+      - name: Create Frontend .env
+        working-directory: expo
+        run: |
+          cat > .env <<EOF
+          EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_RORK_AUTH_URL=${{ secrets.EXPO_PUBLIC_RORK_AUTH_URL }}
+          EXPO_PUBLIC_PROJECT_ID=${{ secrets.EXPO_PUBLIC_PROJECT_ID }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_RORK_APP_KEY=${{ secrets.EXPO_PUBLIC_RORK_APP_KEY }}
+          EXPO_PUBLIC_SKIP_PHONE_OTP=${{ secrets.EXPO_PUBLIC_SKIP_PHONE_OTP }}
+          EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          EXPO_PUBLIC_ADMIN_TOKEN=${{secrets.EXPO_PUBLIC_ADMIN_TOKEN}}
+          EOF
+
+      - name: Install Frontend Dependencies
+        working-directory: expo
+        run: bun install
+
+      - name: Build Frontend
+        working-directory: expo
+        run: npx expo export --platform web
+
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            export BUN_INSTALL="$HOME/.bun"
+            export PATH="$BUN_INSTALL/bin:$PATH"
+
+            PROJECT_DIR="/var/www/testing.2spoonsmore.com/rork-2spoons-more--local-home-food-marketplace"
+
+            cd "$PROJECT_DIR"
+
+            echo "Updating repository..."
+            git fetch origin
+            git reset --hard origin/main
+
+            cd expo
+
+            cat > .env <<EOF
+            EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+            EXPO_PUBLIC_RORK_AUTH_URL=${{ secrets.EXPO_PUBLIC_RORK_AUTH_URL }}
+            EXPO_PUBLIC_PROJECT_ID=${{ secrets.EXPO_PUBLIC_PROJECT_ID }}
+            EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+            EXPO_PUBLIC_RORK_APP_KEY=${{ secrets.EXPO_PUBLIC_RORK_APP_KEY }}
+            EXPO_PUBLIC_SKIP_PHONE_OTP=${{ secrets.EXPO_PUBLIC_SKIP_PHONE_OTP }}
+            EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=${{ secrets.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY }}
+            EXPO_PUBLIC_ADMIN_TOKEN=${{secrets.EXPO_PUBLIC_ADMIN_TOKEN}}
+            EOF
+
+            echo "Node: $(node -v)"
+            echo "NPM : $(npm -v)"
+            echo "Bun : $(bun -v)"
+
+            bun install
+
+            npx expo export --platform web
+
+            sudo systemctl reload apache2
+
+            echo "Deployment completed successfully."
