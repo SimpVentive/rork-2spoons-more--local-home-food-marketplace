@@ -42,18 +42,19 @@ export default function LoginScreen() {
       if (!success) {
         setError('Invalid email or password. Try using john@example.com');
       } else {
-        // If login is successful, manually navigate to ensure it works
-        const { isAuthenticated, userPreference } = useAuthStore.getState();
-        
-        if (isAuthenticated) {
-          if (!userPreference) {
-            router.replace('/user-preference');
-          } else if (userPreference.type === 'seller') {
-            router.replace('/(tabs)/profile');
+        // If login is successful, navigate based on user preference
+        const state = useAuthStore.getState();
+        const { userPreference, user } = state;
+
+        // Always use the preference that was set during login
+        // If user is a chef (seller), go to seller onboarding, else go to home
+        setTimeout(() => {
+          if (user?.isChef) {
+            router.replace('/seller-onboarding');
           } else {
             router.replace('/(tabs)');
           }
-        }
+        }, 500);
       }
     } catch (error) {
       console.log('Login error:', error);
