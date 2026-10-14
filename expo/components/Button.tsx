@@ -42,7 +42,9 @@ const Button = forwardRef<any, ButtonProps>(({
   icon,
   accessibilityLabel,
   accessibilityHint,
-}) => {
+}, ref) => {
+  const actualLoading = isLoading || loading;
+
   const getButtonStyle = () => {
     const baseStyle: ViewStyle = {
       borderRadius: spacing.radius.md,
@@ -156,14 +158,14 @@ const Button = forwardRef<any, ButtonProps>(({
       ref={ref}
       style={[getButtonStyle(), getSizeStyle(), getDisabledStyle(), style]}
       onPress={onPress}
-      disabled={disabled || isLoading}
+      disabled={disabled || actualLoading}
       activeOpacity={0.8}
       hitSlop={{ top: hitSlopValue, bottom: hitSlopValue, left: hitSlopValue, right: hitSlopValue }}
       accessible={true}
       accessibilityLabel={accessibilityLabel || title}
       accessibilityHint={accessibilityHint}
       accessibilityRole="button"
-      accessibilityState={{ disabled: disabled || isLoading }}
+      accessibilityState={{ disabled: disabled || actualLoading }}
     >
       {actualLoading ? (
         <ActivityIndicator size="small" color={variant === 'outline' ? colors.primary : colors.white} />

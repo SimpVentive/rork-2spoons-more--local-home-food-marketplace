@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
-  SectionList,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -49,6 +49,7 @@ export default function AccountScreen() {
   const { user, userPreference, logout } = useAuthStore();
   const isSeller = userPreference?.type === 'seller';
   const [period, setPeriod] = useState<'day' | 'week' | 'month'>('month');
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Mock earnings data - replace with real data from store/API
   const mockEarnings = [
@@ -93,7 +94,18 @@ export default function AccountScreen() {
     },
   ];
 
+  const confirmLogout = () => {
+    logout();
+    setShowLogoutModal(false);
+    router.replace('/(auth)/welcome' as any);
+  };
+
   const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      setShowLogoutModal(true);
+      return;
+    }
+
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
@@ -105,10 +117,7 @@ export default function AccountScreen() {
         },
         {
           text: 'Logout',
-          onPress: () => {
-            logout();
-            router.replace('/(auth)');
-          },
+          onPress: confirmLogout,
           style: 'destructive',
         },
       ]
@@ -311,6 +320,38 @@ export default function AccountScreen() {
         </View>
       ))}
 
+      {Platform.OS === 'web' && (
+        <Modal
+          transparent
+          visible={showLogoutModal}
+          animationType="fade"
+          onRequestClose={() => setShowLogoutModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>Logout</Text>
+              <Text style={styles.modalText}>Are you sure you want to logout?</Text>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setShowLogoutModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.logoutButton]}
+                  onPress={confirmLogout}
+                >
+                  <Text style={styles.logoutButtonText}>Logout</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
       {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>2Spoons v1.0.0</Text>
@@ -462,5 +503,57 @@ const styles = StyleSheet.create({
     borderRadius: designTokens.radius.lg,
     overflow: 'hidden',
     ...designTokens.shadows.sm,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: designTokens.spacing.lg,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: designTokens.colors.white,
+    borderRadius: designTokens.radius.xl,
+    padding: designTokens.spacing['2xl'],
+    ...designTokens.shadows.lg,
+  },
+  modalTitle: {
+    fontSize: designTokens.typography.size.lg,
+    fontWeight: designTokens.typography.weight.bold,
+    color: designTokens.colors.text,
+    marginBottom: designTokens.spacing.sm,
+  },
+  modalText: {
+    fontSize: designTokens.typography.size.base,
+    color: designTokens.colors.textLight,
+    marginBottom: designTokens.spacing['2xl'],
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: designTokens.spacing.md,
+  },
+  modalButton: {
+    paddingVertical: designTokens.spacing.md,
+    paddingHorizontal: designTokens.spacing.lg,
+    borderRadius: designTokens.radius.md,
+    minWidth: 110,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: designTokens.colors.background,
+  },
+  cancelButtonText: {
+    color: designTokens.colors.text,
+    fontWeight: designTokens.typography.weight.semibold,
+  },
+  logoutButton: {
+    backgroundColor: designTokens.colors.error,
+  },
+  logoutButtonText: {
+    color: designTokens.colors.white,
+    fontWeight: designTokens.typography.weight.semibold,
   },
 });

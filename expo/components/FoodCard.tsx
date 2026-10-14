@@ -13,6 +13,7 @@ import { MapPin, Clock, Star } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import designTokens from '@/constants/design-tokens';
 import { FoodListing } from '@/types';
+import { generatePlaceholder, optimizeImageUrl } from '@/utils/imageOptimization';
 import ImagePlaceholder from './ImagePlaceholder';
 
 interface FoodCardProps {

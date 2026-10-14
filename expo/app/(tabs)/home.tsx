@@ -385,7 +385,7 @@ export default function HomeScreen() {
                 <Text style={styles.chefRatingText}>{chef.rating?.toFixed(1) || '4.5'}</Text>
               </View>
               <Text style={styles.chefSpecialty} numberOfLines={1}>
-                {chef.cuisineTypes[0]}
+                {chef.cuisineTypes?.[0] || 'Home chef'}
               </Text>
             </TouchableOpacity>
           ))}
