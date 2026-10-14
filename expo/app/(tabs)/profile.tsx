@@ -12,11 +12,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { 
-  LogOut, 
-  Settings, 
-  Star, 
-  MapPin, 
+import {
+  LogOut,
+  Settings,
+  Star,
+  MapPin,
   CreditCard,
   ChefHat,
   BarChart3,
@@ -26,6 +26,8 @@ import {
   PlusCircle,
   Shield,
   RefreshCw,
+  AlertTriangle,
+  Clock,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { useListingsStore } from '@/store/listings-store';
@@ -97,6 +99,20 @@ export default function ProfileScreen() {
 
   const handleCreateListing = () => {
     if (user?.isChef) {
+      // Check if seller is verified
+      if (user.fssaiStatus !== 'approved') {
+        Alert.alert(
+          'Seller Verification Required',
+          user.fssaiStatus === 'rejected'
+            ? 'Your FSSAI verification was rejected. Please complete your profile to re-upload.'
+            : 'Your seller account is pending verification. Admin will review your FSSAI certificate shortly.',
+          [
+            { text: 'Dismiss', style: 'cancel' },
+          ]
+        );
+        return;
+      }
+
       // Check if user is eligible to post
       const eligibility = checkPostingEligibility();
       if (!eligibility.eligible) {
@@ -167,6 +183,48 @@ export default function ProfileScreen() {
       };
     }
     return styles.addListingCard;
+  };
+
+  const getVerificationStatus = () => {
+    if (!user.isChef) return null;
+
+    if (user.fssaiStatus === 'approved') {
+      return (
+        <View style={[styles.subscriptionContainer, styles.verificationApproved]}>
+          <View style={styles.verificationBadge}>
+            <Shield size={16} color={colors.success} />
+            <Text style={styles.verificationBadgeText}>✅ Verified</Text>
+          </View>
+          <Text style={styles.verificationText}>Your FSSAI certificate has been approved</Text>
+        </View>
+      );
+    } else if (user.fssaiStatus === 'rejected') {
+      return (
+        <View style={[styles.subscriptionContainer, styles.verificationRejected]}>
+          <View style={styles.verificationBadge}>
+            <AlertTriangle size={16} color={colors.error} />
+            <Text style={styles.verificationBadgeText}>❌ Rejected</Text>
+          </View>
+          <Text style={styles.verificationText}>Your FSSAI certificate was rejected. Complete your profile to re-upload.</Text>
+          <TouchableOpacity
+            style={styles.verifyButton}
+            onPress={handleEditProfile}
+          >
+            <Text style={styles.verifyButtonText}>Re-upload Certificate</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    } else {
+      return (
+        <View style={[styles.subscriptionContainer, styles.verificationPending]}>
+          <View style={styles.verificationBadge}>
+            <Clock size={16} color={colors.warning} />
+            <Text style={styles.verificationBadgeText}>⏳ Pending Review</Text>
+          </View>
+          <Text style={styles.verificationText}>Admin is reviewing your FSSAI certificate. You'll be notified once it's approved.</Text>
+        </View>
+      );
+    }
   };
 
   const getSubscriptionStatus = () => {
@@ -294,6 +352,7 @@ export default function ProfileScreen() {
           {user.experience || "No bio provided yet"}
         </Text>
 
+        {user.isChef && getVerificationStatus()}
         {getSubscriptionStatus()}
         
         <View style={styles.detailsContainer}>
@@ -663,6 +722,47 @@ const styles = StyleSheet.create({
   subscribeButtonText: {
     color: colors.white,
     fontSize: 14,
+    fontWeight: '600',
+  },
+  verificationApproved: {
+    backgroundColor: colors.success + '15',
+    borderColor: colors.success + '30',
+  },
+  verificationPending: {
+    backgroundColor: colors.warning + '15',
+    borderColor: colors.warning + '30',
+  },
+  verificationRejected: {
+    backgroundColor: colors.error + '15',
+    borderColor: colors.error + '30',
+  },
+  verificationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  verificationBadgeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  verificationText: {
+    fontSize: 13,
+    color: colors.text,
+    marginBottom: 8,
+  },
+  verifyButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  verifyButtonText: {
+    color: colors.white,
+    fontSize: 13,
     fontWeight: '600',
   },
   detailsContainer: {

@@ -93,6 +93,24 @@ export default function CreateListingScreen() {
   const [isImageLoading, setIsImageLoading] = useState(false);
 
   useEffect(() => {
+    // Check if seller is verified
+    if (user?.isChef && user.fssaiStatus !== 'approved') {
+      Alert.alert(
+        'Seller Verification Required',
+        user.fssaiStatus === 'rejected'
+          ? 'Your FSSAI verification was rejected. Please re-upload your certificate to reapply.'
+          : 'Your seller account is pending verification. Admin will review your FSSAI certificate shortly.',
+        [
+          {
+            text: 'Go Back',
+            onPress: () => router.back(),
+            style: 'cancel'
+          },
+        ]
+      );
+      return;
+    }
+
     // Check if user is eligible to post
     if (user) {
       const eligibility = checkPostingEligibility();
@@ -107,7 +125,7 @@ export default function CreateListingScreen() {
         );
       }
     }
-    
+
     // Set default pickup location when user changes
     if (user && formData.useDefaultAddress) {
       setFormData(prev => ({

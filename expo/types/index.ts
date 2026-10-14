@@ -45,6 +45,9 @@ export interface User {
   firstPostDate?: string | null;
   postCount?: number;
   freePostsRemaining?: number;
+  // Seller verification fields
+  fssaiStatus?: 'pending' | 'approved' | 'rejected';
+  fssaiVerifiedAt?: string | null;
 }
 
 export interface RoutePoint {
@@ -66,6 +69,29 @@ export interface RouteLocation {
 
 export interface UserPreference {
   type: 'buyer' | 'seller';
+}
+
+export interface SellerVerification {
+  id: string;
+  sellerId: string;
+  fssaiDocumentUrl: string;
+  fssaiStatus: 'pending' | 'approved' | 'rejected';
+  reviewedBy?: string;
+  reviewedAt?: string;
+  rejectionReason?: string;
+  submittedAt: string;
+  updatedAt: string;
+}
+
+export interface PendingSellerVerification {
+  id: string;
+  sellerId: string;
+  name: string;
+  email: string;
+  phone: string;
+  fssaiDocumentUrl: string;
+  submittedAt: string;
+  fssaiStatus: 'pending' | 'approved' | 'rejected';
 }
 
 export interface FoodListing {

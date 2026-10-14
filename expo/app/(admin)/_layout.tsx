@@ -2,18 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
-import { 
-  LayoutDashboard, 
-  ShoppingBag, 
-  Tag, 
-  Users, 
-  MessageSquare, 
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  Tag,
+  Users,
+  MessageSquare,
   Settings,
   Bell,
   BarChart3,
   Mail,
   DollarSign,
-  LogOut
+  LogOut,
+  CheckCircle
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import colors from '@/constants/colors';
@@ -79,15 +80,20 @@ export default function AdminLayout() {
       label: 'Orders', 
       path: '/(admin)/orders' 
     },
-    { 
-      icon: <Users size={24} color={isActive('/(admin)/users') ? colors.white : colors.textLight} />, 
-      label: 'Users', 
-      path: '/(admin)/users' 
+    {
+      icon: <Users size={24} color={isActive('/(admin)/users') ? colors.white : colors.textLight} />,
+      label: 'Users',
+      path: '/(admin)/users'
     },
-    { 
-      icon: <MessageSquare size={24} color={isActive('/(admin)/complaints') ? colors.white : colors.textLight} />, 
-      label: 'Complaints', 
-      path: '/(admin)/complaints' 
+    {
+      icon: <CheckCircle size={24} color={isActive('/(admin)/seller-verifications') ? colors.white : colors.textLight} />,
+      label: 'Seller Verifications',
+      path: '/(admin)/seller-verifications'
+    },
+    {
+      icon: <MessageSquare size={24} color={isActive('/(admin)/complaints') ? colors.white : colors.textLight} />,
+      label: 'Complaints',
+      path: '/(admin)/complaints'
     },
     { 
       icon: <Bell size={24} color={isActive('/(admin)/campaigns') ? colors.white : colors.textLight} />, 
@@ -202,6 +208,12 @@ export default function AdminLayout() {
         name="users"
         options={{
           title: 'Manage Users',
+        }}
+      />
+      <Stack.Screen
+        name="seller-verifications"
+        options={{
+          title: 'Seller Verifications',
         }}
       />
       <Stack.Screen

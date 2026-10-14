@@ -58,6 +58,8 @@ function rowToUser(row: Record<string, unknown>): User {
     allowProfileDisplay: (row.allow_profile_display as boolean) ?? true,
     isVerified: (row.is_verified as boolean) || false,
     isAdmin: (row.is_admin as boolean) || false,
+    fssaiStatus: (row.fssai_status as 'pending' | 'approved' | 'rejected') || 'pending',
+    fssaiVerifiedAt: (row.fssai_verified_at as string) || null,
     rating: (row.rating as number) || 0,
     reviewCount: (row.review_count as number) || 0,
     officeAddress: (row.office_address as string) || '',
