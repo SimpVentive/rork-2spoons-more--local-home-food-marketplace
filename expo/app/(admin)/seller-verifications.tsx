@@ -10,6 +10,7 @@ import {
   TextInput,
   Modal,
   Platform,
+  Linking,
   ScrollView,
   RefreshControl,
 } from 'react-native';
@@ -19,7 +20,7 @@ import { PendingSellerVerification } from '@/types';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
-import { Check, X, AlertCircle, Clock } from 'lucide-react-native';
+import { Check, X, AlertCircle, Clock, FileText, Image as ImageIcon, Video } from 'lucide-react-native';
 
 type PendingSellerVerificationRow = {
   id: string;
@@ -28,6 +29,8 @@ type PendingSellerVerificationRow = {
   email: string | null;
   phone: string | null;
   fssai_document_url: string;
+  ingredient_photos: string[] | null;
+  cooking_video_url: string | null;
   submitted_at: string;
   fssai_status: 'pending' | 'approved' | 'rejected';
 };
@@ -66,6 +69,8 @@ export default function SellerVerifications() {
         email: row.email || '',
         phone: row.phone || '',
         fssaiDocumentUrl: row.fssai_document_url,
+        ingredientPhotos: row.ingredient_photos || [],
+        cookingVideoUrl: row.cooking_video_url,
         submittedAt: row.submitted_at,
         fssaiStatus: row.fssai_status,
       })));
@@ -174,6 +179,35 @@ export default function SellerVerifications() {
     }
   };
 
+  const openUploadedFile = async (url: string, bucket: string, label: string) => {
+    const popup = Platform.OS === 'web' ? window.open('about:blank', '_blank') : null;
+
+    try {
+      const objectMarker = `/storage/v1/object/public/${bucket}/`;
+      const pathname = new URL(url).pathname;
+      const markerIndex = pathname.indexOf(objectMarker);
+      if (markerIndex < 0) throw new Error('The uploaded file URL is invalid.');
+
+      const objectPath = decodeURIComponent(pathname.slice(markerIndex + objectMarker.length));
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(objectPath, 300);
+
+      if (error) throw error;
+
+      if (Platform.OS === 'web') {
+        if (!popup) throw new Error('Allow pop-ups to open seller files.');
+        popup.location.href = data.signedUrl;
+      } else {
+        await Linking.openURL(data.signedUrl);
+      }
+    } catch (error) {
+      popup?.close();
+      console.error(`Failed to open ${label}:`, error);
+      Alert.alert('Unable to open file', error instanceof Error ? error.message : `Could not open ${label}.`);
+    }
+  };
+
   const renderVerificationCard = (item: PendingSellerVerification) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
@@ -209,6 +243,13 @@ export default function SellerVerifications() {
             <Text style={styles.buttonText}>Reject</Text>
           </TouchableOpacity>
         </View>
+        <TouchableOpacity
+          style={styles.viewFilesButton}
+          onPress={() => setSelectedVerification(item)}
+        >
+          <FileText size={16} color={colors.primary} />
+          <Text style={styles.viewFilesText}>View submitted files</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -271,13 +312,41 @@ export default function SellerVerifications() {
             <Text style={styles.modalTitle}>Review Verification</Text>
             <Text style={styles.modalSubtitle}>{selectedVerification?.name}</Text>
 
-            <View style={styles.documentPreview}>
-              <Image
-                source={{ uri: selectedVerification?.fssaiDocumentUrl }}
-                style={styles.documentImage}
-                contentFit="cover"
-              />
-            </View>
+            {selectedVerification && (
+              <View style={styles.filesSection}>
+                <Text style={styles.formLabel}>Seller files</Text>
+                <ScrollView style={styles.mediaList} nestedScrollEnabled>
+                  <TouchableOpacity
+                    style={styles.mediaButton}
+                    onPress={() => openUploadedFile(selectedVerification.fssaiDocumentUrl, 'seller-documents', 'FSSAI certificate')}
+                  >
+                    <FileText size={18} color={colors.primary} />
+                    <Text style={styles.mediaButtonText}>Open FSSAI certificate</Text>
+                  </TouchableOpacity>
+
+                  {selectedVerification.ingredientPhotos.map((photoUrl, index) => (
+                    <TouchableOpacity
+                      key={`${photoUrl}-${index}`}
+                      style={styles.mediaButton}
+                      onPress={() => openUploadedFile(photoUrl, 'seller-photos', `ingredient photo ${index + 1}`)}
+                    >
+                      <ImageIcon size={18} color={colors.primary} />
+                      <Text style={styles.mediaButtonText}>View ingredient photo {index + 1}</Text>
+                    </TouchableOpacity>
+                  ))}
+
+                  {selectedVerification.cookingVideoUrl && (
+                    <TouchableOpacity
+                      style={styles.mediaButton}
+                      onPress={() => openUploadedFile(selectedVerification.cookingVideoUrl!, 'seller-videos', 'cooking video')}
+                    >
+                      <Video size={18} color={colors.primary} />
+                      <Text style={styles.mediaButtonText}>Play cooking video</Text>
+                    </TouchableOpacity>
+                  )}
+                </ScrollView>
+              </View>
+            )}
 
             <View style={styles.form}>
               <Text style={styles.formLabel}>Rejection Reason (if rejecting)</Text>
@@ -443,6 +512,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
+  viewFilesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  viewFilesText: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
   button: {
     flex: 1,
     flexDirection: 'row',
@@ -496,14 +578,26 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginBottom: spacing.md,
   },
-  documentPreview: {
-    marginBottom: spacing.lg,
+  filesSection: {
+    marginBottom: spacing.md,
   },
-  documentImage: {
-    width: '100%',
-    height: 300,
+  mediaList: {
+    maxHeight: 180,
+  },
+  mediaButton: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: 8,
-    backgroundColor: colors.background,
+  },
+  mediaButtonText: {
+    color: colors.text,
+    fontSize: 14,
   },
   form: {
     marginBottom: spacing.lg,

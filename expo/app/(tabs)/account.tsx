@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,7 @@ import {
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { EarningsCard } from '@/components/EarningsCard';
+import { supabase } from '@/lib/supabase';
 import colors from '@/constants/colors';
 import designTokens from '@/constants/design-tokens';
 
@@ -50,49 +51,77 @@ export default function AccountScreen() {
   const isSeller = userPreference?.type === 'seller';
   const [period, setPeriod] = useState<'day' | 'week' | 'month'>('month');
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [sellerEarnings, setSellerEarnings] = useState<Array<{
+    id: string;
+    sellerId: string;
+    orderId: string;
+    amount: number;
+    paymentMethod: 'cod' | 'prepaid';
+    status: 'pending' | 'credited' | 'failed';
+    buyerId?: string;
+    dishName?: string;
+    createdAt: string;
+    creditedAt?: string;
+    confirmationDeadline?: string;
+    updatedAt?: string;
+  }>>([]);
 
-  // Mock earnings data - replace with real data from store/API
-  const mockEarnings = [
-    {
-      id: 'earn_1',
-      sellerId: user?.id || '',
-      orderId: 'order_123',
-      amount: 250,
-      paymentMethod: 'cod' as const,
-      status: 'credited' as const,
-      buyerId: 'buyer_1',
-      dishName: 'Biryani',
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      creditedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'earn_2',
-      sellerId: user?.id || '',
-      orderId: 'order_124',
-      amount: 180,
-      paymentMethod: 'prepaid' as const,
-      status: 'credited' as const,
-      buyerId: 'buyer_2',
-      dishName: 'Butter Chicken',
-      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      creditedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'earn_3',
-      sellerId: user?.id || '',
-      orderId: 'order_125',
-      amount: 320,
-      paymentMethod: 'cod' as const,
-      status: 'pending' as const,
-      buyerId: 'buyer_3',
-      dishName: 'Samosas',
-      createdAt: new Date().toISOString(),
-      confirmationDeadline: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
+  useEffect(() => {
+    const fetchSellerEarnings = async () => {
+      if (!user?.id || !isSeller) {
+        setSellerEarnings([]);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('seller_earnings')
+          .select('*')
+          .eq('seller_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching seller earnings:', error);
+          setSellerEarnings([]);
+          return;
+        }
+
+        const mappedEarnings = (data || []).map((row: any) => ({
+          id: row.id,
+          sellerId: row.seller_id,
+          orderId: row.order_id,
+          amount: Number(row.amount) || 0,
+          paymentMethod: row.payment_method || 'prepaid',
+          status: row.status || 'pending',
+          buyerId: row.buyer_id,
+          dishName: row.dish_name || 'Food order',
+          createdAt: row.created_at || new Date().toISOString(),
+          creditedAt: row.credited_at || undefined,
+          confirmationDeadline: row.confirmation_deadline || undefined,
+          updatedAt: row.updated_at || row.created_at || new Date().toISOString(),
+        }));
+
+        setSellerEarnings(mappedEarnings);
+      } catch (fetchError) {
+        console.error('Failed to load seller earnings:', fetchError);
+        setSellerEarnings([]);
+      }
+    };
+
+    fetchSellerEarnings();
+  }, [user?.id, isSeller]);
+
+  const totalEarnings = sellerEarnings
+    .filter((entry) => entry.status === 'credited' || entry.status === 'pending')
+    .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+
+  const creditedAmount = sellerEarnings
+    .filter((entry) => entry.status === 'credited')
+    .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+
+  const pendingAmount = sellerEarnings
+    .filter((entry) => entry.status === 'pending')
+    .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
 
   const confirmLogout = () => {
     logout();
@@ -268,16 +297,10 @@ export default function AccountScreen() {
       {isSeller && (
         <View style={styles.earningsSection}>
           <EarningsCard
-            totalEarnings={mockEarnings
-              .filter(e => e.status === 'credited')
-              .reduce((sum, e) => sum + (e.amount || 0), 0)}
-            pendingAmount={mockEarnings
-              .filter(e => e.status === 'pending')
-              .reduce((sum, e) => sum + (e.amount || 0), 0)}
-            creditedAmount={mockEarnings
-              .filter(e => e.status === 'credited')
-              .reduce((sum, e) => sum + (e.amount || 0), 0)}
-            transactions={mockEarnings}
+            totalEarnings={totalEarnings}
+            pendingAmount={pendingAmount}
+            creditedAmount={creditedAmount}
+            transactions={sellerEarnings}
             period={period}
             onPeriodChange={setPeriod}
           />

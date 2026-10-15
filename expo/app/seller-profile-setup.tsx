@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -20,6 +19,8 @@ import {
   Video,
   Trash2,
   CheckCircle,
+  Clock,
+  AlertCircle,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import Button from '@/components/Button';
@@ -35,6 +36,8 @@ type SelectedMedia = {
   mimeType?: string | null;
 };
 
+type VerificationStatus = 'loading' | 'none' | 'pending' | 'approved' | 'rejected' | 'error';
+
 export default function SellerProfileSetupScreen() {
   const router = useRouter();
   const { user, updateProfile } = useAuthStore();
@@ -43,6 +46,35 @@ export default function SellerProfileSetupScreen() {
   const [ingredientPhotos, setIngredientPhotos] = useState<SelectedMedia[]>([]);
   const [cookingVideo, setCookingVideo] = useState<SelectedMedia | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('loading');
+  const [rejectionReason, setRejectionReason] = useState('');
+
+  useEffect(() => {
+    void loadVerificationStatus();
+  }, [user?.id]);
+
+  const loadVerificationStatus = async () => {
+    if (!user?.id) {
+      setVerificationStatus('error');
+      return;
+    }
+
+    setVerificationStatus('loading');
+    try {
+      const { data, error } = await supabase
+        .from('seller_verifications')
+        .select('fssai_status, rejection_reason')
+        .eq('seller_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      setVerificationStatus(data?.fssai_status || 'none');
+      setRejectionReason(data?.rejection_reason || '');
+    } catch (error) {
+      console.error('Failed to load seller verification status:', error);
+      setVerificationStatus('error');
+    }
+  };
 
   const pickFasiCertificate = async () => {
     try {
@@ -122,6 +154,11 @@ export default function SellerProfileSetupScreen() {
   };
 
   const handleContinue = async () => {
+    if (verificationStatus !== 'none' && verificationStatus !== 'rejected') {
+      Alert.alert('Setup unavailable', 'Seller documents cannot be changed while the review is pending or after approval.');
+      return;
+    }
+
     if (!fasiCertificate) {
       Alert.alert('Required', 'Please upload your FASI certificate');
       return;
@@ -164,19 +201,33 @@ export default function SellerProfileSetupScreen() {
         throw new Error('Could not update your seller profile.');
       }
 
-      const { error: verificationError } = await supabase
-        .from('seller_verifications')
-        .upsert({
-          seller_id: user.id,
-          fssai_document_url: fasiUrl,
-          ingredient_photos: photoUrls,
-          cooking_video_url: videoUrl,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'seller_id' });
+      const verificationResult = verificationStatus === 'rejected'
+        ? await supabase.rpc('resubmit_seller_verification', {
+            p_seller_id: user.id,
+            p_fssai_document_url: fasiUrl,
+            p_ingredient_photos: photoUrls,
+            p_cooking_video_url: videoUrl,
+          })
+        : await supabase
+            .from('seller_verifications')
+            .insert({
+              seller_id: user.id,
+              fssai_document_url: fasiUrl,
+              ingredient_photos: photoUrls,
+              cooking_video_url: videoUrl,
+            });
 
-      if (verificationError) throw verificationError;
+      if (verificationResult.error) throw verificationResult.error;
 
-      Alert.alert('Success', 'Your profile has been updated!');
+      if (verificationStatus === 'rejected') {
+        useAuthStore.setState(state => ({
+          user: state.user
+            ? { ...state.user, fssaiStatus: 'pending', fssaiVerifiedAt: null }
+            : state.user,
+        }));
+      }
+
+      Alert.alert('Submitted', 'Your documents are now under review. You can’t edit them again unless the admin rejects them.');
       setTimeout(() => {
         router.replace('/(tabs)/home' as any);
       }, 500);
@@ -191,11 +242,60 @@ export default function SellerProfileSetupScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.title}>Complete Your Profile</Text>
+        <Text style={styles.title}>
+          {verificationStatus === 'rejected' ? 'Resubmit Seller Documents' : 'Complete Your Profile'}
+        </Text>
         <Text style={styles.subtitle}>
           Help customers know more about you and your cooking
         </Text>
       </View>
+
+      {verificationStatus === 'loading' && (
+        <View style={styles.statusSection}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.statusText}>Checking your verification status...</Text>
+        </View>
+      )}
+
+      {verificationStatus === 'error' && (
+        <View style={styles.statusSection}>
+          <AlertCircle size={28} color={colors.error} />
+          <Text style={styles.statusTitle}>Could not check your review status</Text>
+          <Text style={styles.statusText}>Your documents stay locked until the status can be verified.</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => void loadVerificationStatus()}>
+            <Text style={styles.retryText}>Try again</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {(verificationStatus === 'pending' || verificationStatus === 'approved') && (
+        <View style={styles.statusSection}>
+          {verificationStatus === 'pending'
+            ? <Clock size={28} color={colors.warning} />
+            : <CheckCircle size={28} color={colors.success} />}
+          <Text style={styles.statusTitle}>
+            {verificationStatus === 'pending' ? 'Documents under review' : 'Seller verified'}
+          </Text>
+          <Text style={styles.statusText}>
+            {verificationStatus === 'pending'
+              ? 'You can’t edit or replace your documents while the admin review is in progress.'
+              : 'Your documents are approved. They can no longer be edited.'}
+          </Text>
+        </View>
+      )}
+
+      {(verificationStatus === 'none' || verificationStatus === 'rejected') && <>
+      {verificationStatus === 'rejected' && (
+        <View style={styles.rejectionNotice}>
+          <AlertCircle size={22} color={colors.error} />
+          <View style={styles.rejectionNoticeText}>
+            <Text style={styles.statusTitle}>Changes requested</Text>
+            <Text style={styles.statusText}>
+              {rejectionReason || 'The admin rejected your documents. Upload corrected files to resubmit.'}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* FASI Certificate */}
       <View style={styles.section}>
@@ -299,7 +399,9 @@ export default function SellerProfileSetupScreen() {
       </View>
 
       <Button
-        title={isLoading ? 'Setting up profile...' : 'Complete Setup'}
+        title={isLoading
+          ? 'Submitting documents...'
+          : verificationStatus === 'rejected' ? 'Resubmit for Review' : 'Submit for Review'}
         onPress={handleContinue}
         disabled={isLoading || !fasiCertificate || ingredientPhotos.length === 0}
         style={styles.submitButton}
@@ -308,6 +410,7 @@ export default function SellerProfileSetupScreen() {
       <Text style={styles.disclaimerText}>
         By continuing, you agree that all uploaded documents are authentic and you comply with local food safety regulations.
       </Text>
+      </>}
     </ScrollView>
   );
 }
@@ -448,5 +551,48 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  statusSection: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: spacing.xl,
+    marginBottom: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  statusTitle: {
+    color: colors.text,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.bold,
+  },
+  statusText: {
+    color: colors.textLight,
+    fontSize: typography.sizes.sm,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  rejectionNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+    backgroundColor: `${colors.error}10`,
+    borderRadius: 8,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  rejectionNoticeText: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  retryButton: {
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  retryText: {
+    color: colors.primary,
+    fontWeight: typography.weights.semibold,
   },
 });

@@ -93,7 +93,15 @@ export default function CreateListingScreen() {
   const [isImageLoading, setIsImageLoading] = useState(false);
 
   useEffect(() => {
-    // Check if seller is verified
+    if (user && !user.isChef) {
+      Alert.alert(
+        'Seller Account Required',
+        'Only seller accounts can create listings.',
+        [{ text: 'Go Back', onPress: () => router.back(), style: 'cancel' }]
+      );
+      return;
+    }
+
     if (user?.isChef && user.fssaiStatus !== 'approved') {
       Alert.alert(
         'Seller Verification Required',
@@ -105,6 +113,10 @@ export default function CreateListingScreen() {
             text: 'Go Back',
             onPress: () => router.back(),
             style: 'cancel'
+          },
+          {
+            text: 'Complete Profile',
+            onPress: () => router.push('/seller-profile-setup' as any),
           },
         ]
       );
@@ -331,12 +343,31 @@ export default function CreateListingScreen() {
   };
   
   const handleSubmit = async () => {
-    if (!validateForm()) return;
-
     if (!user) {
       Alert.alert('Error', 'You must be logged in to create a listing');
       return;
     }
+
+    if (!user.isChef) {
+      Alert.alert('Seller Account Required', 'Only seller accounts can create listings.');
+      return;
+    }
+
+    if (user.fssaiStatus !== 'approved') {
+      Alert.alert(
+        'Seller Verification Required',
+        user.fssaiStatus === 'rejected'
+          ? 'Your FSSAI verification was rejected. Please re-upload your certificate to reapply.'
+          : 'Your seller documents must be approved before you can create listings.',
+        [
+          { text: 'Dismiss', style: 'cancel' },
+          { text: 'Complete Profile', onPress: () => router.push('/seller-profile-setup' as any) },
+        ]
+      );
+      return;
+    }
+
+    if (!validateForm()) return;
 
     const eligibility = checkPostingEligibility();
     if (!eligibility.eligible) {
@@ -427,7 +458,10 @@ export default function CreateListingScreen() {
       }
     } catch (error) {
       console.error('Create listing error:', error);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      Alert.alert(
+        'Unable to create listing',
+        error instanceof Error ? error.message : 'Something went wrong. Please try again.'
+      );
     }
   };
   

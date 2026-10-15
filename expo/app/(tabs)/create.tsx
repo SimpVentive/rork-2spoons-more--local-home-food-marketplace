@@ -14,6 +14,7 @@ export default function CreateScreen() {
   const { user } = useAuthStore();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const isVerifiedSeller = user?.isChef === true && user.fssaiStatus === 'approved';
 
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   
@@ -22,8 +23,9 @@ export default function CreateScreen() {
     
     switch (option) {
       case 'food':
-        console.log("Navigating to create-listing");
-        router.push('/create-listing' as any);
+        if (isVerifiedSeller) {
+          router.push('/create-listing' as any);
+        }
         break;
       case 'scan':
         console.log("Navigating to scan screen from create");
@@ -54,17 +56,14 @@ export default function CreateScreen() {
         headerTitleStyle: {
           fontWeight: '700',
         },
-        headerRight: () => (
+        headerRight: () => isVerifiedSeller ? (
           <TouchableOpacity 
-            onPress={() => {
-              console.log("Header button pressed - navigating to create-listing");
-              router.push('/create-listing' as any);
-            }}
+            onPress={() => router.push('/create-listing' as any)}
             style={styles.headerButton}
           >
             <PlusCircle size={24} color={colors.primary} />
           </TouchableOpacity>
-        ),
+        ) : null,
       }} />
       
       <ScrollView
@@ -78,15 +77,22 @@ export default function CreateScreen() {
         
         <View style={styles.optionsContainer}>
           <TouchableOpacity
-            style={[styles.option, selectedOption === 'food' && styles.selectedOption]}
+            style={[
+              styles.option,
+              selectedOption === 'food' && styles.selectedOption,
+              !isVerifiedSeller && styles.disabledOption,
+            ]}
+            disabled={!isVerifiedSeller}
             onPress={() => handleOptionSelect('food')}
           >
-            <View style={[styles.iconContainer, { backgroundColor: '#E3F2FD' }]}>
-              <ChefHat size={24} color="#1976D2" />
+            <View style={[styles.iconContainer, { backgroundColor: isVerifiedSeller ? '#E3F2FD' : colors.background }]}>
+              <ChefHat size={24} color={isVerifiedSeller ? '#1976D2' : colors.textLight} />
             </View>
-            <Text style={styles.optionTitle}>Food Listing</Text>
+            <Text style={[styles.optionTitle, !isVerifiedSeller && styles.disabledText]}>Food Listing</Text>
             <Text style={styles.optionDescription}>
-              Create a new food listing to sell your homemade dishes
+              {isVerifiedSeller
+                ? 'Create a new food listing to sell your homemade dishes'
+                : 'Available after your seller profile and documents are approved'}
             </Text>
           </TouchableOpacity>
           
@@ -122,14 +128,12 @@ export default function CreateScreen() {
           
           <View style={styles.quickActions}>
             <TouchableOpacity 
-              style={styles.quickAction}
-              onPress={() => {
-                console.log("Quick action - New Listing pressed");
-                router.push('/create-listing' as any);
-              }}
+              style={[styles.quickAction, !isVerifiedSeller && styles.disabledQuickAction]}
+              disabled={!isVerifiedSeller}
+              onPress={() => router.push('/create-listing' as any)}
             >
-              <Plus size={20} color={colors.primary} />
-              <Text style={styles.quickActionText}>New Listing</Text>
+              <Plus size={20} color={isVerifiedSeller ? colors.primary : colors.textLight} />
+              <Text style={[styles.quickActionText, !isVerifiedSeller && styles.disabledText]}>New Listing</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -219,12 +223,20 @@ export default function CreateScreen() {
         
         <Button
           title="Create New Food Listing"
-          onPress={() => {
-            console.log("Main button - Create New Food Listing pressed");
-            router.push('/create-listing' as any);
-          }}
+          onPress={() => router.push('/create-listing' as any)}
+          disabled={!isVerifiedSeller}
           style={styles.createButton}
         />
+
+        {!isVerifiedSeller && (
+          <TouchableOpacity
+            style={styles.setupLink}
+            onPress={() => router.push('/seller-profile-setup' as any)}
+          >
+            <FileText size={18} color={colors.primary} />
+            <Text style={styles.setupLinkText}>Complete Seller Profile</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </>
   );
@@ -276,6 +288,12 @@ const styles = StyleSheet.create({
   selectedOption: {
     borderColor: colors.primary,
     backgroundColor: `${colors.primary}10`,
+  },
+  disabledOption: {
+    opacity: 0.62,
+  },
+  disabledText: {
+    color: colors.textLight,
   },
   iconContainer: {
     width: 48,
@@ -337,6 +355,9 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginTop: 8,
   },
+  disabledQuickAction: {
+    opacity: 0.55,
+  },
   tipsContainer: {
     marginBottom: 32,
   },
@@ -390,5 +411,19 @@ const styles = StyleSheet.create({
   createButton: {
     marginTop: 16,
     marginBottom: 32,
+  },
+  setupLink: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginTop: -24,
+    marginBottom: spacing.lg,
+  },
+  setupLinkText: {
+    color: colors.primary,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
   },
 });

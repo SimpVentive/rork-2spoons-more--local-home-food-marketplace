@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
+  Linking,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -23,6 +24,9 @@ import {
   Shield,
   Trash2,
   Edit2,
+  FileText,
+  Image as ImageIcon,
+  Video,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { User as UserType } from '@/types';
@@ -30,6 +34,13 @@ import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 import { supabase } from '@/lib/supabase';
+
+type VerifiedSellerMedia = {
+  certificateUrl: string;
+  certificateIsPdf: boolean;
+  ingredientPhotoUrls: string[];
+  cookingVideoUrl: string | null;
+};
 
 export default function UserDetailsScreen() {
   const router = useRouter();
@@ -39,6 +50,7 @@ export default function UserDetailsScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [earnings, setEarnings] = useState(0);
   const [completedOrders, setCompletedOrders] = useState(0);
+  const [sellerMedia, setSellerMedia] = useState<VerifiedSellerMedia | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -50,6 +62,7 @@ export default function UserDetailsScreen() {
   const loadUserDetails = async () => {
     try {
       setIsLoading(true);
+      setSellerMedia(null);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -75,7 +88,8 @@ export default function UserDetailsScreen() {
           },
           isChef: data.is_chef || false,
           allowProfileDisplay: data.allow_profile_display ?? true,
-          isVerified: data.is_verified || false,
+          isVerified: data.is_verified || data.fssai_status === 'approved',
+          fssaiStatus: data.fssai_status || 'pending',
           isAdmin: data.is_admin || false,
           rating: data.rating || 0,
           reviewCount: data.review_count || 0,
@@ -95,12 +109,79 @@ export default function UserDetailsScreen() {
           freePostsRemaining: data.free_posts_remaining ?? 3,
         };
         setUser(userData);
+
+        if (userData.isChef && userData.fssaiStatus === 'approved') {
+          try {
+            const { data: verification, error: verificationError } = await supabase
+              .from('seller_verifications')
+              .select('fssai_document_url, ingredient_photos, cooking_video_url')
+              .eq('seller_id', userData.id)
+              .maybeSingle();
+
+            if (verificationError) throw verificationError;
+
+            if (verification) {
+              const [certificateUrl, ...ingredientPhotoUrls] = await Promise.all([
+                createSignedMediaUrl(verification.fssai_document_url, 'seller-documents'),
+                ...(verification.ingredient_photos || []).map((url: string) =>
+                  createSignedMediaUrl(url, 'seller-photos'),
+                ),
+              ]);
+              const cookingVideoUrl = verification.cooking_video_url
+                ? await createSignedMediaUrl(verification.cooking_video_url, 'seller-videos')
+                : null;
+
+              setSellerMedia({
+                certificateUrl,
+                certificateIsPdf: /\.pdf(?:$|[?#])/i.test(verification.fssai_document_url),
+                ingredientPhotoUrls,
+                cookingVideoUrl,
+              });
+            } else {
+              setSellerMedia(null);
+            }
+          } catch (mediaError) {
+            console.error('Error loading verified seller media:', mediaError);
+            setSellerMedia(null);
+          }
+        } else {
+          setSellerMedia(null);
+        }
       }
     } catch (error) {
       console.error('Error loading user details:', error);
       Alert.alert('Error', 'Failed to load user details');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const createSignedMediaUrl = async (publicUrl: string, bucket: string) => {
+    const marker = `/storage/v1/object/public/${bucket}/`;
+    const pathname = new URL(publicUrl).pathname;
+    const markerIndex = pathname.indexOf(marker);
+    if (markerIndex < 0) throw new Error('Uploaded media URL is invalid.');
+
+    const objectPath = decodeURIComponent(pathname.slice(markerIndex + marker.length));
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(objectPath, 300);
+    if (error) throw error;
+    return data.signedUrl;
+  };
+
+  const openSellerMedia = async (url: string) => {
+    const popup = Platform.OS === 'web' ? window.open('about:blank', '_blank') : null;
+    try {
+      if (Platform.OS === 'web') {
+        if (!popup) throw new Error('Allow pop-ups to open seller media.');
+        popup.location.href = url;
+      } else {
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      popup?.close();
+      Alert.alert('Unable to open media', error instanceof Error ? error.message : 'Please try again.');
     }
   };
 
@@ -330,6 +411,53 @@ export default function UserDetailsScreen() {
           </View>
         )}
 
+        {user.isChef && user.fssaiStatus === 'approved' && sellerMedia && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Verified Seller Uploads</Text>
+
+            {sellerMedia.certificateIsPdf ? (
+              <TouchableOpacity
+                style={styles.mediaLink}
+                onPress={() => openSellerMedia(sellerMedia.certificateUrl)}
+              >
+                <FileText size={20} color={colors.primary} />
+                <Text style={styles.mediaLinkText}>Open FSSAI certificate (PDF)</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={() => openSellerMedia(sellerMedia.certificateUrl)}>
+                <Text style={styles.infoLabel}>FSSAI Certificate</Text>
+                <Image
+                  source={{ uri: sellerMedia.certificateUrl }}
+                  style={styles.mediaPreview}
+                  contentFit="cover"
+                />
+              </TouchableOpacity>
+            )}
+
+            {sellerMedia.ingredientPhotoUrls.map((photoUrl, index) => (
+              <TouchableOpacity
+                key={`${photoUrl}-${index}`}
+                style={styles.mediaItem}
+                onPress={() => openSellerMedia(photoUrl)}
+              >
+                <ImageIcon size={18} color={colors.primary} />
+                <Text style={styles.mediaLinkText}>Ingredient photo {index + 1}</Text>
+                <Image source={{ uri: photoUrl }} style={styles.mediaThumbnail} contentFit="cover" />
+              </TouchableOpacity>
+            ))}
+
+            {sellerMedia.cookingVideoUrl && (
+              <TouchableOpacity
+                style={styles.mediaLink}
+                onPress={() => openSellerMedia(sellerMedia.cookingVideoUrl!)}
+              >
+                <Video size={20} color={colors.primary} />
+                <Text style={styles.mediaLinkText}>Play cooking video</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
         {/* Actions */}
         <View style={styles.section}>
           <View style={styles.actionButtons}>
@@ -499,6 +627,40 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     color: colors.text,
     fontWeight: typography.weights.medium,
+  },
+  mediaItem: {
+    minHeight: 72,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  mediaLink: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  mediaLinkText: {
+    flex: 1,
+    color: colors.primary,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+  },
+  mediaPreview: {
+    width: '100%',
+    height: 180,
+    borderRadius: 8,
+    backgroundColor: colors.background,
+    marginBottom: spacing.md,
+  },
+  mediaThumbnail: {
+    width: 72,
+    height: 56,
+    borderRadius: 6,
+    backgroundColor: colors.background,
   },
   statsGrid: {
     flexDirection: 'row',

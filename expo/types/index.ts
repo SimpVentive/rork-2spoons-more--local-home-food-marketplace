@@ -90,6 +90,8 @@ export interface PendingSellerVerification {
   email: string;
   phone: string;
   fssaiDocumentUrl: string;
+  ingredientPhotos: string[];
+  cookingVideoUrl: string | null;
   submittedAt: string;
   fssaiStatus: 'pending' | 'approved' | 'rejected';
 }

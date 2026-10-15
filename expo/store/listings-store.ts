@@ -299,6 +299,31 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
 
       const user = useAuthStore.getState().user;
       if (!user) throw new Error('Not authenticated');
+
+      const { data: sellerProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_chef, fssai_status')
+        .eq('id', user.id)
+        .single();
+      if (profileError) throw profileError;
+      if (!sellerProfile?.is_chef || sellerProfile.fssai_status !== 'approved') {
+        throw new Error('Only verified sellers can create listings.');
+      }
+
+      const { data: verification, error: verificationError } = await supabase
+        .from('seller_verifications')
+        .select('fssai_status, fssai_document_url, ingredient_photos')
+        .eq('seller_id', user.id)
+        .maybeSingle();
+      if (verificationError) throw verificationError;
+      if (
+        verification?.fssai_status !== 'approved' ||
+        !verification.fssai_document_url ||
+        !verification.ingredient_photos?.length
+      ) {
+        throw new Error('Upload the required seller documents and wait for admin approval before creating listings.');
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       console.log('supabase session:', session);
       console.log('zustand user:', user);
