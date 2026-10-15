@@ -281,12 +281,13 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-       
         set({
           user: null,
           isAuthenticated: false,
           isAdmin: false,
           userPreference: null,
+          isLoading: false,
+          isInitialized: false,
         });
       },
 

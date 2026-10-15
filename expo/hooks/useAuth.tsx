@@ -578,6 +578,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }*/
   async function signOut() {
     try {
+      // Clear state immediately so route guards stop treating the user as authenticated
+      setUser(null);
+      useAuthStore.getState().logout();
+
       // 1. Sign out from Supabase
       const { error } = await supabase.auth.signOut();
 
@@ -594,14 +598,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await removeStorageItem("notifications-storage");
       await removeStorageItem("orders-storage");
 
-      // 3. Clear Zustand state
-      useAuthStore.getState().logout();
-
-      // 4. Clear local hook state
-      setUser(null);
-
     } catch (error) {
       console.error("Logout error:", error);
+
+      setUser(null);
+      useAuthStore.getState().logout();
 
       // Always clear local state
       await removeStorageItem("access_token");
@@ -611,9 +612,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await removeStorageItem("complaints-storage");
       await removeStorageItem("notifications-storage");
       await removeStorageItem("orders-storage");
-
-      useAuthStore.getState().logout();
-      setUser(null);
 
       throw error;
     }

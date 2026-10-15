@@ -21,7 +21,9 @@ export default function AppIndex() {
         if (user) {
           // User is authenticated — route based on preferences
           const state = useAuthStore.getState();
-          if (user.isAdmin) {
+          if (!state.isAuthenticated || !user) {
+            router.replace('/(auth)/welcome' as never);
+          } else if (state.isAdmin) {
             router.replace('/(admin)' as never);
           } else if (!state.userPreference) {
             router.replace('/user-preference' as never);

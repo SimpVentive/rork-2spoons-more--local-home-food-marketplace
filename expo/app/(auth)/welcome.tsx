@@ -26,6 +26,8 @@ export default function WelcomeScreen() {
     if (user && !authLoading) {
       const state = useAuthStore.getState();
 
+      if (!state.isAuthenticated) return;
+
       if (state.isAdmin) {
         router.replace('/(admin)' as never);
       } else if (!state.userPreference) {

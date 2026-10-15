@@ -39,6 +39,11 @@ export default function TabLayout(): React.ReactElement {
           return;
         }
 
+        if (!isAuthenticated) {
+          router.replace('/(auth)/welcome' as never);
+          return;
+        }
+
         const isLocalPhoneBypassUser =
           authUser.id.startsWith('phone_') || authUser.email.endsWith('@phone.2spoons.app');
         
@@ -50,6 +55,11 @@ export default function TabLayout(): React.ReactElement {
         // Re-check store state after sync
         const state = useAuthStore.getState();
         
+        if (!state.isAuthenticated) {
+          router.replace('/(auth)/welcome' as never);
+          return;
+        }
+
         if (state.user?.isAdmin === true || state.isAdmin) {
           router.replace('/(admin)' as never);
           return;
