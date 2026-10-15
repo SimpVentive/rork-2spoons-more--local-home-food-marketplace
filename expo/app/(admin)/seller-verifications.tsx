@@ -21,6 +21,17 @@ import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 import { Check, X, AlertCircle, Clock } from 'lucide-react-native';
 
+type PendingSellerVerificationRow = {
+  id: string;
+  seller_id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  fssai_document_url: string;
+  submitted_at: string;
+  fssai_status: 'pending' | 'approved' | 'rejected';
+};
+
 export default function SellerVerifications() {
   const [verifications, setVerifications] = useState<PendingSellerVerification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +59,16 @@ export default function SellerVerifications() {
         return;
       }
 
-      setVerifications(data || []);
+      setVerifications(((data || []) as PendingSellerVerificationRow[]).map(row => ({
+        id: row.id,
+        sellerId: row.seller_id,
+        name: row.name || '',
+        email: row.email || '',
+        phone: row.phone || '',
+        fssaiDocumentUrl: row.fssai_document_url,
+        submittedAt: row.submitted_at,
+        fssaiStatus: row.fssai_status,
+      })));
       setReviewedCount(0);
     } catch (err) {
       console.error('Load verifications error:', err);
@@ -62,16 +82,19 @@ export default function SellerVerifications() {
   const handleApprove = async (verification: PendingSellerVerification) => {
     setIsProcessing(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('seller_verifications')
         .update({
           fssai_status: 'approved',
           reviewed_by: (await supabase.auth.getUser()).data.user?.id,
           reviewed_at: new Date().toISOString(),
         })
-        .eq('seller_id', verification.sellerId);
+        .eq('seller_id', verification.sellerId)
+        .select('seller_id')
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('No verification was updated. Check admin permissions and refresh the list.');
 
       await createNotification(verification.sellerId, 'approved', '');
 
@@ -81,7 +104,7 @@ export default function SellerVerifications() {
       loadVerifications();
     } catch (err) {
       console.error('Approve error:', err);
-      Alert.alert('Error', 'Failed to approve verification');
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to approve verification');
     } finally {
       setIsProcessing(false);
     }
@@ -95,7 +118,7 @@ export default function SellerVerifications() {
 
     setIsProcessing(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('seller_verifications')
         .update({
           fssai_status: 'rejected',
@@ -103,9 +126,12 @@ export default function SellerVerifications() {
           reviewed_by: (await supabase.auth.getUser()).data.user?.id,
           reviewed_at: new Date().toISOString(),
         })
-        .eq('seller_id', verification.sellerId);
+        .eq('seller_id', verification.sellerId)
+        .select('seller_id')
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('No verification was updated. Check admin permissions and refresh the list.');
 
       await createNotification(verification.sellerId, 'rejected', rejectionReason.trim());
 
@@ -116,7 +142,7 @@ export default function SellerVerifications() {
       loadVerifications();
     } catch (err) {
       console.error('Reject error:', err);
-      Alert.alert('Error', 'Failed to reject verification');
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to reject verification');
     } finally {
       setIsProcessing(false);
     }
@@ -131,9 +157,10 @@ export default function SellerVerifications() {
       ? 'Your FSSAI certificate has been verified. You can now create listings!'
       : `Your FSSAI certificate was rejected. Reason: ${reason}`;
 
-    await supabase
-      .from('seller_notifications')
-      .insert({
+    try {
+      const { error } = await supabase
+        .from('seller_notifications')
+        .insert({
         seller_id: sellerId,
         type: `fssai_${status}`,
         title,
@@ -141,15 +168,14 @@ export default function SellerVerifications() {
         is_read: false,
         metadata: { reason: status === 'rejected' ? reason : null }
       })
-      .catch(err => console.error('Notification error:', err));
+      if (error) console.error('Notification error:', error.message);
+    } catch (err) {
+      console.error('Notification error:', err);
+    }
   };
 
   const renderVerificationCard = (item: PendingSellerVerification) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => setSelectedVerification(item)}
-      activeOpacity={0.7}
-    >
+    <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.sellerInfo}>
           <Text style={styles.sellerName}>{item.name}</Text>
@@ -169,10 +195,7 @@ export default function SellerVerifications() {
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={[styles.button, styles.approveButton]}
-            onPress={() => {
-              setSelectedVerification(item);
-              handleApprove(item);
-            }}
+            onPress={() => handleApprove(item)}
           >
             <Check size={18} color={colors.white} />
             <Text style={styles.buttonText}>Approve</Text>
@@ -187,7 +210,7 @@ export default function SellerVerifications() {
           </TouchableOpacity>
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   if (isLoading) {

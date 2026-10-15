@@ -282,6 +282,14 @@ export default function MoreScreen() {
             <ChefHat size={22} color={colors.secondary} />
             <Text style={styles.menuItemText}>Seller Settings</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/seller-profile-setup' as any)}
+          >
+            <FileText size={22} color={colors.secondary} />
+            <Text style={styles.menuItemText}>Complete Seller Profile</Text>
+          </TouchableOpacity>
         </View>
       )}
       

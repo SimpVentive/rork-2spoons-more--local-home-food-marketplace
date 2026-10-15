@@ -13,7 +13,6 @@ import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import * as VideoPickerLib from 'expo-video-player';
 import {
   Plus,
   FileText,
@@ -27,26 +26,38 @@ import Button from '@/components/Button';
 import colors from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
-import { uploadImage } from '@/lib/image-upload';
+import { uploadFile } from '@/lib/image-upload';
 import { supabase } from '@/lib/supabase';
+
+type SelectedMedia = {
+  uri: string;
+  name?: string;
+  mimeType?: string | null;
+};
 
 export default function SellerProfileSetupScreen() {
   const router = useRouter();
   const { user, updateProfile } = useAuthStore();
 
-  const [fasiCertificate, setFasiCertificate] = useState<string | null>(null);
-  const [ingredientPhotos, setIngredientPhotos] = useState<string[]>([]);
-  const [cookingVideo, setCookingVideo] = useState<string | null>(null);
+  const [fasiCertificate, setFasiCertificate] = useState<SelectedMedia | null>(null);
+  const [ingredientPhotos, setIngredientPhotos] = useState<SelectedMedia[]>([]);
+  const [cookingVideo, setCookingVideo] = useState<SelectedMedia | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const pickFasiCertificate = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: ['application/pdf', 'image/*'],
+        copyToCacheDirectory: true,
       });
 
-      if (result.type === 'success') {
-        setFasiCertificate(result.uri);
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        setFasiCertificate({
+          uri: asset.uri,
+          name: asset.name,
+          mimeType: asset.mimeType,
+        });
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to pick document');
@@ -67,8 +78,12 @@ export default function SellerProfileSetupScreen() {
         quality: 0.8,
       });
 
-      if (!result.canceled) {
-        setIngredientPhotos([...ingredientPhotos, result.assets[0].uri]);
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        setIngredientPhotos(current => current.length < 5 ? [
+          ...current,
+          { uri: asset.uri, name: asset.fileName ?? undefined, mimeType: asset.mimeType },
+        ] : current);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to pick image');
@@ -93,8 +108,13 @@ export default function SellerProfileSetupScreen() {
         quality: 0.8,
       });
 
-      if (!result.canceled) {
-        setCookingVideo(result.assets[0].uri);
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        setCookingVideo({
+          uri: asset.uri,
+          name: asset.fileName ?? undefined,
+          mimeType: asset.mimeType,
+        });
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to pick video');
@@ -112,59 +132,49 @@ export default function SellerProfileSetupScreen() {
       return;
     }
 
+    if (!user?.id) {
+      Alert.alert('Sign In Required', 'Please sign in again before completing your seller setup.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Upload FASI certificate
-      let fasiUrl = fasiCertificate;
-      if (fasiCertificate.startsWith('file://')) {
-        fasiUrl = await uploadImage(fasiCertificate, 'seller-documents');
+      const fasiUrl = await uploadFile(
+        fasiCertificate.uri,
+        'seller-documents',
+        fasiCertificate.name,
+        fasiCertificate.mimeType ?? undefined,
+        user.id,
+      );
+      const photoUrls = await Promise.all(ingredientPhotos.map(photo =>
+        uploadFile(photo.uri, 'seller-photos', photo.name, photo.mimeType ?? undefined, user.id),
+      ));
+      const videoUrl = cookingVideo
+        ? await uploadFile(
+            cookingVideo.uri,
+            'seller-videos',
+            cookingVideo.name,
+            cookingVideo.mimeType ?? undefined,
+            user.id,
+          )
+        : null;
+
+      const profileUpdated = await updateProfile({ isChef: true });
+      if (!profileUpdated) {
+        throw new Error('Could not update your seller profile.');
       }
 
-      // Upload ingredient photos
-      const photoUrls: string[] = [];
-      for (const photo of ingredientPhotos) {
-        let photoUrl = photo;
-        if (photo.startsWith('file://')) {
-          photoUrl = await uploadImage(photo, 'seller-photos');
-        }
-        photoUrls.push(photoUrl);
-      }
+      const { error: verificationError } = await supabase
+        .from('seller_verifications')
+        .upsert({
+          seller_id: user.id,
+          fssai_document_url: fasiUrl,
+          ingredient_photos: photoUrls,
+          cooking_video_url: videoUrl,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'seller_id' });
 
-      // Upload cooking video if present
-      let videoUrl: string | null = null;
-      if (cookingVideo && cookingVideo.startsWith('file://')) {
-        videoUrl = await uploadImage(cookingVideo, 'seller-videos');
-      } else if (cookingVideo) {
-        videoUrl = cookingVideo;
-      }
-
-      // Save profile information with URLs
-      const updates: any = {
-        isChef: true,
-      };
-
-      if (user?.id) {
-        // Store seller documents in a separate table
-        const { error: docError } = await supabase
-          .from('seller_documents')
-          .upsert({
-            user_id: user.id,
-            fasi_certificate_url: fasiUrl,
-            ingredient_photos: photoUrls,
-            cooking_video_url: videoUrl,
-            updated_at: new Date().toISOString(),
-          });
-
-        if (docError) {
-          console.error('Error saving seller documents:', docError);
-          Alert.alert('Error', 'Failed to save seller documents');
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      // Update profile
-      await updateProfile(updates);
+      if (verificationError) throw verificationError;
 
       Alert.alert('Success', 'Your profile has been updated!');
       setTimeout(() => {
@@ -231,7 +241,7 @@ export default function SellerProfileSetupScreen() {
           {ingredientPhotos.map((photo, index) => (
             <View key={index} style={styles.photoCard}>
               <Image
-                source={{ uri: photo }}
+                source={{ uri: photo.uri }}
                 style={styles.photo}
                 contentFit="cover"
               />

@@ -161,6 +161,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 2. Try phone session (phone-number OTP sign-in)
       const phoneSession = await getStorageItem("phone_session");
       if (phoneSession) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (isSupabaseConfigured && (!session || session.user.id !== phoneSession)) {
+          await removeStorageItem("phone_session");
+          useAuthStore.getState().logout();
+          return;
+        }
+
         // Restore phone user from Zustand persist (already hydrated from AsyncStorage)
         const storedUser = useAuthStore.getState().user;
         if (storedUser) {
@@ -436,6 +443,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const sessionUser = sessionData.user;
+        if (!sessionUser) {
+          throw new Error("Supabase authentication did not return a user session.");
+        }
 
         resolvedAuthUser = {
           id: sessionUser.id,

@@ -16,6 +16,7 @@ import {
   ChefHat,
   CreditCard,
   Users,
+  BadgeCheck,
 } from 'lucide-react-native';
 import { fetchUserProfile } from '@/lib/supabase';
 import { useListingsStore } from '@/store/listings-store';
@@ -76,7 +77,8 @@ export default function SellerProfileScreen() {
           location: sellerData.location,
           isChef: sellerData.is_chef,
           allowProfileDisplay: sellerData.allow_profile_display,
-          isVerified: sellerData.is_verified,
+          isVerified: sellerData.is_verified || sellerData.fssai_status === 'approved',
+          fssaiStatus: sellerData.fssai_status || 'pending',
           rating: sellerData.rating,
           reviewCount: sellerData.review_count,
         };
@@ -164,7 +166,15 @@ export default function SellerProfileScreen() {
           />
           
           <View style={styles.profileInfo}>
-            <Text style={styles.name}>{seller.name}</Text>
+            <View style={styles.nameRow}>
+              <Text style={styles.name}>{seller.name}</Text>
+              {seller.isChef && seller.fssaiStatus === 'approved' && (
+                <View style={styles.verifiedBadge}>
+                  <BadgeCheck size={15} color={colors.success} />
+                  <Text style={styles.verifiedBadgeText}>Verified</Text>
+                </View>
+              )}
+            </View>
             
             <View style={styles.ratingContainer}>
               <Star size={16} color={colors.primary} fill={colors.primary} />
@@ -402,6 +412,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
     marginBottom: 4,
+    flexShrink: 1,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 4,
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: `${colors.success}15`,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  verifiedBadgeText: {
+    color: colors.success,
+    fontSize: 12,
+    fontWeight: '600',
   },
   ratingContainer: {
     flexDirection: 'row',
