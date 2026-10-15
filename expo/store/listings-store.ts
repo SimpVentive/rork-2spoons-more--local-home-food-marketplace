@@ -72,6 +72,11 @@ function rowToListing(row: Record<string, unknown>): FoodListing {
   };
 }
 
+function isNotExpired(listing: FoodListing, now = Date.now()): boolean {
+  const expiryTime = new Date(listing.availableUntil).getTime();
+  return Number.isFinite(expiryTime) && expiryTime >= now;
+}
+
 export const useListingsStore = create<ListingsState>((set, get) => ({
   listings: [],
   filteredListings: [],
@@ -93,7 +98,10 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
       let query = supabase.from('food_listings').select('*');
 
       if (!user.isAdmin) {
-        query = query.eq('is_active', true).eq('is_approved', true);
+        query = query
+          .eq('is_active', true)
+          .eq('is_approved', true)
+          .gt('available_until', new Date().toISOString());
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -116,8 +124,9 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
 
   searchListings: (options: FilterOptions) => {
     const state = get();
+    const now = Date.now();
     const listings = state.listings || [];
-    let filtered = [...listings];
+    let filtered = listings.filter(listing => isNotExpired(listing, now));
 
     if (options.query) {
       const query = options.query.toLowerCase();
@@ -245,7 +254,7 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
     ];
 
     let filtered = listings.filter(listing =>
-      routePoints.some(point => {
+      isNotExpired(listing) && routePoints.some(point => {
         const distance = calculateDistance(
           point.latitude, point.longitude,
           listing.location.latitude, listing.location.longitude
@@ -501,6 +510,7 @@ export const useListingsStore = create<ListingsState>((set, get) => ({
         .select('*')
         .eq('is_approved', true)
         .eq('is_active', true)
+        .gt('available_until', new Date().toISOString())
         .order('order_count', { ascending: false })
         .limit(limit);
 

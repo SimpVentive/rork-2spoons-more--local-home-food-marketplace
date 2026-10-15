@@ -43,7 +43,12 @@ export async function fetchTopChefs(limit: number = 5) {
       .limit(limit);
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map((chef) => ({
+      ...chef,
+      profileImage: chef.avatar_url || chef.profileImage || '',
+      cuisineTypes: chef.cuisine_types || chef.cuisineTypes || [],
+      reviewCount: chef.review_count || chef.reviewCount || 0,
+    }));
   } catch (error) {
     console.error('Error fetching top chefs:', error);
     return [];

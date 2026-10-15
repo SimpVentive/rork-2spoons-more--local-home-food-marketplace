@@ -58,12 +58,16 @@ export default function OrderDetailsScreen() {
     Alert.alert('Success', `Order status updated to ${newStatus}`);
   };
   
-  const handleRateOrder = () => {
+  const handleRateOrder = async () => {
     if (!isBuyer || order.isRated) return;
-    
-    rateOrder(order.id, rating);
-    setShowRatingModal(false);
-    Alert.alert('Thank You!', 'Your rating has been submitted');
+
+    try {
+      await rateOrder(order.id, rating);
+      setShowRatingModal(false);
+      Alert.alert('Thank You!', 'Your rating has been submitted');
+    } catch (error) {
+      Alert.alert('Unable to submit rating', error instanceof Error ? error.message : 'Please try again.');
+    }
   };
   
   const handleFileComplaint = () => {

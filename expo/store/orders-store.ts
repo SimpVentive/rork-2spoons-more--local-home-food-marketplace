@@ -606,9 +606,22 @@ export const useOrdersStore = create<OrdersState>()(
         }
       },
 
-      rateOrder: async (id:any, rating:any, comment:any) => {
+      rateOrder: async (id: string, rating: number, comment?: string) => {
         try {
           set({ isLoading: true, error: null });
+          const order = get().orders.find((item) => item.id === id);
+          const user = useAuthStore.getState().user;
+
+          if (!order) throw new Error('Order not found');
+          if (!user || order.buyerId !== user.id) throw new Error('Only the buyer can rate this order');
+          if (order.isRated) throw new Error('This order has already been rated');
+          if (!['delivered', 'completed'].includes(order.status)) {
+            throw new Error('Only delivered orders can be rated');
+          }
+          if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+            throw new Error('Rating must be between 1 and 5');
+          }
+
           const now = new Date().toISOString();
 
           const { error } = await supabase
@@ -623,8 +636,7 @@ export const useOrdersStore = create<OrdersState>()(
           }
 
           const state = get();
-          const orderIndex = state.orders.findIndex(o => o.id === id);
-          if (orderIndex === -1) throw new Error('Order not found');
+          const orderIndex = state.orders.findIndex(item => item.id === id);
 
           const updatedOrder = { ...state.orders[orderIndex], rating, reviewComment: comment || '', isRated: true, updatedAt: now };
           const updatedOrders = [...state.orders];

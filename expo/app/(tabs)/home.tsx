@@ -374,7 +374,7 @@ export default function HomeScreen() {
             >
               <View style={styles.chefImageContainer}>
                 <Image
-                  source={{ uri: chef.profileImage }}
+                  source={{ uri: chef.profileImage || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167' }}
                   style={styles.chefImage}
                   resizeMode="cover"
                 />
@@ -382,7 +382,9 @@ export default function HomeScreen() {
               <Text style={styles.chefName} numberOfLines={1}>{chef.name}</Text>
               <View style={styles.chefRating}>
                 <Star size={12} color="#FFD700" fill="#FFD700" />
-                <Text style={styles.chefRatingText}>{chef.rating?.toFixed(1) || '4.5'}</Text>
+                <Text style={styles.chefRatingText}>
+                  {chef.reviewCount ? `${chef.rating?.toFixed(1)} (${chef.reviewCount})` : 'New'}
+                </Text>
               </View>
               <Text style={styles.chefSpecialty} numberOfLines={1}>
                 {chef.cuisineTypes?.[0] || 'Home chef'}

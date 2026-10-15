@@ -132,9 +132,7 @@ export default function SearchScreen() {
   }, [filters, selectedCuisine, activeQuickFilter]);
 
   const displayListings = useMemo(() => {
-    const source = filteredListings.length > 0 || searchQuery || activeFilterCount > 0
-      ? filteredListings
-      : listings;
+    const source = filteredListings;
 
     if (activeQuickFilter === 'new') {
       return [...source].sort((a, b) =>
@@ -232,12 +230,20 @@ export default function SearchScreen() {
               cachePolicy="memory-disk"
             />
             <Text style={styles.cardSellerName} numberOfLines={1}>{item.sellerName}</Text>
+            <View style={styles.cardSellerRating}>
+              <Star size={11} color="#FFB800" fill="#FFB800" />
+              <Text style={styles.cardRatingText}>
+                {item.sellerRating > 0 ? item.sellerRating.toFixed(1) : 'New'}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.cardFooter}>
             <View style={styles.cardRating}>
               <Star size={11} color="#FFB800" fill="#FFB800" />
-              <Text style={styles.cardRatingText}>{item.sellerRating?.toFixed(1) || '0.0'}</Text>
+              <Text style={styles.cardRatingText}>
+                {item.reviewCount ? `${item.rating?.toFixed(1)} (${item.reviewCount})` : 'New dish'}
+              </Text>
             </View>
             <View style={styles.cardTime}>
               <Clock size={11} color={isExpired ? colors.error : colors.textLight} />
@@ -715,6 +721,10 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     flex: 1,
     fontWeight: '500' as const,
+  },
+  cardSellerRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   cardFooter: {
     flexDirection: 'row',

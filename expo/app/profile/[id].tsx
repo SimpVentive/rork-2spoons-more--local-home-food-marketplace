@@ -70,7 +70,7 @@ export default function SellerProfileScreen() {
           email: sellerData.email,
           phone: sellerData.phone,
           address: sellerData.address,
-          profileImage: sellerData.profile_image,
+          profileImage: sellerData.avatar_url || sellerData.profile_image || '',
           experience: sellerData.experience,
           cuisineTypes: sellerData.cuisine_types || [],
           paymentMethods: sellerData.payment_methods || [],
@@ -103,6 +103,12 @@ export default function SellerProfileScreen() {
   const loadSellerReviews = async (sellerId: string) => {
     const reviews = await fetchSellerReviews(sellerId);
     setSellerReviews(reviews);
+    const rating = reviews.length
+      ? reviews.reduce((total, review) => total + review.rating, 0) / reviews.length
+      : 0;
+    setSeller((currentSeller) => currentSeller?.id === sellerId
+      ? { ...currentSeller, rating, reviewCount: reviews.length }
+      : currentSeller);
   };
   
   const handleListingPress = (listing: FoodListing) => {
@@ -179,7 +185,7 @@ export default function SellerProfileScreen() {
             <View style={styles.ratingContainer}>
               <Star size={16} color={colors.primary} fill={colors.primary} />
               <Text style={styles.rating}>
-                {seller.rating?.toFixed(1) || '0.0'} ({seller.reviewCount || 0} reviews)
+                {seller.reviewCount ? `${seller.rating?.toFixed(1)} (${seller.reviewCount} reviews)` : 'No ratings yet'}
               </Text>
             </View>
             
@@ -208,7 +214,7 @@ export default function SellerProfileScreen() {
           <View style={styles.statDivider} />
           
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{seller.rating?.toFixed(1) || '0.0'}</Text>
+            <Text style={styles.statValue}>{seller.reviewCount ? seller.rating?.toFixed(1) : '-'}</Text>
             <Text style={styles.statLabel}>Rating</Text>
           </View>
         </View>
