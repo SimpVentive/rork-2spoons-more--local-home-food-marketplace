@@ -23,7 +23,7 @@ export default function AppIndex() {
           const state = useAuthStore.getState();
           if (!state.isAuthenticated || !user) {
             router.replace('/(auth)/welcome' as never);
-          } else if (state.isAdmin) {
+          } else if (user.isAdmin) {
             router.replace('/(admin)' as never);
           } else if (!state.userPreference) {
             router.replace('/user-preference' as never);
