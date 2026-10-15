@@ -129,6 +129,7 @@ export default function TabLayout(): React.ReactElement {
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textLight,
+        tabBarShowLabel: isWeb,
         tabBarStyle: [
           styles.tabBar,
           {
@@ -139,7 +140,7 @@ export default function TabLayout(): React.ReactElement {
         sceneContainerStyle: {
           paddingBottom: tabBarHeight,
         },
-        tabBarLabelStyle: isWeb ? styles.tabBarLabel : styles.tabBarLabelMobile,
+        tabBarLabelStyle: styles.tabBarLabel,
         headerStyle: {
           backgroundColor: colors.white,
           borderBottomColor: colors.border,
@@ -173,7 +174,6 @@ export default function TabLayout(): React.ReactElement {
         name="home"
         options={{
           title: isChef ? 'Home' : 'Explore',
-          tabBarLabel: isWeb ? (isChef ? 'Home' : 'Explore') : '',
           tabBarIcon: ({ color }) => (
             <TabIcon icon={isChef ? <ChefHat size={24} color={color} /> : <Home size={24} color={color} />} />
           ),
@@ -183,7 +183,6 @@ export default function TabLayout(): React.ReactElement {
         name="orders"
         options={{
           title: 'Orders',
-          tabBarLabel: isWeb ? 'Orders' : '',
           tabBarIcon: ({ color }) => (
             <TabIcon
               icon={<UtensilsCrossed size={24} color={color} />}
@@ -197,7 +196,6 @@ export default function TabLayout(): React.ReactElement {
         name="finances"
         options={{
           title: 'Wallet',
-          tabBarLabel: isWeb ? 'Wallet' : '',
           tabBarIcon: ({ color }) => (
             <TabIcon icon={<CreditCard size={24} color={color} />} />
           ),
@@ -208,7 +206,6 @@ export default function TabLayout(): React.ReactElement {
         name="route-settings"
         options={{
           title: 'Routes',
-          tabBarLabel: isWeb ? 'Routes' : '',
           tabBarIcon: ({ color }) => (
             <TabIcon
               icon={<MapPin size={24} color={color} />}
@@ -222,7 +219,6 @@ export default function TabLayout(): React.ReactElement {
         name="following"
         options={{
           title: 'Follow',
-          tabBarLabel: isWeb ? 'Follow' : '',
           tabBarIcon: ({ color }) => (
             <TabIcon icon={<Heart size={24} color={color} />} />
           ),
@@ -232,7 +228,6 @@ export default function TabLayout(): React.ReactElement {
         name="more"
         options={{
           title: 'More',
-          tabBarLabel: isWeb ? 'More' : '',
           tabBarIcon: ({ color }) => (
             <TabIcon icon={<User size={24} color={color} />} />
           ),
@@ -295,12 +290,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 6,
     marginBottom: 2,
-  },
-  tabBarLabelMobile: {
-    fontSize: 0,
-    height: 0,
-    marginTop: 0,
-    marginBottom: 0,
   },
   tabIconContainer: {
     alignItems: 'center',
